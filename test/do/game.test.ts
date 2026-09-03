@@ -55,13 +55,42 @@ describe('join and slots (§2.1)', () => {
     expect(av.teams[2]?.status).toBe('väntar');
   });
 
-  it('a reconnecting phone keeps its team by device id', async () => {
-    await joined('device-cccccccc', 5);
-    const again = await player('device-cccccccc', 5);
+  it('a reconnecting phone keeps its team by device id and claim token', async () => {
+    const first = await joined('device-cccccccc', 5);
+    const token = (await first.playerState((s) => s.team === 5)).claimToken;
+    const again = await player('device-cccccccc', 5, token);
     open.push(again);
     const s = await again.playerState();
     expect(s.team).toBe(5);
     expect(s.taken).not.toContain(5);
+  });
+
+  it('a release while the phone is offline sticks: its reconnect with the remembered team is sent to the tiles', async () => {
+    const p = await joined('device-oooooooo', 4);
+    const token = (await p.playerState((s) => s.team === 4)).claimToken;
+    expect(typeof token).toBe('number');
+    p.close(); // offline: nobody receives the release
+    await sleep(100);
+    expect((await a.admin({ type: 'release', team: 4 })).type).toBe('ok');
+    await a.adminState((s) => s.teams[3]?.claimed === false);
+
+    const back = await player('device-oooooooo', 4, token); // what the phone remembers
+    open.push(back);
+    const msg = await back.until((m) => m.type === 'released');
+    expect(msg).toMatchObject({ type: 'released', message: 'Erik släppte Lag 4. Välj lag igen.' });
+    const s = await back.playerState();
+    expect(s.team).toBeNull();
+    // A fresh tap works again.
+    back.send({ type: 'claim', team: 4, deviceId: 'device-oooooooo' });
+    await back.playerState((x) => x.team === 4);
+  });
+
+  it('one phone cannot hold two teams: claiming another team moves it and kicks the old team socket', async () => {
+    const p = await joined('device-pppppppp', 1);
+    p.send({ type: 'claim', team: 2, deviceId: 'device-pppppppp' });
+    await p.playerState((s) => s.team === 2);
+    const av = await a.adminState((s) => s.teams[1]?.claimed === true && s.teams[0]?.claimed === false);
+    expect(av.teams[0]?.status).toBe('ledig');
   });
 
   it('a phone whose slot was taken by another device is sent back to the tiles', async () => {
@@ -228,6 +257,7 @@ describe('grading and reveal (§2.5, §2.6, §2.7)', () => {
 describe('resilience (§2.9)', () => {
   it('survives a Durable Object restart mid-question with slots, answers and the clock intact', async () => {
     const p = await joined('device-llllllll', 5);
+    const token = (await p.playerState((s) => s.team === 5)).claimToken;
     await a.admin({ type: 'start' });
     await a.admin({ type: 'pause' }); // pause so the 2 s clock cannot run out during the restart
     await p.playerState((x) => x.pausedRemainingMs !== null);
@@ -240,7 +270,7 @@ describe('resilience (§2.9)', () => {
     await evictDurableObject(stub, { webSockets: 'close' });
     await sleep(200);
 
-    const p2 = await player('device-llllllll', 5);
+    const p2 = await player('device-llllllll', 5, token);
     open.push(p2);
     const s = await p2.playerState();
     expect(s.team).toBe(5);

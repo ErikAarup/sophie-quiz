@@ -83,6 +83,29 @@ describe('gradeAnswers', () => {
     expect(partial.rows.find((r) => r.team === 3)).toMatchObject({ rowIndex: null, needsReview: true });
   });
 
+  it('a schema-valid but contradictory response (duplicate team rows) is never trusted: everything pending goes to review', async () => {
+    const out = await gradeAnswers(eu, [{ team: 1, text: 'Atlantis' }, { team: 2, text: 'Tjekkiet' }], {
+      callModel: async () => ({
+        results: [
+          { team: 1, row: null, reason: 'utanför' },
+          { team: 1, row: 1, reason: 'träff' }, // contradicts the row above
+          { team: 2, row: rowIndexOf('Tjeckien') + 1, reason: 'ok' },
+        ],
+      }),
+    });
+    expect(out.failed).toBe(true);
+    expect(out.rows.find((r) => r.team === 1)).toMatchObject({ rowIndex: null, needsReview: true });
+    expect(out.rows.find((r) => r.team === 2)).toMatchObject({ rowIndex: null, needsReview: true });
+  });
+
+  it('a response that names a team that was not asked about is not trusted either', async () => {
+    const out = await gradeAnswers(eu, [{ team: 1, text: 'Atlantis' }], {
+      callModel: async () => ({ results: [{ team: 1, row: null, reason: '' }, { team: 7, row: 2, reason: 'extra' }] }),
+    });
+    expect(out.failed).toBe(true);
+    expect(out.rows[0]).toMatchObject({ team: 1, rowIndex: null, needsReview: true });
+  });
+
   it('never invents a hit for an unmatched answer', async () => {
     const out = await gradeAnswers(eu, [{ team: 4, text: 'Slovenien' }], { callModel: async () => ({ results: [{ team: 4, row: null, reason: 'not listed' }] }) });
     expect(out.rows[0]).toMatchObject({ rowIndex: null, needsReview: false });

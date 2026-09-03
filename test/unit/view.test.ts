@@ -84,11 +84,24 @@ describe('playerView', () => {
     expect(playerView(st, quiz, T0, 3, 'dev-3').standings[0]).toEqual({ position: 1, team: 3, points: 10 });
   });
 
-  it('never leaks row names during the question', () => {
-    const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+  it('never leaks row names during the question, nor the question text before it starts', () => {
+    const lobby = claimAll(fresh());
+    const lv = playerView(lobby, quiz, T0, 1, 'dev-1');
+    expect(lv.question).toBeNull();
+    expect(lv.rows).toEqual([]);
+    expect(adminView(lobby, quiz, T0, allOnline).question?.question).toContain('folkrikaste'); // Erik needs it
+    const open = run(lobby, [{ type: 'start' }], T0);
     const v = playerView(open, quiz, T0, 1, 'dev-1');
     expect(v.rows.every((r) => r.name === null)).toBe(true);
     expect(v.question?.question).toContain('folkrikaste');
+  });
+
+  it('gives the phone its claim token and reports running grading while requests are outstanding', () => {
+    const s = run(fresh(), [{ type: 'claim', team: 2, deviceId: 'a' }], T0);
+    expect(playerView(s, quiz, T0, 2, 'a').claimToken).toBe(s.claimGen[2]);
+    expect(playerView(s, quiz, T0, null, 'zzz').claimToken).toBeNull();
+    const g = run(claimAll(fresh()), [{ type: 'start' }, { type: 'answer', team: 1, text: 'Tjekkiet', source: 'team' }, { type: 'lock' }, { type: 'grade' }], T0);
+    expect(adminView(g, quiz, T0, allOnline).gradeStatus).toBe('running');
   });
 });
 

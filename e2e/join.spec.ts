@@ -53,6 +53,24 @@ test('release and re-claim: admin releases Lag 3, that phone is sent back to the
   await expect(p1.page.getByRole('button', { name: /^Lag 3/ })).toHaveClass(/taken/);
 });
 
+test('a release while the phone is offline sticks: when the phone comes back it lands on the tiles, not on its old team', async ({ browser }) => {
+  const p1 = await openPlayer(browser, 6);
+  phones.push(p1);
+  await p1.context.setOffline(true);
+  await p1.page.evaluate(() => (window as unknown as { __sophie: { drop: () => void } }).__sophie.drop());
+  await adminRelease(admin.page, 6);
+  await expect(admin.page.locator('.team-grid .row').nth(5)).toContainText('ledig');
+  await p1.context.setOffline(false);
+  await expect(p1.page.getByText('Erik släppte Lag 6. Välj lag igen.')).toBeVisible({ timeout: 15_000 });
+  await expect(p1.page.getByRole('button', { name: 'Lag 6' })).not.toHaveClass(/taken/);
+  await expect(admin.page.locator('.team-grid .row').nth(5)).toContainText('ledig');
+  // Reloading does not resurrect it either; a tap does.
+  await p1.page.reload();
+  await expect(p1.page.getByRole('button', { name: 'Lag 1' })).toBeVisible();
+  await p1.page.getByRole('button', { name: 'Lag 6' }).click();
+  await expectTeam(p1.page, 6);
+});
+
 test('a reloaded phone comes back as its team; a phone whose slot was taken meanwhile is sent to the tiles', async ({ browser }) => {
   const p1 = await openPlayer(browser, 5);
   phones.push(p1);

@@ -28,7 +28,10 @@ export function visibleRowCount(state: GameState, question: QuizQuestion | undef
 function base(state: GameState, quiz: Quiz, now: number, maskHidden: boolean): BaseStateView {
   const question = quiz.questions[state.questionIndex];
   const visible = visibleRowCount(state, question);
-  const rows: RowView[] = question
+  // Players never see the next question's text (nor its row shape) before Erik starts it; admin
+  // needs it for "Nästa lista".
+  const questionVisible = question !== undefined && !(maskHidden && state.phase === 'lobby');
+  const rows: RowView[] = questionVisible
     ? question.rows.map((row, i) => ({
         rank: row.rank,
         name: !maskHidden || i < visible ? row.name : null,
@@ -42,7 +45,7 @@ function base(state: GameState, quiz: Quiz, now: number, maskHidden: boolean): B
     phase: state.phase,
     questionIndex: state.questionIndex,
     questionCount: quiz.questions.length,
-    question: question
+    question: questionVisible
       ? {
           number: state.questionIndex + 1,
           slug: question.slug,
@@ -105,6 +108,7 @@ export function playerView(state: GameState, quiz: Quiz, now: number, team: Team
     ...base(state, quiz, now, true),
     role: 'player',
     team,
+    claimToken: team ? state.claimGen[team] : null,
     taken,
     answer: answer?.text ?? null,
     answerSource: answer?.source ?? null,
@@ -151,6 +155,6 @@ export function adminView(state: GameState, quiz: Quiz, now: number, online: Rec
     ...base(state, quiz, now, false),
     role: 'admin',
     teams,
-    gradeStatus: state.gradeStatus[String(state.questionIndex)] ?? 'idle',
+    gradeStatus: state.gradePending > 0 ? 'running' : (state.gradeStatus[String(state.questionIndex)] ?? 'idle'),
   };
 }

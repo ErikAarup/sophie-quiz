@@ -99,9 +99,9 @@ export class Client {
   }
 }
 
-export async function player(deviceId: string, team: Team | null = null): Promise<Client> {
+export async function player(deviceId: string, team: Team | null = null, token: number | null = null): Promise<Client> {
   const c = await Client.connect();
-  c.send({ type: 'hello', role: 'player', deviceId, team });
+  c.send({ type: 'hello', role: 'player', deviceId, team, token });
   return c;
 }
 

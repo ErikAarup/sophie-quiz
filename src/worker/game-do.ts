@@ -8,7 +8,7 @@
 // - Full state on every change and on connect; no deltas.
 
 import { DurableObject } from 'cloudflare:workers';
-import { initialState, reduce, type GameEvent, type GradeRequest, type Outcome } from '../shared/game.ts';
+import { initialState, migrateState, reduce, type GameEvent, type GradeRequest, type KickReason, type Outcome } from '../shared/game.ts';
 import {
   CONFIRM_WORD,
   TEAMS,
@@ -53,10 +53,12 @@ export class Game extends DurableObject<Env> {
     ctx.blockConcurrencyWhile(async () => {
       const stored = await ctx.storage.get<GameState>(STATE_KEY);
       if (stored && stored.v === 1) {
-        this.state = stored;
-        if (this.state.phase === 'grading') {
-          // We died mid-grading. Back to locked, then grade again on the next alarm.
-          this.state.phase = 'locked';
+        this.state = migrateState(stored, Date.now());
+        if (this.state.phase === 'grading' || this.state.gradePending > 0) {
+          // We died with grading in flight. Nothing is outstanding any more: back to locked if we
+          // were grading, and grade again on the next alarm (manual grades are never overwritten).
+          if (this.state.phase === 'grading') this.state.phase = 'locked';
+          this.state.gradePending = 0;
           this.resumeGrading = true;
           await ctx.storage.put(STATE_KEY, this.state);
           await ctx.storage.setAlarm(Date.now() + 500);
@@ -111,7 +113,7 @@ export class Game extends DurableObject<Env> {
     switch (msg.type) {
       case 'hello':
         if (msg.role === 'admin') await this.helloAdmin(ws, att, msg.token);
-        else await this.helloPlayer(ws, att, msg.deviceId, msg.team);
+        else await this.helloPlayer(ws, att, msg.deviceId, msg.team, msg.token);
         return;
       case 'claim':
         await this.claim(ws, att, msg.team, msg.deviceId);
@@ -130,9 +132,12 @@ export class Game extends DurableObject<Env> {
         else this.send(ws, { type: 'ok', of: 'answer' });
         return;
       }
-      case 'ping':
-        this.sendState(ws, att);
+      case 'ping': {
+        // A ping runs the clock check too, so a delayed alarm can never leave phones on "open".
+        const out = await this.apply({ type: 'tick' });
+        if (!out.changed) this.sendState(ws, att);
         return;
+      }
       default:
         await this.adminCommand(ws, att, msg);
         return;
@@ -171,13 +176,13 @@ export class Game extends DurableObject<Env> {
     }
     if (this.resumeGrading) {
       this.resumeGrading = false;
-      if (s.phase === 'locked') await this.apply({ type: 'grade' });
+      if (s.phase === 'locked' || s.phase === 'reveal' || s.phase === 'standings') await this.apply({ type: 'grade' });
     }
   }
 
   // ---------- Handlers ----------
 
-  private async helloPlayer(ws: WebSocket, att: Attachment, deviceId: unknown, team: unknown): Promise<void> {
+  private async helloPlayer(ws: WebSocket, att: Attachment, deviceId: unknown, team: unknown, token: unknown): Promise<void> {
     if (typeof deviceId !== 'string' || deviceId.length < 8 || deviceId.length > 64) {
       this.send(ws, { type: 'error', code: 'badDevice', message: 'Ogiltig enhet.' });
       return;
@@ -188,10 +193,13 @@ export class Game extends DurableObject<Env> {
     if (team !== null && team !== undefined && isTeam(team)) {
       att.team = team; // optimistic, see claim()
       ws.serializeAttachment(att);
-      const out = await this.apply({ type: 'claim', team, deviceId });
+      // A remembered team is an automatic re-claim: it must carry the token the phone was given.
+      const out = await this.apply({ type: 'claim', team, deviceId, auto: true, token: typeof token === 'number' ? token : null });
       if (out.error) {
         att.team = null;
-        this.send(ws, { type: 'released', message: `${teamName(team)} används av en annan telefon. Välj lag igen.` });
+        const owner = this.state.slots[team];
+        const message = owner && owner.deviceId !== deviceId ? `${teamName(team)} används av en annan telefon. Välj lag igen.` : out.error.message;
+        this.send(ws, { type: 'released', message });
       }
     }
     ws.serializeAttachment(att);
@@ -278,16 +286,23 @@ export class Game extends DurableObject<Env> {
     if (out.alarm === null) await this.ctx.storage.deleteAlarm();
     else if (typeof out.alarm === 'number') await this.ctx.storage.setAlarm(out.alarm);
 
-    for (const k of out.kicked) this.kick(k.deviceId, `Erik släppte ${teamName(k.team)}. Välj lag igen.`);
+    for (const k of out.kicked) this.kick(k.deviceId, k.team, k.reason);
     if (out.changed) this.broadcastAll();
     if (out.grade) await this.runGrader(out.grade);
     return out;
   }
 
-  private kick(deviceId: string, message: string): void {
+  /** Tell the sockets of `deviceId` that are bound to `team` (and only those) to go back to the tiles. */
+  private kick(deviceId: string, team: Team, reason: KickReason): void {
+    const message =
+      reason === 'moved'
+        ? `Den här telefonen valde ett annat lag i en annan flik. ${teamName(team)} är släppt.`
+        : reason === 'reset'
+          ? 'Erik nollställde spelet. Välj lag igen.'
+          : `Erik släppte ${teamName(team)}. Välj lag igen.`;
     for (const ws of this.ctx.getWebSockets()) {
       const att = this.attachment(ws);
-      if (att.role === 'player' && att.deviceId === deviceId && att.team !== null) {
+      if (att.role === 'player' && att.deviceId === deviceId && att.team === team) {
         att.team = null;
         ws.serializeAttachment(att);
         this.send(ws, { type: 'released', message });

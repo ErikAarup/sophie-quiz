@@ -76,9 +76,19 @@ export interface GameState {
   totalMs: number; // question length incl. extensions — the ring's denominator
   revealed: number; // rows revealed from the top (0..topCount). At topCount the near misses show too.
   slots: Record<Team, Slot | null>;
+  /**
+   * Per-slot claim generation. Bumped on every release and reset, so a phone that stored
+   * "I am Lag 3" while offline cannot walk back onto the slot: its remembered token no longer
+   * matches and its automatic re-claim is refused (an explicit tap is a fresh claim).
+   */
+  claimGen: Record<Team, number>;
   answers: Record<string, Answer>; // key `${questionIndex}:${team}`
   grades: Record<string, Grade>; // same key
   gradeStatus: Record<string, GradeStatus>; // key `${questionIndex}`
+  /** Grade requests in flight for the current question; reveal starts only when it reaches 0. */
+  gradePending: number;
+  /** Whether any grade batch for the question failed (→ status 'failed' once settled). */
+  gradeFailed: Record<string, boolean>;
   updatedAt: number;
 }
 
@@ -89,7 +99,7 @@ export function answerKey(questionIndex: number, team: Team): string {
 // ---------- Wire protocol: client -> server ----------
 
 export type ClientMessage =
-  | { type: 'hello'; role: 'player'; deviceId: string; team: Team | null }
+  | { type: 'hello'; role: 'player'; deviceId: string; team: Team | null; token?: number | null }
   | { type: 'hello'; role: 'admin'; token: string }
   | { type: 'claim'; team: Team; deviceId: string }
   | { type: 'leave' } // player gives up its slot voluntarily (not in the spec's UI; kept for tests)
@@ -172,6 +182,8 @@ export type PlayerResult =
 export interface PlayerStateView extends BaseStateView {
   role: 'player';
   team: Team | null;
+  /** Claim generation of the own slot; the phone stores it and sends it back in `hello`. */
+  claimToken: number | null;
   taken: Team[]; // slots claimed by a different device (for the tiles)
   answer: string | null; // this team's answer for the current question
   answerSource: 'team' | 'admin' | null;

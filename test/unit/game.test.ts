@@ -36,7 +36,7 @@ describe('join (§2.1)', () => {
   it('release frees the slot, kicks the device, and lets another device claim', () => {
     const s1 = run(fresh(), [{ type: 'claim', team: 3, deviceId: 'a' }], T0);
     const out = step(s1, { type: 'release', team: 3 }, T0);
-    expect(out.kicked).toEqual([{ team: 3, deviceId: 'a' }]);
+    expect(out.kicked).toEqual([{ team: 3, deviceId: 'a', reason: 'release' }]);
     expect(out.state.slots[3]).toBeNull();
     const s2 = run(out.state, [{ type: 'claim', team: 3, deviceId: 'b' }], T0);
     expect(s2.slots[3]?.deviceId).toBe('b');
@@ -342,6 +342,105 @@ describe('standings and moving on (§2.7)', () => {
     expect(s.phase).toBe('final');
     expect(s.questionIndex).toBe(quiz.questions.length - 1);
     expect(step(s, { type: 'start' }, T0).error?.code).toBe('phase');
+  });
+});
+
+describe('R1 review fixes', () => {
+  it('a release survives an offline phone: its automatic re-claim with the old token is refused, a tap is a fresh claim', () => {
+    const s1 = run(fresh(), [{ type: 'claim', team: 3, deviceId: 'a' }], T0);
+    const token = s1.claimGen[3];
+    // Same device reconnecting with its token: fine.
+    expect(step(s1, { type: 'claim', team: 3, deviceId: 'a', auto: true, token }, T0).error).toBeUndefined();
+    // Erik releases while the phone is away (kicked reaches nobody).
+    const released = step(s1, { type: 'release', team: 3 }, T0).state;
+    expect(released.slots[3]).toBeNull();
+    expect(released.claimGen[3]).toBe(token + 1);
+    const back = step(released, { type: 'claim', team: 3, deviceId: 'a', auto: true, token }, T0);
+    expect(back.error).toEqual({ code: 'stale', message: 'Erik släppte Lag 3. Välj lag igen.' });
+    expect(back.state.slots[3]).toBeNull();
+    // An explicit tap after that is a new claim and works.
+    expect(step(released, { type: 'claim', team: 3, deviceId: 'a' }, T0).state.slots[3]?.deviceId).toBe('a');
+    // No token at all (an old client) is refused too.
+    expect(step(released, { type: 'claim', team: 3, deviceId: 'a', auto: true, token: null }, T0).error?.code).toBe('stale');
+  });
+
+  it('resetGame invalidates every remembered claim', () => {
+    const s1 = claimAll(fresh());
+    const token = s1.claimGen[5];
+    const reset = step(s1, { type: 'resetGame', confirm: CONFIRM_WORD }, T0);
+    expect(reset.kicked.map((k) => k.reason)).toEqual(Array(8).fill('reset'));
+    expect(reset.state.claimGen[5]).toBe(token + 1);
+    expect(step(reset.state, { type: 'claim', team: 5, deviceId: 'dev-5', auto: true, token }, T0).error?.code).toBe('stale');
+  });
+
+  it('one slot per device: a second claim moves the device and kicks its old team only', () => {
+    const s1 = run(fresh(), [{ type: 'claim', team: 3, deviceId: 'a' }, { type: 'claim', team: 4, deviceId: 'b' }], T0);
+    const out = step(s1, { type: 'claim', team: 5, deviceId: 'a' }, T0);
+    expect(out.error).toBeUndefined();
+    expect(out.state.slots[3]).toBeNull();
+    expect(out.state.slots[5]?.deviceId).toBe('a');
+    expect(out.state.slots[4]?.deviceId).toBe('b');
+    expect(out.kicked).toEqual([{ team: 3, deviceId: 'a', reason: 'moved' }]);
+    expect(out.state.claimGen[3]).toBe(s1.claimGen[3] + 1);
+  });
+
+  it('the auto-lock survives a refused event (empty answer, late pause) and a bare tick', () => {
+    const s = run(claimAll(fresh()), [{ type: 'start' }], T0);
+    const empty = step(s, { type: 'answer', team: 1, text: '   ', source: 'team' }, T0 + DURATION + 1_000);
+    expect(empty.error?.code).toBe('locked'); // the clock ran out first; that is the message the phone needs
+    expect(empty.state.phase).toBe('locked');
+    expect(empty.changed).toBe(true);
+    expect(empty.alarm).toBeNull();
+
+    const pause = step(s, { type: 'pause' }, T0 + DURATION + 5_000);
+    expect(pause.error?.code).toBe('phase');
+    expect(pause.state.phase).toBe('locked');
+    expect(pause.changed).toBe(true);
+
+    const tick = step(s, { type: 'tick' }, T0 + DURATION);
+    expect(tick.state.phase).toBe('locked');
+    expect(tick.changed).toBe(true);
+    const early = step(s, { type: 'tick' }, T0 + 10);
+    expect(early.state.phase).toBe('open');
+    expect(early.changed).toBe(false);
+    expect(early.alarm).toBeUndefined();
+  });
+
+  it('a manual answer typed while the batch is in flight does not end grading early', () => {
+    const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+    const locked = run(open, [{ type: 'answer', team: 1, text: 'Tjekkiet', source: 'team' }, { type: 'lock' }], T0);
+    const g = step(locked, { type: 'grade' }, T0);
+    expect(g.state.gradePending).toBe(1);
+    const manual = step(g.state, { type: 'answer', team: 2, text: 'Belgien', source: 'admin' }, T0 + 1);
+    expect(manual.grade).toEqual({ questionIndex: 0, answers: [{ team: 2, text: 'Belgien' }] });
+    expect(manual.state.gradePending).toBe(2);
+    // The quick one comes back first: still grading, nothing revealed.
+    const first = step(
+      manual.state,
+      { type: 'gradeResult', questionIndex: 0, failed: false, results: [{ team: 2, gradedText: 'Belgien', rowIndex: rowIndexOf('Belgien'), needsReview: false, reason: 'Exakt träff' }] },
+      T0 + 2,
+    );
+    expect(first.state.phase).toBe('grading');
+    expect(first.state.gradePending).toBe(1);
+    expect(first.state.gradeStatus['0']).toBe('running');
+    expect(step(first.state, { type: 'revealNext' }, T0).error?.code).toBe('phase');
+    // The batch lands: now the reveal may start, with the batch's failure remembered.
+    const second = step(
+      first.state,
+      { type: 'gradeResult', questionIndex: 0, failed: true, results: [{ team: 1, gradedText: 'Tjekkiet', rowIndex: null, needsReview: true, reason: 'model down' }] },
+      T0 + 3,
+    );
+    expect(second.state.phase).toBe('reveal');
+    expect(second.state.gradePending).toBe(0);
+    expect(second.state.gradeStatus['0']).toBe('failed');
+    expect(second.state.grades[answerKey(0, 2)]?.points).toBe(8);
+    expect(second.state.grades[answerKey(0, 1)]?.needsReview).toBe(true);
+  });
+
+  it('grade is refused while any request is in flight', () => {
+    const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+    const g = run(open, [{ type: 'lock' }, { type: 'grade' }], T0);
+    expect(step(g, { type: 'grade' }, T0).error?.code).toBe('busy');
   });
 });
 

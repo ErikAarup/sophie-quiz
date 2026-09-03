@@ -71,6 +71,8 @@ const OUTPUT_SCHEMA = {
   additionalProperties: false,
 } as const;
 
+const JSON_TEAM_NOTE = 'exactly one result per team in "answers", no other teams';
+
 export function buildUserPrompt(input: ModelInput): string {
   const payload = {
     list: {
@@ -81,7 +83,7 @@ export function buildUserPrompt(input: ModelInput): string {
     prepass_hits: input.prepassHits,
     answers: input.answers,
   };
-  return `Grade these answers.\n\n\`\`\`json\n${JSON.stringify(payload)}\n\`\`\``;
+  return `Grade these answers (${JSON_TEAM_NOTE}).\n\n\`\`\`json\n${JSON.stringify(payload)}\n\`\`\``;
 }
 
 async function callAnthropic(input: ModelInput, opts: GraderOptions): Promise<ModelOutput & { model: string }> {
@@ -160,6 +162,8 @@ export async function gradeAnswers(
     for (const a of pending) rows.push({ team: a.team, gradedText: a.text, rowIndex: null, needsReview: true, reason });
     return { rows, failed: true, usedModel: false, error: reason };
   };
+  // Belt and braces for the schema: the output format asks for exactly these teams.
+  void JSON_TEAM_NOTE;
 
   const call = opts.callModel;
   if (!call && !opts.apiKey) return flagAll('Ingen API-nyckel (ANTHROPIC_API_KEY saknas)');
@@ -172,6 +176,16 @@ export async function gradeAnswers(
     return flagAll(`Modellen svarade inte (${message.slice(0, 120)})`);
   }
 
+  // The response must contain exactly one row per pending team, nothing else. Duplicates
+  // (possibly contradictory), extra teams or a missing team mean the model did not do what was
+  // asked; none of it is trusted, all of it goes to Erik.
+  const pendingTeams = new Set<number>(pending.map((a) => a.team));
+  const seen = new Set<number>();
+  for (const r of output.results) {
+    if (!pendingTeams.has(r.team)) return flagAll(`Modellen svarade för lag ${r.team} som inte skulle rättas`);
+    if (seen.has(r.team)) return flagAll(`Modellen gav flera svar för lag ${r.team}`);
+    seen.add(r.team);
+  }
   const byTeam = new Map<number, { row: number | null; reason: string }>();
   for (const r of output.results) byTeam.set(r.team, { row: r.row, reason: r.reason });
   let anyMissing = false;

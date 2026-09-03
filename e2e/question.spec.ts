@@ -24,10 +24,11 @@ async function rawAnswer(page: Page, text: string): Promise<{ type: string; code
     async ({ url, text }) => {
       const deviceId = localStorage.getItem('sq.device')!;
       const team = Number(localStorage.getItem('sq.team'));
+      const token = Number(localStorage.getItem('sq.token'));
       const ws = new WebSocket(url);
       return new Promise((resolve) => {
         ws.onopen = () => {
-          ws.send(JSON.stringify({ type: 'hello', role: 'player', deviceId, team }));
+          ws.send(JSON.stringify({ type: 'hello', role: 'player', deviceId, team, token }));
           ws.send(JSON.stringify({ type: 'answer', text }));
         };
         ws.onmessage = (ev) => {

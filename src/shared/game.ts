@@ -20,7 +20,14 @@ import {
 export const DEFAULT_EXTEND_MS = 30_000;
 
 export type GameEvent =
-  | { type: 'claim'; team: Team; deviceId: string }
+  | {
+      type: 'claim';
+      team: Team;
+      deviceId: string;
+      /** Automatic re-claim on reconnect (hello): must present the token the phone was given. */
+      auto?: boolean;
+      token?: number | null;
+    }
   | { type: 'release'; team: Team }
   | { type: 'answer'; team: Team; text: string; source: 'team' | 'admin' }
   | { type: 'start' }
@@ -29,6 +36,7 @@ export type GameEvent =
   | { type: 'extend'; ms?: number }
   | { type: 'lock' }
   | { type: 'alarm' }
+  | { type: 'tick' } // "check the clock", nothing else (used for pings)
   | { type: 'grade' }
   | { type: 'gradeResult'; questionIndex: number; results: GradeResultRow[]; failed: boolean }
   | { type: 'override'; team: Team; rank: number }
@@ -53,6 +61,8 @@ export interface GradeRequest {
   answers: { team: Team; text: string }[];
 }
 
+export type KickReason = 'release' | 'moved' | 'reset';
+
 export interface Outcome {
   state: GameState;
   changed: boolean;
@@ -60,11 +70,13 @@ export interface Outcome {
   error?: { code: string; message: string };
   /** `number` = set the alarm at that time, `null` = clear it, absent = leave it. */
   alarm?: number | null;
-  /** Devices whose slot was released; the DO tells them to go back to the tiles. */
-  kicked: { team: Team; deviceId: string }[];
+  /** Devices whose binding to a team ended; the DO tells those sockets to go back to the tiles. */
+  kicked: { team: Team; deviceId: string; reason: KickReason }[];
   /** Answers the DO must send to the grader now. */
   grade?: GradeRequest;
 }
+
+const ZERO_BY_TEAM = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 } as Record<Team, number>;
 
 export function initialState(now: number): GameState {
   return {
@@ -76,15 +88,30 @@ export function initialState(now: number): GameState {
     totalMs: 0,
     revealed: 0,
     slots: { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null },
+    claimGen: { ...ZERO_BY_TEAM },
     answers: {},
     grades: {},
     gradeStatus: {},
+    gradePending: 0,
+    gradeFailed: {},
     updatedAt: now,
   };
 }
 
-function refuse(state: GameState, code: string, message: string): Outcome {
-  return { state, changed: false, error: { code, message }, kicked: [] };
+/** Fill in fields a state persisted by an earlier build may lack. */
+export function migrateState(stored: Partial<GameState> & { v: 1 }, now: number): GameState {
+  const base = initialState(now);
+  return {
+    ...base,
+    ...stored,
+    slots: { ...base.slots, ...(stored.slots ?? {}) },
+    claimGen: { ...base.claimGen, ...(stored.claimGen ?? {}) },
+    answers: stored.answers ?? {},
+    grades: stored.grades ?? {},
+    gradeStatus: stored.gradeStatus ?? {},
+    gradePending: typeof stored.gradePending === 'number' ? stored.gradePending : 0,
+    gradeFailed: stored.gradeFailed ?? {},
+  };
 }
 
 /** Remaining clock time in ms as the server sees it (0 once locked). */
@@ -116,11 +143,13 @@ function clearQuestion(state: GameState, questionIndex: number): void {
     if (key.startsWith(`${questionIndex}:`)) delete state.grades[key];
   }
   delete state.gradeStatus[String(questionIndex)];
+  delete state.gradeFailed[String(questionIndex)];
+  state.gradePending = 0;
 }
 
 function gradeFromRow(quiz: Quiz, questionIndex: number, rowIndex: number | null, opts: { manual: boolean; needsReview: boolean; reason: string; gradedText: string }): Grade {
   const question = quiz.questions[questionIndex];
-  const row = rowIndex !== null && question ? question.rows[rowIndex] ?? null : null;
+  const row = rowIndex !== null && question ? (question.rows[rowIndex] ?? null) : null;
   const rank = row ? row.rank : null;
   return {
     rank,
@@ -136,6 +165,8 @@ function gradeFromRow(quiz: Quiz, questionIndex: number, rowIndex: number | null
 export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Quiz): Outcome {
   const state: GameState = structuredClone(prev);
   const kicked: Outcome['kicked'] = [];
+  // The clock is checked before every event. If it just ran out, that lock is part of this
+  // outcome even when the event itself is refused (a late alarm must never leave the game open).
   let changed = autoLock(state, now);
   let alarm: number | null | undefined = changed ? null : undefined;
   let grade: GradeRequest | undefined;
@@ -150,13 +181,37 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
     if (grade) out.grade = grade;
     return out;
   };
+  const refuse = (code: string, message: string): Outcome => {
+    const out = done();
+    out.error = { code, message };
+    return out;
+  };
 
   switch (event.type) {
     case 'claim': {
-      if (!isTeam(event.team)) return refuse(prev, 'badTeam', 'Ogiltigt lag.');
+      if (!isTeam(event.team)) return refuse('badTeam', 'Ogiltigt lag.');
       const slot = state.slots[event.team];
       if (slot && slot.deviceId !== event.deviceId) {
-        return refuse(prev, 'taken', `${teamName(event.team)} är redan taget`);
+        return refuse('taken', `${teamName(event.team)} är redan taget`);
+      }
+      if (event.auto) {
+        // A remembered claim is only honoured while its generation is current: a release or a
+        // reset while the phone was away invalidates it.
+        if (event.token !== state.claimGen[event.team]) {
+          return refuse('stale', `Erik släppte ${teamName(event.team)}. Välj lag igen.`);
+        }
+      }
+      // One slot per device: a device that already holds another team is moved, and the socket
+      // bound to that other team is told to go back to the tiles.
+      for (const other of TEAMS) {
+        if (other === event.team) continue;
+        const s = state.slots[other];
+        if (s && s.deviceId === event.deviceId) {
+          state.slots[other] = null;
+          state.claimGen[other] += 1;
+          kicked.push({ team: other, deviceId: event.deviceId, reason: 'moved' });
+          changed = true;
+        }
       }
       if (!slot) {
         state.slots[event.team] = { deviceId: event.deviceId, claimedAt: now };
@@ -166,34 +221,27 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
     }
 
     case 'release': {
-      if (!isTeam(event.team)) return refuse(prev, 'badTeam', 'Ogiltigt lag.');
+      if (!isTeam(event.team)) return refuse('badTeam', 'Ogiltigt lag.');
       const slot = state.slots[event.team];
       if (slot) {
-        kicked.push({ team: event.team, deviceId: slot.deviceId });
+        kicked.push({ team: event.team, deviceId: slot.deviceId, reason: 'release' });
         state.slots[event.team] = null;
+        state.claimGen[event.team] += 1;
         changed = true;
       }
       return done();
     }
 
     case 'answer': {
-      if (!isTeam(event.team)) return refuse(prev, 'badTeam', 'Ogiltigt lag.');
+      if (!isTeam(event.team)) return refuse('badTeam', 'Ogiltigt lag.');
       const text = event.text.trim().slice(0, MAX_ANSWER_LENGTH);
-      if (!text) return refuse(prev, 'empty', 'Skriv ett svar först.');
       if (event.source === 'team') {
-        if (state.phase === 'lobby' || state.phase === 'final') {
-          return refuse(state, 'notOpen', 'Frågan har inte startat än.');
-        }
-        if (state.phase !== 'open') {
-          // `state` (not `prev`) and `changed` carried over, so an auto-lock that just happened
-          // is still persisted even though the answer itself is refused.
-          const out = done();
-          out.error = { code: 'locked', message: 'Tiden är ute – svaret togs inte emot.' };
-          return out;
-        }
+        if (state.phase === 'lobby' || state.phase === 'final') return refuse('notOpen', 'Frågan har inte startat än.');
+        if (state.phase !== 'open') return refuse('locked', 'Tiden är ute – svaret togs inte emot.');
       } else if (!questionActive(state)) {
-        return refuse(state, 'notOpen', 'Ingen fråga pågår.');
+        return refuse('notOpen', 'Ingen fråga pågår.');
       }
+      if (!text) return refuse('empty', 'Skriv ett svar först.');
       const key = answerKey(qi, event.team);
       const answer: Answer = { text, updatedAt: now, source: event.source };
       state.answers[key] = answer;
@@ -203,18 +251,21 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
       if (existing && existing.gradedText !== text) delete state.grades[key];
       if (event.source === 'admin' && state.phase !== 'open' && !state.grades[key]) {
         grade = { questionIndex: qi, answers: [{ team: event.team, text }] };
+        state.gradePending += 1;
+        state.gradeStatus[String(qi)] = 'running';
       }
       return done();
     }
 
     case 'start': {
-      if (state.phase !== 'lobby') return refuse(state, 'phase', 'En fråga pågår redan.');
-      if (!question) return refuse(state, 'noQuestion', 'Det finns ingen fråga kvar.');
+      if (state.phase !== 'lobby') return refuse('phase', 'En fråga pågår redan.');
+      if (!question) return refuse('noQuestion', 'Det finns ingen fråga kvar.');
       state.phase = 'open';
       state.deadlineAt = now + quiz.durationMs;
       state.pausedRemainingMs = null;
       state.totalMs = quiz.durationMs;
       state.revealed = 0;
+      state.gradePending = 0;
       alarm = state.deadlineAt;
       changed = true;
       return done();
@@ -222,7 +273,7 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
 
     case 'pause': {
       if (state.phase !== 'open' || state.pausedRemainingMs !== null || state.deadlineAt === null) {
-        return refuse(state, 'phase', 'Klockan går inte.');
+        return refuse('phase', 'Klockan går inte.');
       }
       state.pausedRemainingMs = Math.max(0, state.deadlineAt - now);
       state.deadlineAt = null;
@@ -232,9 +283,7 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
     }
 
     case 'resume': {
-      if (state.phase !== 'open' || state.pausedRemainingMs === null) {
-        return refuse(state, 'phase', 'Klockan är inte pausad.');
-      }
+      if (state.phase !== 'open' || state.pausedRemainingMs === null) return refuse('phase', 'Klockan är inte pausad.');
       state.deadlineAt = now + state.pausedRemainingMs;
       state.pausedRemainingMs = null;
       alarm = state.deadlineAt;
@@ -243,9 +292,9 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
     }
 
     case 'extend': {
-      if (state.phase !== 'open') return refuse(state, 'phase', 'Frågan är inte öppen.');
+      if (state.phase !== 'open') return refuse('phase', 'Frågan är inte öppen.');
       const ms = event.ms ?? DEFAULT_EXTEND_MS;
-      if (!Number.isFinite(ms) || ms <= 0 || ms > 10 * 60_000) return refuse(state, 'badExtend', 'Ogiltig förlängning.');
+      if (!Number.isFinite(ms) || ms <= 0 || ms > 10 * 60_000) return refuse('badExtend', 'Ogiltig förlängning.');
       if (state.pausedRemainingMs !== null) {
         state.pausedRemainingMs += ms;
       } else if (state.deadlineAt !== null) {
@@ -258,7 +307,7 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
     }
 
     case 'lock': {
-      if (state.phase !== 'open') return refuse(state, 'phase', 'Frågan är inte öppen.');
+      if (state.phase !== 'open') return refuse('phase', 'Frågan är inte öppen.');
       state.phase = 'locked';
       state.pausedRemainingMs = null;
       alarm = null;
@@ -266,18 +315,16 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
       return done();
     }
 
-    case 'alarm': {
-      // autoLock already ran; the alarm is consumed either way.
-      alarm = null;
+    case 'alarm':
+    case 'tick': {
+      // autoLock already ran. An alarm that fired early leaves the alarm alone; the DO re-arms it.
       return done();
     }
 
     case 'grade': {
-      if (state.phase === 'open' || state.phase === 'lobby' || state.phase === 'final') {
-        return refuse(state, 'phase', 'Svaren måste vara låsta först.');
-      }
-      if (state.phase === 'grading') return refuse(state, 'busy', 'Rättning pågår.');
-      if (!question) return refuse(state, 'noQuestion', 'Ingen fråga.');
+      if (state.phase === 'open' || state.phase === 'lobby' || state.phase === 'final') return refuse('phase', 'Svaren måste vara låsta först.');
+      if (state.phase === 'grading' || state.gradePending > 0) return refuse('busy', 'Rättning pågår.');
+      if (!question) return refuse('noQuestion', 'Ingen fråga.');
       const answers: GradeRequest['answers'] = [];
       for (const team of TEAMS) {
         const key = answerKey(qi, team);
@@ -290,6 +337,8 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
         state.revealed = 0;
       }
       state.gradeStatus[String(qi)] = 'running';
+      delete state.gradeFailed[String(qi)];
+      state.gradePending += 1;
       grade = { questionIndex: qi, answers };
       changed = true;
       return done();
@@ -312,10 +361,15 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
         });
       }
       if (rqi === qi) {
-        state.gradeStatus[String(qi)] = event.failed ? 'failed' : 'done';
-        if (state.phase === 'grading') {
-          state.phase = 'reveal';
-          state.revealed = 0;
+        if (event.failed) state.gradeFailed[String(qi)] = true;
+        state.gradePending = Math.max(0, state.gradePending - 1);
+        if (state.gradePending === 0) {
+          // Every outstanding request has settled: now, and only now, the reveal may start.
+          state.gradeStatus[String(qi)] = state.gradeFailed[String(qi)] ? 'failed' : 'done';
+          if (state.phase === 'grading') {
+            state.phase = 'reveal';
+            state.revealed = 0;
+          }
         }
       }
       changed = true;
@@ -323,13 +377,13 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
     }
 
     case 'override': {
-      if (!isTeam(event.team)) return refuse(state, 'badTeam', 'Ogiltigt lag.');
-      if (!questionActive(state) || !question) return refuse(state, 'phase', 'Ingen fråga pågår.');
+      if (!isTeam(event.team)) return refuse('badTeam', 'Ogiltigt lag.');
+      if (!questionActive(state) || !question) return refuse('phase', 'Ingen fråga pågår.');
       const rank = event.rank;
-      if (!Number.isInteger(rank) || rank < 0 || rank > 15) return refuse(state, 'badRank', 'Plats måste vara 0–15.');
+      if (!Number.isInteger(rank) || rank < 0 || rank > 15) return refuse('badRank', 'Plats måste vara 0–15.');
       const key = answerKey(qi, event.team);
       const rowIndex = rank === 0 ? null : question.rows.findIndex((r) => r.rank === rank);
-      if (rank !== 0 && rowIndex === -1) return refuse(state, 'noRow', `Listan har ingen plats ${rank}.`);
+      if (rank !== 0 && rowIndex === -1) return refuse('noRow', `Listan har ingen plats ${rank}.`);
       state.grades[key] = gradeFromRow(quiz, qi, rowIndex, {
         manual: true,
         needsReview: false,
@@ -341,15 +395,15 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
     }
 
     case 'revealNext': {
-      if (state.phase !== 'reveal' || !question) return refuse(state, 'phase', 'Inget avslöjande pågår.');
-      if (state.revealed >= question.topCount) return refuse(state, 'done', 'Hela listan är visad.');
+      if (state.phase !== 'reveal' || !question) return refuse('phase', 'Inget avslöjande pågår.');
+      if (state.revealed >= question.topCount) return refuse('done', 'Hela listan är visad.');
       state.revealed += 1;
       changed = true;
       return done();
     }
 
     case 'revealAll': {
-      if (state.phase !== 'reveal' || !question) return refuse(state, 'phase', 'Inget avslöjande pågår.');
+      if (state.phase !== 'reveal' || !question) return refuse('phase', 'Inget avslöjande pågår.');
       if (state.revealed !== question.topCount) {
         state.revealed = question.topCount;
         changed = true;
@@ -358,23 +412,21 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
     }
 
     case 'standings': {
-      if (state.phase !== 'reveal') return refuse(state, 'phase', 'Visa ställningen efter avslöjandet.');
+      if (state.phase !== 'reveal') return refuse('phase', 'Visa ställningen efter avslöjandet.');
       state.phase = 'standings';
       changed = true;
       return done();
     }
 
     case 'backToReveal': {
-      if (state.phase !== 'standings') return refuse(state, 'phase', 'Ställningen visas inte.');
+      if (state.phase !== 'standings') return refuse('phase', 'Ställningen visas inte.');
       state.phase = 'reveal';
       changed = true;
       return done();
     }
 
     case 'next': {
-      if (state.phase !== 'standings' && state.phase !== 'reveal') {
-        return refuse(state, 'phase', 'Avsluta frågan först.');
-      }
+      if (state.phase !== 'standings' && state.phase !== 'reveal') return refuse('phase', 'Avsluta frågan först.');
       if (qi + 1 < quiz.questions.length) {
         state.phase = 'lobby';
         state.questionIndex = qi + 1;
@@ -387,14 +439,15 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
         state.deadlineAt = null;
         state.pausedRemainingMs = null;
       }
+      state.gradePending = 0;
       alarm = null;
       changed = true;
       return done();
     }
 
     case 'resetQuestion': {
-      if (event.confirm !== CONFIRM_WORD) return refuse(state, 'confirm', 'Bekräfta med NOLLSTÄLL.');
-      if (state.phase === 'lobby') return refuse(state, 'phase', 'Frågan har inte startat.');
+      if (event.confirm !== CONFIRM_WORD) return refuse('confirm', 'Bekräfta med NOLLSTÄLL.');
+      if (state.phase === 'lobby') return refuse('phase', 'Frågan har inte startat.');
       const target = state.phase === 'final' ? Math.max(0, quiz.questions.length - 1) : qi;
       clearQuestion(state, target);
       state.phase = 'lobby';
@@ -409,18 +462,20 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
     }
 
     case 'resetGame': {
-      if (event.confirm !== CONFIRM_WORD) return refuse(state, 'confirm', 'Bekräfta med NOLLSTÄLL.');
+      if (event.confirm !== CONFIRM_WORD) return refuse('confirm', 'Bekräfta med NOLLSTÄLL.');
       for (const team of TEAMS) {
         const slot = state.slots[team];
-        if (slot) kicked.push({ team, deviceId: slot.deviceId });
+        if (slot) kicked.push({ team, deviceId: slot.deviceId, reason: 'reset' });
       }
       const fresh = initialState(now);
+      // Generations keep counting up across resets, so no phone's remembered claim survives one.
+      for (const team of TEAMS) fresh.claimGen[team] = state.claimGen[team] + 1;
       return { state: fresh, changed: true, alarm: null, kicked };
     }
 
     default: {
       const never: never = event;
-      return refuse(prev, 'unknown', `Okänt kommando ${(never as { type?: string }).type ?? ''}`);
+      return refuse('unknown', `Okänt kommando ${(never as { type?: string }).type ?? ''}`);
     }
   }
 }

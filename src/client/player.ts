@@ -42,14 +42,23 @@ const deviceId = (() => {
   return id;
 })();
 
+const TOKEN_KEY = 'sq.token';
+
 let team: Team | null = (() => {
   const t = Number(storageGet(TEAM_KEY));
   return t >= 1 && t <= 8 ? (t as Team) : null;
 })();
+/** The claim generation the server gave us; sent back in hello so a released claim is not resurrected. */
+let claimToken: number | null = (() => {
+  const raw = storageGet(TOKEN_KEY);
+  return raw !== null && raw !== '' && Number.isFinite(Number(raw)) ? Number(raw) : null;
+})();
 
-function saveTeam(t: Team | null): void {
+function saveTeam(t: Team | null, token: number | null): void {
   team = t;
+  claimToken = t === null ? null : token;
   storageSet(TEAM_KEY, t === null ? null : String(t));
+  storageSet(TOKEN_KEY, t === null || token === null ? null : String(token));
 }
 
 // ---------- state ----------
@@ -65,7 +74,7 @@ let toastTimer: number | undefined;
 const app = byId('app');
 
 const conn = new Connection({
-  hello: () => ({ type: 'hello', role: 'player', deviceId, team }),
+  hello: () => ({ type: 'hello', role: 'player', deviceId, team, token: claimToken }),
   ping: 'ping',
   onMessage,
   onStatus: (v) => {
@@ -79,11 +88,11 @@ function onMessage(m: ServerMessage): void {
     case 'state':
       if (m.role !== 'player') return;
       state = m;
-      if (m.team !== team) saveTeam(m.team);
+      if (m.team !== team || m.claimToken !== claimToken) saveTeam(m.team, m.claimToken);
       render();
       break;
     case 'released':
-      saveTeam(null);
+      saveTeam(null, null);
       notice = m.message;
       noticeIsError = false;
       render();
