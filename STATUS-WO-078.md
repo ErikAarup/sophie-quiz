@@ -2,8 +2,8 @@
 
 **Branch:** `build/wo-078` · **Worktree:** `C:\Users\erika\projects\sophie-quiz\.claude\worktrees\wo-078`
 **Stamped by the loop at dispatch:** 2026-09-03T14:51:02.979Z
-**Phase:** 1 — scaffold + state machine + tests (shared core written, unit tests written, installing deps)
-**Last touch:** 2026-09-03 17:05 +02:00
+**Phase:** 2 — Durable Object + WebSocket transport + persistence (9/10 DO tests green; fixing a transient offline flash on claim, then commit + draft PR)
+**Last touch:** 2026-09-03 17:24 +02:00
 
 > Reset at dispatch so this file can never show the PREVIOUS work order's status
 > (WO-019 §2.6). Everything below this line is written by WO-078
@@ -34,4 +34,6 @@ phone, and a leaderboard shows between questions. Cloudflare Workers + Durable O
 
 - 2026-09-03 16:51 — Builder started. Read dispatch + WORK_ORDER.md. Phase 0: orientation.
 - 2026-09-03 16:58 — Orientation done: wrangler whoami OK (deploy is on); ANTHROPIC_API_KEY present in shared `.dev.vars` (copied to worktree, ADMIN_TOKEN generated locally, gitignored); bank = 100 lists; `design/claude-design/` has no export yet (building from §E + reference sketches).
+- 2026-09-03 17:12 — Phase 1 committed (a8a1e19): 3 tsc projects clean, 48 unit tests green.
+- 2026-09-03 17:19 — Phase 2: src/worker/{index,game-do,grader}.ts written; first DO test run failed because the workers pool loads the real `.dev.vars` (token mismatch) — fixed by reading the token from the runtime env and pointing the grader at a dead port in tests. Re-running.
 - 2026-09-03 17:05 — Phase 1 in progress: package.json/tsconfigs/wrangler.jsonc, data (bank snapshot, quiz.json with ten verified placeholders, aliases.json), src/shared (types, game reducer, scoring, normalize, format, view), unit tests written. Running `npm install` (first attempt hit a workers-types peer conflict; bumped to 5.x).

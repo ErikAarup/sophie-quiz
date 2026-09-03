@@ -27,7 +27,13 @@ export default defineConfig({
           cloudflareTest({
             wrangler: { configPath: './wrangler.jsonc' },
             miniflare: {
-              bindings: { ADMIN_TOKEN: 'test-admin-token', QUESTION_SECONDS: '5' },
+              // A dead API host: the DO tests must never reach the real model, whatever .dev.vars says.
+              bindings: {
+                ADMIN_TOKEN: 'test-admin-token',
+                QUESTION_SECONDS: '2',
+                ANTHROPIC_API_KEY: '',
+                ANTHROPIC_BASE_URL: 'http://127.0.0.1:9',
+              },
             },
           }),
         ],
