@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #0a0b10; color: #f2f3f7; font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif; }
+    a { color: #d8ff3d; } a:hover { color: #eaff85; }
+    .phone { width: 390px; height: 844px; box-sizing: border-box; background: radial-gradient(120% 60% at 50% -10%, #1a1f33 0%, #0a0b10 60%); position: relative; overflow: hidden; }
+    .display { font-family: "Bebas Neue", "Arial Narrow", Impact, sans-serif; letter-spacing: 0.02em; }
+    .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #8a90a6; }
+    .btn { display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 12px; font-weight: 600; font-size: 17px; }
+    .btn-primary { background: #d8ff3d; color: #0a0b10; }
+    .btn-ghost { background: #171a26; color: #f2f3f7; border: 1px solid #2a2f44; }
+    .btn-danger { background: #2a1420; color: #ff6b8a; border: 1px solid #4a1f30; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 999px; background: #171a26; border: 1px solid #2a2f44; font-size: 13px; font-weight: 500; color: #c9cddb; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #d8ff3d; }
+    .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: #12141d; border: 1px solid #1f2333; }
+    .rank { width: 40px; font-size: 30px; line-height: 1; color: #8a90a6; text-align: center; }
+    .muted { color: #8a90a6; }
+    .tag { font-family: "IBM Plex Sans", sans-serif; font-size: 12px; letter-spacing: 0.1em; color: #8a90a6; }
+  </style>
+</helmet>
+<div class="phone" style="display: flex; flex-direction: column; padding: 56px 20px 28px 20px; gap: 14px;">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="pill" style="border-color: #d8ff3d; color: #d8ff3d;"><span class="dot"></span>Admin</div>
+    <div class="eyebrow">Fråga 4 av 10 · avslöjar</div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <div class="display" style="font-size: 56px; line-height: 0.9;">6<span style="color: #8a90a6;">/10</span></div>
+    <div class="btn btn-primary" style="flex-grow: 1; height: 56px;">Visa nästa rad: 7</div>
+  </div>
+  <div class="eyebrow">Lagens svar · tryck för att ändra</div>
+  <div style="display: flex; flex-direction: column; gap: 6px;">
+    <div class="row" style="padding: 9px 12px;"><div style="width: 52px; font-size: 14px; font-weight: 600;">Lag 1</div><div style="flex-grow: 1; font-size: 15px;">Spanien</div><div class="display" style="font-size: 26px; line-height: 1; color: #d8ff3d;">4</div></div>
+    <div class="row" style="padding: 9px 12px;"><div style="width: 52px; font-size: 14px; font-weight: 600;">Lag 2</div><div style="flex-grow: 1; font-size: 15px;">Nederländerna</div><div class="display" style="font-size: 26px; line-height: 1; color: #d8ff3d;">7</div></div>
+    <div class="row" style="padding: 9px 12px;"><div style="width: 52px; font-size: 14px; font-weight: 600;">Lag 3</div><div style="flex-grow: 1; font-size: 15px;">Portugal</div><div class="display" style="font-size: 26px; line-height: 1; color: #d8ff3d;">10</div></div>
+    <div class="row" style="padding: 9px 12px; border-color: #4a1f30;"><div style="width: 52px; font-size: 14px; font-weight: 600;">Lag 4</div><div style="flex-grow: 1; font-size: 15px;">Sverige</div><div class="display" style="font-size: 26px; line-height: 1; color: #ff6b8a;">0</div><div class="muted" style="font-size: 12px;">plats 11</div></div>
+    <div class="row" style="padding: 9px 12px;"><div style="width: 52px; font-size: 14px; font-weight: 600;">Lag 5</div><div style="flex-grow: 1; font-size: 15px;">tjeckien</div><div class="display" style="font-size: 26px; line-height: 1; color: #d8ff3d;">9</div></div>
+    <div class="row" style="padding: 9px 12px; border-color: #d8ff3d;"><div style="width: 52px; font-size: 14px; font-weight: 600;">Lag 6</div><div style="flex-grow: 1; font-size: 15px; color: #8a90a6;">skriv svar för hand…</div><div class="muted" style="font-size: 13px;">offline</div></div>
+    <div class="row" style="padding: 9px 12px;"><div style="width: 52px; font-size: 14px; font-weight: 600;">Lag 7</div><div style="flex-grow: 1; font-size: 15px;">Polen</div><div class="display" style="font-size: 26px; line-height: 1; color: #d8ff3d;">5</div></div>
+    <div class="row" style="padding: 9px 12px; border-color: #4a1f30;"><div style="width: 52px; font-size: 14px; font-weight: 600;">Lag 8</div><div style="flex-grow: 1; font-size: 15px;">Grekland</div><div class="display" style="font-size: 26px; line-height: 1; color: #ff6b8a;">0</div><div class="muted" style="font-size: 12px;">plats 12</div></div>
+  </div>
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+    <div class="btn btn-ghost" style="height: 48px;">Visa ställningen</div>
+    <div class="btn btn-primary" style="height: 48px; opacity: 0.35;">Nästa fråga</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

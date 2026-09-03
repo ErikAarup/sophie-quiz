@@ -1,0 +1,87 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "1 · Välj lag"
+    },
+    {
+      "file": "Lobby.dc.html",
+      "x": 480,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "2 · Väntar"
+    },
+    {
+      "file": "Question.dc.html",
+      "x": 960,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "3 · Fråga + timer"
+    },
+    {
+      "file": "Locked.dc.html",
+      "x": 1440,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "4 · Låst"
+    },
+    {
+      "file": "Reveal.dc.html",
+      "x": 0,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "title": "5 · Avslöjande"
+    },
+    {
+      "file": "Leaderboard.dc.html",
+      "x": 480,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "title": "6 · Ställning"
+    },
+    {
+      "file": "Admin.dc.html",
+      "x": 960,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "title": "7 · Admin: fråga öppen"
+    },
+    {
+      "file": "AdminReveal.dc.html",
+      "x": 1440,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "title": "8 · Admin: avslöjande"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -190,
+      "w": 560,
+      "text": "Sophies topp tio · spelarnas skärmar (rad 1) och Eriks adminskärm (rad 2).\nRiktning: game show, mörkt, en neonaccent (#d8ff3d), stora siffror.\nTypsnitt: Bebas Neue för siffror och rubriker, IBM Plex Sans för text.\nStatisk skiss: inga knappar fungerar här. Byggaren tar exakta värden från dessa filer."
+    },
+    {
+      "id": "flow",
+      "x": 960,
+      "y": -150,
+      "w": 440,
+      "text": "Flöde per fråga: Erik startar → 2:30, samma klocka på alla telefoner → låser sig på 0:00 (Erik kan pausa, +30 s, låsa nu) → rättning via modell → Erik avslöjar rad för rad → ställning → nästa fråga."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

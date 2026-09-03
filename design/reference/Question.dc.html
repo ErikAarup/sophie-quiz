@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #0a0b10; color: #f2f3f7; font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif; }
+    a { color: #d8ff3d; } a:hover { color: #eaff85; }
+    .phone { width: 390px; height: 844px; box-sizing: border-box; background: radial-gradient(120% 60% at 50% -10%, #1a1f33 0%, #0a0b10 60%); position: relative; overflow: hidden; }
+    .display { font-family: "Bebas Neue", "Arial Narrow", Impact, sans-serif; letter-spacing: 0.02em; }
+    .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #8a90a6; }
+    .btn { display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 12px; font-weight: 600; font-size: 17px; }
+    .btn-primary { background: #d8ff3d; color: #0a0b10; }
+    .btn-ghost { background: #171a26; color: #f2f3f7; border: 1px solid #2a2f44; }
+    .btn-danger { background: #2a1420; color: #ff6b8a; border: 1px solid #4a1f30; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 999px; background: #171a26; border: 1px solid #2a2f44; font-size: 13px; font-weight: 500; color: #c9cddb; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #d8ff3d; }
+    .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: #12141d; border: 1px solid #1f2333; }
+    .rank { width: 40px; font-size: 30px; line-height: 1; color: #8a90a6; text-align: center; }
+    .muted { color: #8a90a6; }
+    .tag { font-family: "IBM Plex Sans", sans-serif; font-size: 12px; letter-spacing: 0.1em; color: #8a90a6; }
+  </style>
+</helmet>
+<div class="phone" style="display: flex; flex-direction: column; padding: 56px 24px 32px 24px; gap: 20px;">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="pill"><span class="dot"></span>Lag 3</div>
+    <div class="eyebrow">Fråga 4 av 10</div>
+  </div>
+  <div style="display: flex; flex-direction: column; align-items: center; margin-top: 8px;">
+    <div style="position: relative; width: 168px; height: 168px; display: flex; align-items: center; justify-content: center;">
+      <svg width="168" height="168" viewBox="0 0 168 168" style="position: absolute; top: 0; left: 0;">
+        <circle cx="84" cy="84" r="76" fill="none" stroke="#1f2333" stroke-width="8"></circle>
+        <circle cx="84" cy="84" r="76" fill="none" stroke="#d8ff3d" stroke-width="8" stroke-linecap="round" stroke-dasharray="477" stroke-dashoffset="140" transform="rotate(-90 84 84)"></circle>
+      </svg>
+      <div class="display" style="font-size: 64px; line-height: 1; color: #f2f3f7;">1:47</div>
+    </div>
+    <div class="eyebrow" style="margin-top: 6px;">kvar</div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div class="eyebrow">Frågan</div>
+    <div style="font-size: 22px; font-weight: 600; line-height: 1.3;">Vilka är EU:s tio folkrikaste länder?</div>
+    <div class="muted" style="font-size: 14px; line-height: 1.5;">Enligt Eurostat, 1 januari 2025. Ett svar: skriv landet ni tror ligger så långt ner på listan som möjligt utan att ramla ur.</div>
+  </div>
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; height: 60px; padding: 0 18px; border-radius: 12px; background: #12141d; border: 2px solid #d8ff3d; font-size: 20px; font-weight: 500;">Portugal</div>
+    <div class="btn btn-primary">Skicka svar</div>
+    <div style="font-size: 13px; color: #8a90a6; text-align: center;">Ni kan ändra ert svar tills tiden går ut.</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
