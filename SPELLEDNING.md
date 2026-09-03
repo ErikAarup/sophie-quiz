@@ -3,13 +3,13 @@
 Det här är din lathund, Erik. Fredag: gör appen redo. Lördag: kör kvällen. Allt du behöver
 trycka på står här; koden bakom står i `README.md` och `WORK_ORDER.md`.
 
-**Adresser (efter `npm run deploy`, se 2.4):**
+**Adresser (deployat av byggaren 3 september; `npm run deploy` lägger upp en ny version på samma adress):**
 
 | Vad | Adress |
 |---|---|
-| Gästernas sida (den QR-koden pekar på) | `https://sophie-quiz.<ditt-konto>.workers.dev/` |
-| Din adminsida | `https://sophie-quiz.<ditt-konto>.workers.dev/admin?t=<ADMIN_TOKEN>` |
-| QR-sidan att skriva ut | `https://sophie-quiz.<ditt-konto>.workers.dev/qr` |
+| Gästernas sida (den QR-koden pekar på) | https://sophie-quiz.erik-aarup.workers.dev/ |
+| Din adminsida | `https://sophie-quiz.erik-aarup.workers.dev/admin?t=<ADMIN_TOKEN>` |
+| QR-sidan att skriva ut | https://sophie-quiz.erik-aarup.workers.dev/qr |
 
 `<ADMIN_TOKEN>` är raden `ADMIN_TOKEN=…` i `.dev.vars` i repots rot. Den filen är hemlig och
 ligger inte i git. Spara adminlänken som bokmärke i telefonen, då slipper du skriva in den.
@@ -88,8 +88,9 @@ i en tredje. Lokalt använder appen `.dev.vars` direkt. Avsluta med Ctrl+C.
 npm run deploy
 ```
 Skriptet bygger telefonsidorna, kontrollerar att ingen nyckel hamnat i bygget, och laddar upp
-Workern. Sista raderna visar adressen, i stil med
-`https://sophie-quiz.erik-aarup.workers.dev`. Skriv in den i tabellen överst.
+Workern. Sista raderna visar adressen: `https://sophie-quiz.erik-aarup.workers.dev`. Tar det
+över en minut eller klagar på "malformed response" från API:et: kör kommandot en gång till
+(det hände byggaren en gång; andra försöket gick igenom).
 
 Om deployen klagar på rättigheter ("scope"): din API-token i Windows (`CLOUDFLARE_API_TOKEN`)
 saknar behörighet — ge den *Workers Scripts: Edit* på

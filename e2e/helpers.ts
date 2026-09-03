@@ -9,8 +9,8 @@ export interface Phone {
   page: Page;
 }
 
-export async function newPhone(browser: Browser, opts: { clockSkewMs?: number } = {}): Promise<Phone> {
-  const context = await browser.newContext();
+export async function newPhone(browser: Browser, opts: { clockSkewMs?: number; videoDir?: string } = {}): Promise<Phone> {
+  const context = await browser.newContext(opts.videoDir ? { recordVideo: { dir: opts.videoDir, size: { width: 390, height: 844 } } } : {});
   if (opts.clockSkewMs) {
     // A phone whose clock is wrong: Date.now() is shifted, nothing else.
     await context.addInitScript((skew: number) => {
@@ -22,15 +22,15 @@ export async function newPhone(browser: Browser, opts: { clockSkewMs?: number } 
   return { context, page };
 }
 
-export async function openAdmin(browser: Browser): Promise<Phone> {
-  const phone = await newPhone(browser);
+export async function openAdmin(browser: Browser, opts: { videoDir?: string } = {}): Promise<Phone> {
+  const phone = await newPhone(browser, opts);
   await phone.page.goto(`/admin?t=${ADMIN_TOKEN}`);
   await expect(phone.page.locator('[data-pill] .label')).toHaveText('Admin');
   return phone;
 }
 
 /** Open the player page and, if a team is given, claim it. */
-export async function openPlayer(browser: Browser, team?: Team, opts: { clockSkewMs?: number } = {}): Promise<Phone> {
+export async function openPlayer(browser: Browser, team?: Team, opts: { clockSkewMs?: number; videoDir?: string } = {}): Promise<Phone> {
   const phone = await newPhone(browser, opts);
   await phone.page.goto('/');
   await expect(phone.page.getByRole('button', { name: 'Lag 1' })).toBeVisible();

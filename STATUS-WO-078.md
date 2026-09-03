@@ -2,7 +2,9 @@
 
 **Branch:** `build/wo-078` · **Worktree:** `C:\Users\erika\projects\sophie-quiz\.claude\worktrees\wo-078`
 **Stamped by the loop at dispatch:** 2026-09-03T14:51:02.979Z
-**Phase:** 6 — fourth e2e run in progress (17:55). Run 3: 10/11 passed; the failure exposed two real bugs, both fixed: the admin lobby screen never refreshed the team grid (blank statuses), and an idle phone's text pings did not refresh presence when the DO was awake (would read "offline" after 8 s). New DO test covers the second; 65 unit+DO tests green.
+**Phase:** 6 — clean-install chain green (npm ci, typecheck, 65 tests, 13 e2e, build, proof) at 18:05; DEPLOYED to https://sophie-quiz.erik-aarup.workers.dev (18:09, second attempt after a transient API reset), secrets set, /health ok, deployed smoke with admin + 3 phones OK (18:12). Remaining: final commit + push, PR body, mark ready.
+**Last touch:** 2026-09-03 18:12 +02:00 (clock read)
+Earlier: fourth e2e run in progress (17:55). Run 3: 10/11 passed; the failure exposed two real bugs, both fixed: the admin lobby screen never refreshed the team grid (blank statuses), and an idle phone's text pings did not refresh presence when the DO was awake (would read "offline" after 8 s). New DO test covers the second; 65 unit+DO tests green.
 **Last touch:** 2026-09-03 17:55 +02:00 (clock read)
 Earlier: third e2e run in progress. Run 2: 5 passed, 4 failed → fixed: taken tiles stay tappable so the server's "redan taget" refusal shows (§2.1), admin status rule offline > svar > väntar/ledig, reconnect scenario uses a client drop hook + offline emulation, strict-mode selector. Live grader round with the real model PASSED (8/8 sample answers). Phases 3–5 committed (975e092) and pushed; artboards rendered to proof/artboards.
 **Last touch:** 2026-09-03 17:51 +02:00 (clock read; the two previous touches were written as 17:56 and 18:05 from memory and were wrong — real times were about 17:44 and 17:49)

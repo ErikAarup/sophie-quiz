@@ -9,7 +9,15 @@ import { ROOT } from './env.ts';
 import { adminGrade, adminLock, adminManualAnswer, adminRelease, adminSocket, adminStart, expectTeam, openAdmin, openPlayer, resetGame, setMock, type Phone } from './helpers.ts';
 
 const SCREENS = resolve(ROOT, 'proof', 'screens');
+const VIDEO_TMP = resolve(ROOT, 'test-results', 'proof-video');
 const shot = (page: Page, name: string) => page.screenshot({ path: resolve(SCREENS, `${name}.png`), fullPage: false });
+
+/** Close a context and keep its recording as proof/<name>.webm. */
+async function closeWithVideo(phone: Phone, name: string): Promise<void> {
+  const video = phone.page.video();
+  await phone.context.close();
+  if (video) await video.saveAs(resolve(ROOT, 'proof', `${name}.webm`));
+}
 
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(10 * 60_000);
@@ -30,7 +38,7 @@ test('a full three-question game with eight teams and Erik, with the eight canva
   await resetGame();
   await setMock('ok');
 
-  const admin = await openAdmin(browser);
+  const admin = await openAdmin(browser, { videoDir: VIDEO_TMP });
   await shot(admin.page, 'x-admin-lobby');
 
   // Two teams join first, so a fresh phone sees "TAGET" tiles like the Main artboard.
@@ -41,7 +49,8 @@ test('a full three-question game with eight teams and Erik, with the eight canva
   await expect(fresh.page.getByRole('button', { name: /^Lag 5/ })).toHaveClass(/taken/);
   await shot(fresh.page, '1-main');
   await fresh.context.close();
-  for (const t of [1, 3, 4, 6, 7, 8] as Team[]) phones.set(t, await openPlayer(browser, t));
+  phones.set(3, await openPlayer(browser, 3, { videoDir: VIDEO_TMP }));
+  for (const t of [1, 4, 6, 7, 8] as Team[]) phones.set(t, await openPlayer(browser, t));
   const p = (t: Team) => phones.get(t)!.page;
   await shot(p(3), '2-lobby');
   await expect(admin.page.locator('.team-grid .row').nth(7)).toContainText('väntar');
@@ -175,6 +184,9 @@ test('a full three-question game with eight teams and Erik, with the eight canva
   await shot(p(3), 'x-final');
   await shot(admin.page, 'x-admin-final');
 
-  for (const ph of phones.values()) await ph.context.close();
-  await admin.context.close();
+  for (const [t, ph] of phones) {
+    if (t === 3) await closeWithVideo(ph, 'video-lag3');
+    else await ph.context.close();
+  }
+  await closeWithVideo(admin, 'video-admin');
 });

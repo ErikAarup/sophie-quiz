@@ -7,6 +7,9 @@
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat"],
+  // The app lives on <name>.<account>.workers.dev; no preview URLs (fewer public surfaces).
+  "workers_dev": true,
+  "preview_urls": false,
   "assets": {
     "directory": "./dist/public",
     "binding": "ASSETS",

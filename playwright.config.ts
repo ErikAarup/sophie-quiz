@@ -28,6 +28,8 @@ export default defineConfig({
   },
   projects: [
     { name: 'e2e', testMatch: /.*\.spec\.ts/, testIgnore: /proof\.spec\.ts/ },
-    { name: 'proof', testMatch: /proof\.spec\.ts/, use: { trace: 'on', video: 'on' } },
+    // Proof: actions-only trace of all nine contexts (small), plus screen videos of the admin phone
+    // and Lag 3's phone recorded by the spec itself → proof/.
+    { name: 'proof', testMatch: /proof\.spec\.ts/, use: { trace: { mode: 'on', screenshots: false, snapshots: false, sources: false } } },
   ],
 });
