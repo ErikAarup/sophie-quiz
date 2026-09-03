@@ -1,0 +1,729 @@
+// Admin page (/admin?t=<ADMIN_TOKEN>): Erik's phone. One-handed, big buttons, every action is one
+// message to the DO; the DO answers with the full state for everyone.
+
+import { formatClock } from '../shared/format.ts';
+import {
+  CONFIRM_WORD,
+  teamName,
+  type AdminCommand,
+  type AdminStateView,
+  type AdminTeamView,
+  type ServerMessage,
+  type Team,
+} from '../shared/types.ts';
+import { byId, h, setText, toggle } from './dom.ts';
+import { Connection } from './ws.ts';
+
+const TOKEN_KEY = 'sq.admin';
+
+function readToken(): string {
+  const fromUrl = new URLSearchParams(location.search).get('t');
+  if (fromUrl) {
+    try {
+      localStorage.setItem(TOKEN_KEY, fromUrl);
+    } catch {
+      // ignore
+    }
+    return fromUrl;
+  }
+  try {
+    return localStorage.getItem(TOKEN_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+const token = readToken();
+const app = byId('app');
+
+let state: AdminStateView | null = null;
+let online = false;
+let sheet: { kind: 'team'; team: Team } | { kind: 'confirm'; what: 'question' | 'game' } | null = null;
+let toastTimer: number | undefined;
+
+const conn = new Connection({
+  hello: () => ({ type: 'hello', role: 'admin', token }),
+  ping: JSON.stringify({ type: 'ping' }),
+  onMessage,
+  onStatus: (v) => {
+    online = v;
+    updateStatus();
+  },
+});
+
+function onMessage(m: ServerMessage): void {
+  switch (m.type) {
+    case 'state':
+      if (m.role !== 'admin') return;
+      state = m;
+      render();
+      break;
+    case 'error':
+      toast(m.message, true);
+      if (m.code === 'auth') {
+        app.replaceChildren(
+          h(
+            'div',
+            { class: 'stack', style: 'margin-top:20vh;text-align:center;gap:12px' },
+            h('div', { class: 'display', style: 'font-size:56px;line-height:0.95' }, 'Fel adminlänk'),
+            h('div', { style: 'color:var(--text-2)' }, 'Öppna admin med länken som innehåller nyckeln: /admin?t=…'),
+          ),
+        );
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+function cmd(c: AdminCommand): void {
+  if (!conn.send({ ...c, token })) toast('Ingen anslutning – försöker igen…', true);
+}
+
+function toast(text: string, isError = false): void {
+  document.querySelectorAll('.toast').forEach((t) => t.remove());
+  const el = h('div', { class: 'toast' + (isError ? ' error' : ''), role: 'status' }, text);
+  document.body.appendChild(el);
+  if (toastTimer !== undefined) clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => el.remove(), 3500);
+}
+
+// ---------- rendering ----------
+
+interface Screen {
+  key: string;
+  el: HTMLElement;
+  update(s: AdminStateView): void;
+  tick?: () => void;
+}
+
+let current: Screen | null = null;
+let ticker: number | undefined;
+
+function screenKey(s: AdminStateView): string {
+  switch (s.phase) {
+    case 'lobby':
+      return `lobby:${s.questionIndex}`;
+    case 'open':
+    case 'locked':
+    case 'grading':
+      return `question:${s.questionIndex}`;
+    case 'reveal':
+      return `reveal:${s.questionIndex}`;
+    case 'standings':
+      return `standings:${s.questionIndex}`;
+    default:
+      return 'final';
+  }
+}
+
+function render(): void {
+  if (!state) return;
+  const key = screenKey(state);
+  if (!current || current.key !== key) {
+    current = buildScreen(state, key);
+    app.replaceChildren(current.el);
+    window.scrollTo(0, 0);
+    if (ticker !== undefined) {
+      clearInterval(ticker);
+      ticker = undefined;
+    }
+    if (current.tick) ticker = window.setInterval(() => current?.tick?.(), 200);
+  }
+  current.update(state);
+  renderSheet();
+  updateStatus();
+}
+
+function updateStatus(): void {
+  const pill = document.querySelector<HTMLElement>('[data-pill]');
+  if (!pill) return;
+  toggle(pill, 'offline', !online);
+  toggle(pill, 'accent', online);
+  setText(pill.querySelector('.label') ?? pill, online ? 'Admin' : 'Återansluter…');
+}
+
+function topbar(right: HTMLElement): HTMLElement {
+  return h('div', { class: 'topbar' }, h('div', { class: 'pill accent', 'data-pill': true }, h('span', { class: 'dot' }), h('span', { class: 'label' }, 'Admin')), right);
+}
+
+function remainingMs(s: AdminStateView): number {
+  if (s.phase !== 'open') return 0;
+  if (s.pausedRemainingMs !== null) return s.pausedRemainingMs;
+  if (s.deadlineAt === null) return 0;
+  return Math.max(0, s.deadlineAt - conn.now());
+}
+
+function buildScreen(s: AdminStateView, key: string): Screen {
+  switch (s.phase) {
+    case 'lobby':
+      return lobbyScreen(key);
+    case 'open':
+    case 'locked':
+    case 'grading':
+      return questionScreen(key);
+    case 'reveal':
+      return revealScreen(key);
+    case 'standings':
+      return standingsScreen(key);
+    default:
+      return finalScreen(key);
+  }
+}
+
+// ---- team grid (2×4) ----
+function teamGrid(): { el: HTMLElement; update: (s: AdminStateView) => void } {
+  const cells = ([1, 2, 3, 4, 5, 6, 7, 8] as Team[]).map((t) => {
+    const status = h('div', { class: 'status' });
+    const cell = h(
+      'button',
+      {
+        class: 'row',
+        type: 'button',
+        'data-team': t,
+        onClick: () => {
+          sheet = { kind: 'team', team: t };
+          renderSheet();
+        },
+      },
+      h('div', { class: 'grow', style: 'font-size:15px;font-weight:600' }, teamName(t)),
+      status,
+    );
+    return { cell, status };
+  });
+  const el = h('div', { class: 'team-grid' }, cells.map((c) => c.cell));
+  return {
+    el,
+    update(s) {
+      s.teams.forEach((tv, i) => {
+        const c = cells[i]!;
+        c.status.className = `status ${tv.status}`;
+        setText(c.status, tv.status);
+        toggle(c.cell, 'offline', tv.status === 'offline');
+      });
+    },
+  };
+}
+
+function smallLinks(...items: { label: string; onClick: () => void }[]): HTMLElement {
+  return h(
+    'div',
+    { class: 'small-links' },
+    items.map((it) => h('button', { class: 'btn btn-ghost', type: 'button', onClick: it.onClick }, it.label)),
+  );
+}
+
+// ---- Lobby: "Starta fråga N" ----
+function lobbyScreen(key: string): Screen {
+  const label = h('div', { class: 'eyebrow' });
+  const title = h('div', { style: 'font-size:15px;font-weight:600;line-height:1.3' });
+  const question = h('div', { class: 'muted', style: 'font-size:14px;line-height:1.5' });
+  const grid = teamGrid();
+  const start = h('button', { class: 'btn btn-primary', type: 'button', onClick: () => cmd({ type: 'start' }) }, 'Starta fråga');
+  const el = h(
+    'div',
+    { style: 'display:flex;flex-direction:column;gap:16px;flex-grow:1' },
+    topbar(label),
+    h('div', { class: 'stack', style: 'gap:6px' }, h('div', { class: 'eyebrow' }, 'Nästa lista'), title, question),
+    h('div', { class: 'eyebrow' }, 'Lagen · tryck för att släppa en plats'),
+    grid.el,
+    h(
+      'div',
+      { class: 'bottom', style: 'gap:10px' },
+      start,
+      h('div', { style: 'font-size:12px;color:var(--muted);text-align:center' }, 'Klockan startar direkt. Läs frågan högt när den syns.'),
+      smallLinks({
+        label: 'Nollställ spelet',
+        onClick: () => {
+          sheet = { kind: 'confirm', what: 'game' };
+          renderSheet();
+        },
+      }),
+    ),
+  );
+  return {
+    key,
+    el,
+    update(s) {
+      setText(label, `Fråga ${s.questionIndex + 1} av ${s.questionCount} · väntar`);
+      setText(title, s.question?.title ?? '');
+      setText(question, s.question?.question ?? '');
+      setText(start, `Starta fråga ${s.questionIndex + 1}`);
+    },
+  };
+}
+
+// ---- Question open / locked / grading ----
+function questionScreen(key: string): Screen {
+  const label = h('div', { class: 'eyebrow' });
+  const clock = h('div', { class: 'display clock' }, '2:30');
+  const pause = h('button', { class: 'btn btn-ghost btn-sm', type: 'button' }, 'Pausa');
+  const extend = h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => cmd({ type: 'extend' }) }, '+30 s');
+  const title = h('div', { style: 'font-size:15px;font-weight:600;line-height:1.3' });
+  const grid = teamGrid();
+  const lock = h('button', { class: 'btn btn-danger', type: 'button', onClick: () => cmd({ type: 'lock' }) }, 'Lås svaren nu');
+  const grade = h('button', { class: 'btn btn-primary', type: 'button', onClick: () => cmd({ type: 'grade' }) }, 'Rätta och börja avslöja');
+  const note = h('div', { style: 'font-size:12px;color:var(--muted);text-align:center' });
+  let paused = false;
+  pause.addEventListener('click', () => cmd({ type: paused ? 'resume' : 'pause' }));
+
+  const el = h(
+    'div',
+    { style: 'display:flex;flex-direction:column;gap:16px;flex-grow:1' },
+    topbar(label),
+    h('div', { class: 'clock-row' }, clock, h('div', { class: 'clock-buttons' }, pause, extend)),
+    title,
+    h('div', { class: 'eyebrow' }, 'Lagen · tryck för att skriva svar eller släppa'),
+    grid.el,
+    h(
+      'div',
+      { class: 'bottom', style: 'gap:10px' },
+      lock,
+      grade,
+      note,
+      smallLinks(
+        {
+          label: 'Nollställ frågan',
+          onClick: () => {
+            sheet = { kind: 'confirm', what: 'question' };
+            renderSheet();
+          },
+        },
+        {
+          label: 'Nollställ spelet',
+          onClick: () => {
+            sheet = { kind: 'confirm', what: 'game' };
+            renderSheet();
+          },
+        },
+      ),
+    ),
+  );
+
+  let last: AdminStateView | null = null;
+  const tick = () => {
+    if (!last) return;
+    const rem = remainingMs(last);
+    setText(clock, last.phase === 'open' ? formatClock(rem) : '0:00');
+    toggle(clock, 'paused', last.pausedRemainingMs !== null);
+    toggle(clock, 'zero', last.phase !== 'open' || rem <= 0);
+  };
+  return {
+    key,
+    el,
+    tick,
+    update(s) {
+      last = s;
+      tick();
+      paused = s.pausedRemainingMs !== null;
+      const status = s.phase === 'open' ? (paused ? 'pausad' : 'svar öppna') : s.phase === 'locked' ? 'låst' : 'rättar…';
+      setText(label, `Fråga ${s.questionIndex + 1} av ${s.questionCount} · ${status}`);
+      setText(title, s.question?.title ?? '');
+      setText(pause, paused ? 'Fortsätt' : 'Pausa');
+      pause.disabled = s.phase !== 'open';
+      extend.disabled = s.phase !== 'open';
+      lock.disabled = s.phase !== 'open';
+      grade.disabled = s.phase !== 'locked';
+      setText(grade, s.phase === 'grading' ? 'Rättar…' : s.gradeStatus === 'failed' ? 'Rätta igen' : 'Rätta och börja avslöja');
+      const answered = s.teams.filter((t) => t.answer !== null).length;
+      setText(
+        note,
+        s.phase === 'open'
+          ? `Låses av sig själv på 0:00. ${answered} av 8 har svarat. Rättning tar några sekunder.`
+          : s.phase === 'locked'
+            ? `Svaren är låsta (${answered} av 8). Tryck Rätta när du är redo att läsa listan.`
+            : 'Modellen matchar svaren mot listan. Fastnar den får du rätta för hand.',
+      );
+      grid.update(s);
+    },
+  };
+}
+
+// ---- Reveal ----
+function answerRow(t: AdminTeamView, onTap: () => void): HTMLElement {
+  const g = t.grade;
+  const scoreText = g ? (g.needsReview ? '?' : String(g.points)) : t.answer ? '…' : '';
+  const score = h('div', { class: 'display score' + (g && !g.needsReview && g.points === 0 ? ' zero' : '') }, scoreText);
+  const extra: string[] = [];
+  if (g && g.rank !== null && g.rank > 10) extra.push(`plats ${g.rank}`);
+  if (g && g.needsReview) extra.push('ogranskad');
+  if (g && g.manual) extra.push('hand');
+  const rowClass = 'row' + (g && g.needsReview ? ' review' : g && !g.needsReview && g.points === 0 ? ' miss' : '');
+  return h(
+    'button',
+    { class: rowClass, type: 'button', onClick: onTap },
+    h('div', { class: 'team' }, teamName(t.team)),
+    h('div', { class: 'grow text' + (t.answer ? '' : ' empty') }, t.answer ?? (t.claimed ? 'inget svar · skriv för hand…' : 'ledig · skriv för hand…')),
+    extra.length ? h('div', { class: 'muted', style: 'font-size:12px;white-space:nowrap' }, extra.join(' · ')) : null,
+    score,
+  );
+}
+
+function answersList(): { el: HTMLElement; update: (s: AdminStateView) => void } {
+  const el = h('div', { class: 'answers stack', style: 'gap:6px' });
+  return {
+    el,
+    update(s) {
+      el.replaceChildren(
+        ...s.teams.map((t) =>
+          answerRow(t, () => {
+            sheet = { kind: 'team', team: t.team };
+            renderSheet();
+          }),
+        ),
+      );
+    },
+  };
+}
+
+function revealScreen(key: string): Screen {
+  const label = h('div', { class: 'eyebrow' });
+  const counter = h('div', { class: 'display counter' });
+  const main = h('button', { class: 'btn btn-primary', type: 'button', style: 'flex-grow:1' }, 'Visa nästa rad');
+  const lastRow = h('div', { style: 'font-size:15px;line-height:1.4' });
+  const nextRow = h('div', { class: 'muted', style: 'font-size:14px;line-height:1.4' });
+  const all = h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => cmd({ type: 'revealAll' }) }, 'Visa alla');
+  const answers = answersList();
+  const standings = h('button', { class: 'btn btn-ghost btn-md', type: 'button', onClick: () => cmd({ type: 'standings' }) }, 'Visa ställningen');
+  const next = h('button', { class: 'btn btn-primary btn-md', type: 'button', onClick: () => cmd({ type: 'next' }) }, 'Nästa fråga');
+  let mode: 'next' | 'standings' = 'next';
+  main.addEventListener('click', () => cmd({ type: mode === 'next' ? 'revealNext' : 'standings' }));
+
+  const el = h(
+    'div',
+    { style: 'display:flex;flex-direction:column;gap:14px;flex-grow:1' },
+    topbar(label),
+    h('div', { class: 'reveal-controls' }, counter, main),
+    h('div', { class: 'card', style: 'padding:12px 14px;gap:4px' }, lastRow, nextRow),
+    h('div', { class: 'topbar' }, h('div', { class: 'eyebrow' }, 'Lagens svar · tryck för att ändra'), all),
+    answers.el,
+    h(
+      'div',
+      { class: 'bottom', style: 'gap:8px' },
+      standings,
+      next,
+      smallLinks(
+        {
+          label: 'Nollställ frågan',
+          onClick: () => {
+            sheet = { kind: 'confirm', what: 'question' };
+            renderSheet();
+          },
+        },
+        {
+          label: 'Nollställ spelet',
+          onClick: () => {
+            sheet = { kind: 'confirm', what: 'game' };
+            renderSheet();
+          },
+        },
+      ),
+    ),
+  );
+  return {
+    key,
+    el,
+    update(s) {
+      const top = s.question?.topCount ?? 10;
+      const n = s.revealed;
+      setText(label, `Fråga ${s.questionIndex + 1} av ${s.questionCount} · avslöjar`);
+      counter.replaceChildren(String(n), h('span', { class: 'of' }, `/${top}`));
+      if (n < top) {
+        mode = 'next';
+        setText(main, `Visa nästa rad: ${n + 1}`);
+        all.disabled = false;
+      } else {
+        mode = 'standings';
+        setText(main, 'Visa ställningen');
+        all.disabled = true;
+      }
+      const shown = s.rows[n - 1];
+      const coming = s.rows[n];
+      setText(lastRow, n === 0 ? 'Ingen rad visad än. Läs listan nerifrån: tryck för rad 1.' : `Visad: ${shown?.rank}. ${shown?.name ?? ''}${shown?.label ? ' · ' + shown.label : ''}`);
+      setText(
+        nextRow,
+        n < top && coming ? `Nästa: ${coming.rank}. ${coming.name ?? ''}${coming.label ? ' · ' + coming.label : ''}` : n >= top ? 'Hela topplistan är visad. Plats 11–15 syns nu som nära skott på telefonerna.' : '',
+      );
+      setText(next, s.questionIndex + 1 >= s.questionCount ? 'Visa slutresultat' : 'Nästa fråga');
+      if (s.gradeStatus === 'failed') toast('Modellen kunde inte rätta alla svar. Rader med "ogranskad" sätter du för hand.', true);
+      answers.update(s);
+    },
+  };
+}
+
+// ---- Standings ----
+function standingsScreen(key: string): Screen {
+  const label = h('div', { class: 'eyebrow' });
+  const list = h('div', { class: 'standings stack' });
+  const back = h('button', { class: 'btn btn-ghost btn-md', type: 'button', onClick: () => cmd({ type: 'backToReveal' }) }, 'Tillbaka till listan');
+  const next = h('button', { class: 'btn btn-primary btn-md', type: 'button', onClick: () => cmd({ type: 'next' }) }, 'Nästa fråga');
+  const el = h(
+    'div',
+    { style: 'display:flex;flex-direction:column;gap:16px;flex-grow:1' },
+    topbar(label),
+    h('div', { class: 'display', style: 'font-size:56px;line-height:0.95' }, 'Ställning'),
+    h('div', { class: 'eyebrow' }, 'Tryck på ett lag för att ändra dess svar eller plats'),
+    list,
+    h('div', { class: 'bottom', style: 'gap:8px' }, back, next),
+  );
+  return {
+    key,
+    el,
+    update(s) {
+      setText(label, `Fråga ${s.questionIndex + 1} av ${s.questionCount} · ställning`);
+      list.replaceChildren(
+        ...s.standings.map((row) => {
+          const tv = s.teams[row.team - 1];
+          return h(
+            'button',
+            {
+              class: 'row',
+              type: 'button',
+              style: 'width:100%;text-align:left',
+              onClick: () => {
+                sheet = { kind: 'team', team: row.team };
+                renderSheet();
+              },
+            },
+            h('div', { class: 'rank display' + (row.position === 1 ? ' top' : '') }, String(row.position)),
+            h('div', { class: 'grow' }, h('div', { class: 'name' }, teamName(row.team)), h('div', { class: 'muted', style: 'font-size:12px' }, tv?.answer ? `${tv.answer} · ${tv.grade ? (tv.grade.needsReview ? 'ogranskad' : tv.grade.rank === null ? 'utanför' : 'plats ' + tv.grade.rank) : '…'}` : 'inget svar')),
+            h('div', { class: 'display points' }, String(row.points)),
+          );
+        }),
+      );
+      setText(next, s.questionIndex + 1 >= s.questionCount ? 'Visa slutresultat' : 'Nästa fråga');
+    },
+  };
+}
+
+// ---- Final ----
+function finalScreen(key: string): Screen {
+  const winners = h('div', { class: 'display winner small' });
+  const list = h('div', { class: 'standings stack' });
+  const el = h(
+    'div',
+    { style: 'display:flex;flex-direction:column;gap:16px;flex-grow:1' },
+    topbar(h('div', { class: 'eyebrow' }, 'Slutresultat')),
+    h('div', { class: 'stack center', style: 'gap:6px' }, h('div', { class: 'eyebrow' }, 'Vinnare'), winners),
+    list,
+    h(
+      'div',
+      { class: 'bottom' },
+      smallLinks({
+        label: 'Nollställ spelet',
+        onClick: () => {
+          sheet = { kind: 'confirm', what: 'game' };
+          renderSheet();
+        },
+      }),
+    ),
+  );
+  return {
+    key,
+    el,
+    update(s) {
+      setText(winners, s.winners.map(teamName).join(' & ') || '–');
+      list.replaceChildren(
+        ...s.standings.map((row) =>
+          h(
+            'div',
+            { class: 'row' },
+            h('div', { class: 'rank display' + (row.position === 1 ? ' top' : '') }, String(row.position)),
+            h('div', { class: 'grow name' }, teamName(row.team)),
+            h('div', { class: 'display points' }, String(row.points)),
+          ),
+        ),
+      );
+    },
+  };
+}
+
+// ---------- sheets ----------
+
+let sheetEl: HTMLElement | null = null;
+
+function closeSheet(): void {
+  sheet = null;
+  if (sheetEl) {
+    sheetEl.remove();
+    sheetEl = null;
+  }
+}
+
+function renderSheet(): void {
+  if (sheetEl) {
+    sheetEl.remove();
+    sheetEl = null;
+  }
+  if (!sheet || !state) return;
+  const body = sheet.kind === 'team' ? teamSheet(state, sheet.team) : confirmSheet(state, sheet.what);
+  sheetEl = h(
+    'div',
+    {
+      class: 'sheet-backdrop',
+      onClick: (ev) => {
+        if (ev.target === sheetEl) closeSheet();
+      },
+    },
+    h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' }, body),
+  );
+  document.body.appendChild(sheetEl);
+}
+
+function teamSheet(s: AdminStateView, team: Team): (HTMLElement | null)[] {
+  const tv = s.teams[team - 1]!;
+  const questionActive = s.phase !== 'lobby' && s.phase !== 'final';
+  const canOverride = questionActive && s.phase !== 'open';
+  const input = h('input', {
+    class: 'answer-input',
+    type: 'text',
+    maxlength: 80,
+    placeholder: 'skriv svar för hand…',
+    autocomplete: 'off',
+    disabled: !questionActive,
+  });
+  input.value = tv.answer ?? '';
+  const save = h(
+    'button',
+    {
+      class: 'btn btn-primary',
+      type: 'button',
+      disabled: !questionActive,
+      onClick: () => {
+        const text = input.value.trim();
+        if (!text) {
+          toast('Skriv ett svar först.', true);
+          return;
+        }
+        cmd({ type: 'manualAnswer', team, text });
+        closeSheet();
+      },
+    },
+    'Spara svar',
+  );
+  input.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      save.click();
+    }
+  });
+
+  const ranks = Array.from(new Set(s.rows.map((r) => r.rank))).sort((a, b) => a - b);
+  const currentRank = tv.grade ? (tv.grade.needsReview ? -1 : (tv.grade.rank ?? 0)) : -1;
+  const rankGrid = h(
+    'div',
+    { class: 'rank-grid' },
+    [0, ...ranks].map((r) =>
+      h(
+        'button',
+        {
+          class: 'btn btn-ghost' + (r === currentRank ? ' current' : ''),
+          type: 'button',
+          title: r === 0 ? 'Utanför listan' : s.rows.filter((row) => row.rank === r).map((row) => row.name).join(' / '),
+          onClick: () => {
+            cmd({ type: 'override', team, rank: r });
+            closeSheet();
+          },
+        },
+        r === 0 ? '0' : String(r),
+      ),
+    ),
+  );
+  const gradeLine = tv.grade
+    ? tv.grade.needsReview
+      ? 'Ogranskad – modellen kunde inte avgöra. Välj plats nedan.'
+      : tv.grade.rank === null
+        ? `Utanför listan · 0 poäng${tv.grade.manual ? ' (satt för hand)' : ''}`
+        : `Plats ${tv.grade.rank} · ${tv.grade.rowName ?? ''} · ${tv.grade.points} poäng${tv.grade.manual ? ' (satt för hand)' : ''}`
+    : questionActive
+      ? 'Inte rättad än.'
+      : '';
+
+  return [
+    h('div', { class: 'topbar' }, h('h2', { class: 'display' }, teamName(team)), h('div', { class: `status ${tv.status}` }, tv.status + (tv.total ? ` · ${tv.total} p totalt` : ''))),
+    h(
+      'div',
+      { class: 'stack' },
+      h('div', { class: 'eyebrow' }, questionActive ? `Svar på fråga ${s.questionIndex + 1}` : 'Svar'),
+      input,
+      save,
+      tv.answerSource === 'admin' ? h('div', { class: 'muted', style: 'font-size:12px' }, 'Nuvarande svar är inskrivet av dig.') : null,
+    ),
+    canOverride
+      ? h(
+          'div',
+          { class: 'stack' },
+          h('div', { class: 'eyebrow' }, 'Plats på listan · rätta för hand (0 = utanför)'),
+          h('div', { style: 'font-size:14px;color:var(--text-2)' }, gradeLine),
+          rankGrid,
+        )
+      : questionActive
+        ? h('div', { class: 'muted', style: 'font-size:13px' }, 'Plats kan sättas för hand när svaren är låsta.')
+        : null,
+    tv.claimed
+      ? h(
+          'button',
+          {
+            class: 'btn btn-danger',
+            type: 'button',
+            onClick: () => {
+              cmd({ type: 'release', team });
+              closeSheet();
+            },
+          },
+          `Släpp ${teamName(team)} (telefonen får välja lag igen)`,
+        )
+      : h('div', { class: 'muted', style: 'font-size:13px' }, 'Ingen telefon har valt det här laget.'),
+    h('button', { class: 'btn btn-ghost', type: 'button', onClick: closeSheet }, 'Stäng'),
+  ];
+}
+
+function confirmSheet(s: AdminStateView, what: 'question' | 'game'): (HTMLElement | null)[] {
+  const isQ = what === 'question';
+  return [
+    h('h2', { class: 'display' }, isQ ? 'Nollställ frågan?' : 'Nollställ spelet?'),
+    h(
+      'div',
+      { style: 'font-size:15px;color:var(--text-2);line-height:1.5' },
+      isQ
+        ? `Alla svar och poäng på fråga ${s.questionIndex + 1} raderas och frågan går tillbaka till "Starta fråga". Lagen behåller sina platser.`
+        : 'Alla lag, svar och poäng raderas och spelet börjar om från fråga 1. Alla telefoner får välja lag igen. Gör detta innan gästerna kommer.',
+    ),
+    h(
+      'button',
+      {
+        class: 'btn btn-danger',
+        type: 'button',
+        onClick: () => {
+          cmd(isQ ? { type: 'resetQuestion', confirm: CONFIRM_WORD } : { type: 'resetGame', confirm: CONFIRM_WORD });
+          closeSheet();
+        },
+      },
+      isQ ? 'Ja, nollställ frågan' : 'Ja, nollställ hela spelet',
+    ),
+    h('button', { class: 'btn btn-ghost', type: 'button', onClick: closeSheet }, 'Avbryt'),
+  ];
+}
+
+// ---------- boot ----------
+
+if (!token) {
+  app.replaceChildren(
+    h(
+      'div',
+      { class: 'stack', style: 'margin-top:20vh;text-align:center;gap:12px' },
+      h('div', { class: 'display', style: 'font-size:56px;line-height:0.95' }, 'Adminnyckel saknas'),
+      h('div', { style: 'color:var(--text-2)' }, 'Öppna admin med länken som innehåller nyckeln: /admin?t=…'),
+    ),
+  );
+} else {
+  app.replaceChildren(
+    h(
+      'div',
+      { style: 'display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;flex-grow:1' },
+      h('div', { class: 'display', style: 'font-size:64px;line-height:0.95' }, 'Admin'),
+      h('div', { class: 'pill offline', 'data-pill': true }, h('span', { class: 'dot' }), h('span', { class: 'label' }, 'Ansluter…')),
+    ),
+  );
+  conn.start();
+}

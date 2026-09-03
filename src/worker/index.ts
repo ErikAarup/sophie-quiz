@@ -1,4 +1,5 @@
 // Worker entry: static assets serve the pages (dist/public), `/ws` goes to the single Game DO.
+import { GAME_NAME } from './config.ts';
 import { Game } from './game-do.ts';
 
 export { Game };
@@ -15,8 +16,6 @@ export interface Env {
   /** Optional override of data/quiz.json durationSeconds (the e2e suite shortens the clock). */
   QUESTION_SECONDS?: string;
 }
-
-export const GAME_NAME = 'sophie-2026';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {

@@ -2,7 +2,7 @@
 // QUESTION_SECONDS is 2 here (vitest.config.ts), so "lock at zero" is observable in a test.
 import { env, evictDurableObject } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { GAME_NAME } from '../../src/worker/index.ts';
+import { GAME_NAME } from '../../src/worker/config.ts';
 import { Client, admin, player, resetGame, sleep } from './client.ts';
 
 let a: Client;

@@ -121,11 +121,13 @@ export function adminView(state: GameState, quiz: Quiz, now: number, online: Rec
     const key = answerKey(state.questionIndex, team);
     const answer = state.answers[key];
     const grade = state.grades[key];
+    // offline beats svar (§2.9: Erik must see a dropped phone), svar beats ledig (a hand-typed
+    // answer for a team without a phone still counts as answered).
     let status: TeamStatus;
-    if (!claimed) status = 'ledig';
-    else if (!online[team]) status = 'offline';
+    if (claimed && !online[team]) status = 'offline';
     else if (answer) status = 'svar';
-    else status = 'väntar';
+    else if (claimed) status = 'väntar';
+    else status = 'ledig';
     return {
       team,
       claimed,

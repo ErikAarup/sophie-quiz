@@ -1,0 +1,14 @@
+{
+  "_comment": "Sample answers for the live grader proof (WORK_ORDER §5) against the EU population list. expectedRank null = utanför listan. Rows marked prepass are decided without the model; the rest exercise the model.",
+  "slug": "most-populous-eu-countries",
+  "answers": [
+    { "team": 1, "text": "tjeckien", "expectedRank": 9, "via": "prepass" },
+    { "team": 2, "text": "Tjekkiet", "expectedRank": 9, "via": "model" },
+    { "team": 3, "text": "Portugall", "expectedRank": 10, "via": "model" },
+    { "team": 4, "text": "Rumania", "expectedRank": 6, "via": "model" },
+    { "team": 5, "text": "Deutschland", "expectedRank": 1, "via": "prepass" },
+    { "team": 6, "text": "Osterreich", "expectedRank": 14, "via": "model" },
+    { "team": 7, "text": "Norge", "expectedRank": null, "via": "model" },
+    { "team": 8, "text": "Belgium!", "expectedRank": 8, "via": "prepass" }
+  ]
+}

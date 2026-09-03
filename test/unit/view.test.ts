@@ -95,10 +95,18 @@ describe('playerView', () => {
 describe('adminView', () => {
   it('reports svar / väntar / offline / ledig per team and full rows', () => {
     const s = run(claimAll(fresh()), [{ type: 'release', team: 8 }, { type: 'start' }], T0);
-    const s2 = run(s, [{ type: 'answer', team: 1, text: 'Polen', source: 'team' }], T0);
+    const s2 = run(
+      s,
+      [
+        { type: 'answer', team: 1, text: 'Polen', source: 'team' },
+        { type: 'answer', team: 6, text: 'Belgien', source: 'admin' }, // offline phone, Erik typed it
+        { type: 'answer', team: 8, text: 'Italien', source: 'admin' }, // no phone at all, Erik typed it
+      ],
+      T0,
+    );
     const v = adminView(s2, quiz, T0, { ...allOnline, 6: false });
     const status = Object.fromEntries(v.teams.map((t) => [t.team, t.status]));
-    expect(status).toEqual({ 1: 'svar', 2: 'väntar', 3: 'väntar', 4: 'väntar', 5: 'väntar', 6: 'offline', 7: 'väntar', 8: 'ledig' });
+    expect(status).toEqual({ 1: 'svar', 2: 'väntar', 3: 'väntar', 4: 'väntar', 5: 'väntar', 6: 'offline', 7: 'väntar', 8: 'svar' });
     expect(v.rows[0]).toEqual({ rank: 1, name: 'Tyskland', label: '83,6 milj', near: false });
     expect(v.teams[0]?.answer).toBe('Polen');
     expect(v.gradeStatus).toBe('idle');

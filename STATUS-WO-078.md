@@ -2,8 +2,9 @@
 
 **Branch:** `build/wo-078` · **Worktree:** `C:\Users\erika\projects\sophie-quiz\.claude\worktrees\wo-078`
 **Stamped by the loop at dispatch:** 2026-09-03T14:51:02.979Z
-**Phase:** 2 — Durable Object + WebSocket transport + persistence (9/10 DO tests green; fixing a transient offline flash on claim, then commit + draft PR)
-**Last touch:** 2026-09-03 17:24 +02:00
+**Phase:** 6 — third e2e run in progress. Run 2: 5 passed, 4 failed → fixed: taken tiles stay tappable so the server's "redan taget" refusal shows (§2.1), admin status rule offline > svar > väntar/ledig, reconnect scenario uses a client drop hook + offline emulation, strict-mode selector. Live grader round with the real model PASSED (8/8 sample answers).
+**Last touch:** 2026-09-03 18:05 +02:00
+**Draft PR:** https://github.com/ErikAarup/sophie-quiz/pull/1 (opened after phase 2)
 
 > Reset at dispatch so this file can never show the PREVIOUS work order's status
 > (WO-019 §2.6). Everything below this line is written by WO-078
@@ -34,6 +35,8 @@ phone, and a leaderboard shows between questions. Cloudflare Workers + Durable O
 
 - 2026-09-03 16:51 — Builder started. Read dispatch + WORK_ORDER.md. Phase 0: orientation.
 - 2026-09-03 16:58 — Orientation done: wrangler whoami OK (deploy is on); ANTHROPIC_API_KEY present in shared `.dev.vars` (copied to worktree, ADMIN_TOKEN generated locally, gitignored); bank = 100 lists; `design/claude-design/` has no export yet (building from §E + reference sketches).
+- 2026-09-03 17:28 — Phase 2 committed (6a61605): 10 DO integration tests green (58 tests total). Branch pushed; draft PR #1 opened.
+- 2026-09-03 17:33 — Phase 3/4: ws.ts (reconnect + watchdog + clock offset), dom.ts, styles.css, index/admin/qr.html, player.ts (7 screens), admin.ts (5 screens + team sheet + confirm sheets), scripts/build.mjs (esbuild + wrangler dry run + secret scan).
 - 2026-09-03 17:12 — Phase 1 committed (a8a1e19): 3 tsc projects clean, 48 unit tests green.
 - 2026-09-03 17:19 — Phase 2: src/worker/{index,game-do,grader}.ts written; first DO test run failed because the workers pool loads the real `.dev.vars` (token mismatch) — fixed by reading the token from the runtime env and pointing the grader at a dead port in tests. Re-running.
 - 2026-09-03 17:05 — Phase 1 in progress: package.json/tsconfigs/wrangler.jsonc, data (bank snapshot, quiz.json with ten verified placeholders, aliases.json), src/shared (types, game reducer, scoring, normalize, format, view), unit tests written. Running `npm install` (first attempt hit a workers-types peer conflict; bumped to 5.x).
