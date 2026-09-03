@@ -98,6 +98,20 @@ describe('gradeAnswers', () => {
     expect(out.rows.find((r) => r.team === 2)).toMatchObject({ rowIndex: null, needsReview: true });
   });
 
+  it('an echo of a pre-pass team is ignored (the pre-pass is final), whatever row it claims', async () => {
+    const out = await gradeAnswers(eu, [{ team: 3, text: 'Portugal' }, { team: 5, text: 'Tjekkiet' }], {
+      callModel: async () => ({
+        results: [
+          { team: 3, row: 1, reason: 'echo with a wrong row' },
+          { team: 5, row: rowIndexOf('Tjeckien') + 1, reason: 'dansk stavning' },
+        ],
+      }),
+    });
+    expect(out.failed).toBe(false);
+    expect(out.rows.find((r) => r.team === 3)).toMatchObject({ rowIndex: rowIndexOf('Portugal'), needsReview: false });
+    expect(out.rows.find((r) => r.team === 5)).toMatchObject({ rowIndex: rowIndexOf('Tjeckien'), needsReview: false });
+  });
+
   it('a response that names a team that was not asked about is not trusted either', async () => {
     const out = await gradeAnswers(eu, [{ team: 1, text: 'Atlantis' }], {
       callModel: async () => ({ results: [{ team: 1, row: null, reason: '' }, { team: 7, row: 2, reason: 'extra' }] }),

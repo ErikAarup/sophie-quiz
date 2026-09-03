@@ -48,7 +48,7 @@ Rules:
 - An empty, joke or unrelated answer gets row: null.
 - The pre-pass hits are exact matches already decided; keep your decisions consistent with them.
 
-Answer with JSON only, following the schema: one result per team in the "answers" list, with the row NUMBER (the "row" field of the list, not the rank) or null, and a short reason in Swedish.`;
+Answer with JSON only, following the schema: exactly one result per team in the "answers" list (and none for the "prepass_hits" teams, which are already decided), with the row NUMBER (the "row" field of the list, not the rank) or null, and a short reason in Swedish.`;
 
 const OUTPUT_SCHEMA = {
   type: 'object',
@@ -71,7 +71,7 @@ const OUTPUT_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const JSON_TEAM_NOTE = 'exactly one result per team in "answers", no other teams';
+const JSON_TEAM_NOTE = 'return exactly one result per team listed in "answers" and no results for other teams; the "prepass_hits" teams are already decided and must not appear in your results';
 
 export function buildUserPrompt(input: ModelInput): string {
   const payload = {
@@ -176,18 +176,22 @@ export async function gradeAnswers(
     return flagAll(`Modellen svarade inte (${message.slice(0, 120)})`);
   }
 
-  // The response must contain exactly one row per pending team, nothing else. Duplicates
-  // (possibly contradictory), extra teams or a missing team mean the model did not do what was
-  // asked; none of it is trusted, all of it goes to Erik.
+  // The response must contain exactly one row per pending team. Duplicates (possibly
+  // contradictory) or rows for a team that was never asked about mean the model did not do what
+  // was asked; none of it is trusted, all of it goes to Erik. The one tolerated extra is an echo
+  // of a pre-pass team (the model sees those hits for context and sometimes repeats them); a
+  // pre-pass hit is final by spec, so such rows are ignored whatever they say.
   const pendingTeams = new Set<number>(pending.map((a) => a.team));
+  const prepassTeams = new Set<number>(prepassHits.map((h) => h.team));
   const seen = new Set<number>();
+  const byTeam = new Map<number, { row: number | null; reason: string }>();
   for (const r of output.results) {
+    if (prepassTeams.has(r.team)) continue;
     if (!pendingTeams.has(r.team)) return flagAll(`Modellen svarade för lag ${r.team} som inte skulle rättas`);
     if (seen.has(r.team)) return flagAll(`Modellen gav flera svar för lag ${r.team}`);
     seen.add(r.team);
+    byTeam.set(r.team, { row: r.row, reason: r.reason });
   }
-  const byTeam = new Map<number, { row: number | null; reason: string }>();
-  for (const r of output.results) byTeam.set(r.team, { row: r.row, reason: r.reason });
   let anyMissing = false;
   for (const a of pending) {
     const r = byTeam.get(a.team);

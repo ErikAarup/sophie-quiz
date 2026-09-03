@@ -1,10 +1,10 @@
-live grader run 2026-09-03T15:59:36.889Z
-model=claude-opus-5 usedModel=true failed=false time=5104 ms
+live grader run 2026-09-03T16:27:54.956Z
+model=claude-opus-5 usedModel=true failed=false time=3380 ms
 OK   Lag 1 "tjeckien" -> Tjeckien (rank 9; expected 9; prepass) Exakt träff
-OK   Lag 2 "Tjekkiet" -> Tjeckien (rank 9; expected 9; model) Dansk stavning av Tjeckien
-OK   Lag 3 "Portugall" -> Portugal (rank 10; expected 10; model) Felstavat Portugal
-OK   Lag 4 "Rumania" -> Rumänien (rank 6; expected 6; model) Rumänien på engelska
+OK   Lag 2 "Tjekkiet" -> Tjeckien (rank 9; expected 9; model) Danskt/felstavat för Tjeckien
+OK   Lag 3 "Portugall" -> Portugal (rank 10; expected 10; model) Felstavning av Portugal
+OK   Lag 4 "Rumania" -> Rumänien (rank 6; expected 6; model) Engelsk/felstavad form av Rumänien
 OK   Lag 5 "Deutschland" -> Tyskland (rank 1; expected 1; prepass) Exakt träff
-OK   Lag 6 "Osterreich" -> Österrike (rank 14; expected 14; model) Österrike på tyska
-OK   Lag 7 "Norge" -> utanför listan (rank -; expected -; model) Norge är inte EU-medlem och finns ej i listan
+OK   Lag 6 "Osterreich" -> Österrike (rank 14; expected 14; model) Tyska namnet på Österrike
+OK   Lag 7 "Norge" -> utanför listan (rank -; expected -; model) Norge är inte EU-medlem och finns inte på listan
 OK   Lag 8 "Belgium!" -> Belgien (rank 8; expected 8; prepass) Exakt träff
