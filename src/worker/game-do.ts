@@ -89,7 +89,11 @@ export class Game extends DurableObject<Env> {
   override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
     if (typeof raw !== 'string') return;
     if (raw === 'ping') {
-      // Only reached if auto-response did not (e.g. while we are awake); answer the same way.
+      // Reached when the runtime's auto-response did not answer (it only does while we hibernate).
+      // Record liveness ourselves so an idle phone never reads "offline" on admin.
+      const att = this.attachment(ws);
+      att.lastSeen = Date.now();
+      ws.serializeAttachment(att);
       this.safeSend(ws, 'pong');
       return;
     }

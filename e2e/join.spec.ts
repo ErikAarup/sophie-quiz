@@ -25,7 +25,7 @@ test('double-claim refusal: a second phone tapping a taken tile is told "Lag 3 �
   const p2 = await openPlayer(browser);
   phones.push(p2);
   const tile3 = p2.page.getByRole('button', { name: /^Lag 3/ });
-  await expect(tile3).toHaveAttribute('aria-disabled', 'true');
+  await expect(tile3).toHaveClass(/taken/);
   await expect(tile3).toContainText('TAGET');
   // The tap still goes to the server, which refuses with the exact message.
   await tile3.click();
@@ -43,14 +43,14 @@ test('release and re-claim: admin releases Lag 3, that phone is sent back to the
   phones.push(p1);
   await adminRelease(admin.page, 3);
   await expect(p1.page.getByText('Erik sl채ppte Lag 3. V채lj lag igen.')).toBeVisible();
-  await expect(p1.page.getByRole('button', { name: 'Lag 3' })).toHaveAttribute('aria-disabled', 'false');
+  await expect(p1.page.getByRole('button', { name: 'Lag 3' })).not.toHaveClass(/taken/);
   await expect(admin.page.locator('.team-grid .row').nth(2)).toContainText('ledig');
 
   const p2 = await openPlayer(browser, 3);
   phones.push(p2);
   await expectTeam(p2.page, 3);
   // The released phone now sees the tile as taken by someone else.
-  await expect(p1.page.getByRole('button', { name: /^Lag 3/ })).toHaveAttribute('aria-disabled', 'true');
+  await expect(p1.page.getByRole('button', { name: /^Lag 3/ })).toHaveClass(/taken/);
 });
 
 test('a reloaded phone comes back as its team; a phone whose slot was taken meanwhile is sent to the tiles', async ({ browser }) => {
@@ -60,13 +60,19 @@ test('a reloaded phone comes back as its team; a phone whose slot was taken mean
   await expectTeam(p1.page, 5);
   await expect(p1.page.getByText('V채ntar p책 att Erik startar')).toBeVisible();
 
-  // Erik releases Lag 5 while the phone is away, and a different phone takes it.
+  // Erik releases Lag 5 while the phone is away (socket dropped, network gone), and a different
+  // phone takes it. The stale phone still has "Lag 5" stored locally.
   await p1.context.setOffline(true);
+  await p1.page.evaluate(() => (window as unknown as { __sophie: { drop: () => void } }).__sophie.drop());
   await adminRelease(admin.page, 5);
   const p2 = await openPlayer(browser, 5);
   phones.push(p2);
+  // Back online: the phone reconnects with its stored "Lag 5", the server refuses and sends it to the tiles.
   await p1.context.setOffline(false);
+  await expect(p1.page.getByText('Lag 5 anv채nds av en annan telefon. V채lj lag igen.')).toBeVisible({ timeout: 15_000 });
+  await expect(p1.page.getByRole('button', { name: /^Lag 5/ })).toHaveClass(/taken/);
+  // And a reload after that stays on the tiles (the stale team was forgotten).
   await p1.page.reload();
-  await expect(p1.page.getByText('Lag 5 anv채nds av en annan telefon. V채lj lag igen.')).toBeVisible();
-  await expect(p1.page.getByRole('button', { name: /^Lag 5/ })).toHaveAttribute('aria-disabled', 'true');
+  await expect(p1.page.getByRole('button', { name: 'Lag 1' })).toBeVisible();
+  await expect(p1.page.getByRole('button', { name: /^Lag 5/ })).toHaveClass(/taken/);
 });

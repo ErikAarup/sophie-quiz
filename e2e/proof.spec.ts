@@ -38,7 +38,7 @@ test('a full three-question game with eight teams and Erik, with the eight canva
   phones.set(2, await openPlayer(browser, 2));
   phones.set(5, await openPlayer(browser, 5));
   const fresh = await openPlayer(browser);
-  await expect(fresh.page.getByRole('button', { name: /^Lag 5/ })).toHaveAttribute('aria-disabled', 'true');
+  await expect(fresh.page.getByRole('button', { name: /^Lag 5/ })).toHaveClass(/taken/);
   await shot(fresh.page, '1-main');
   await fresh.context.close();
   for (const t of [1, 3, 4, 6, 7, 8] as Team[]) phones.set(t, await openPlayer(browser, t));

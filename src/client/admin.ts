@@ -249,6 +249,7 @@ function lobbyScreen(key: string): Screen {
       setText(title, s.question?.title ?? '');
       setText(question, s.question?.question ?? '');
       setText(start, `Starta fråga ${s.questionIndex + 1}`);
+      grid.update(s);
     },
   };
 }

@@ -241,7 +241,6 @@ function tilesScreen(key: string): Screen {
         // Dimmed with "TAGET" but still tappable: the server is the one that refuses (§2.1), so a
         // phone with a stale view gets the real answer, "Lag 3 är redan taget".
         toggle(tile, 'taken', taken);
-        tile.setAttribute('aria-disabled', String(taken));
         const tag = tile.querySelector('.tag');
         if (tag) toggle(tag, 'hidden', !taken);
       });

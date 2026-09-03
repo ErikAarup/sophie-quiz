@@ -255,6 +255,20 @@ describe('resilience (§2.9)', () => {
     expect(av.teams[4]?.claimed).toBe(true);
   });
 
+  it('an idle phone that only pings stays "väntar" well past the presence window', async () => {
+    const p = await joined('device-nnnnnnnn', 2);
+    await a.adminState((x) => x.teams[1]?.status === 'väntar');
+    const t0 = Date.now();
+    while (Date.now() - t0 < 10_500) {
+      p.ws.send('ping'); // what the player page sends every 3 s
+      await sleep(2_000);
+    }
+    a.send({ type: 'ping' });
+    const av = await a.adminState();
+    expect(av.teams[1]?.status).toBe('väntar');
+    expect(av.teams[1]?.online).toBe(true);
+  });
+
   it('shows offline within a few seconds of a phone closing its socket', async () => {
     const p = await joined('device-mmmmmmmm', 1);
     await a.adminState((x) => x.teams[0]?.online === true);
