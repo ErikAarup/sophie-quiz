@@ -309,7 +309,7 @@ where the export differs, the export wins:
 
 ## F. Erik's hands (before or during the build — not the builder's)
 
-1. Create a Cloudflare account (free) and, in the repo folder, run `npx wrangler login`.
+1. ~~Create a Cloudflare account and run `npx wrangler login`~~ **Already in place (checked 3 Sept 16:50):** a Cloudflare account exists ("Erik.aarup@live.se's Account", id 3230330a438cc5c59b377e1834847e76) and `CLOUDFLARE_API_TOKEN` is a user-level Windows environment variable, so `npx wrangler whoami` succeeds in any shell under Erik's account, the builder's included. Do not run `wrangler login`; it refuses while the token is set. If `wrangler deploy` reports a missing scope (Workers Scripts, Durable Objects, Workers Assets), the PR's first paragraph names it and Erik widens the token at dash.cloudflare.com/3230330a438cc5c59b377e1834847e76/api-tokens.
 2. Create an Anthropic API key at console.anthropic.com with a spend cap, and write it as
    `ANTHROPIC_API_KEY=...` into `.dev.vars` in the repo root (gitignored). The builder or
    the runbook pushes it to Cloudflare with `wrangler secret put`.
