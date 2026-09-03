@@ -641,6 +641,7 @@ a {
   font-size: 14px;
   z-index: 20;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  pointer-events: none; /* a notice must never swallow a tap meant for what is under it */
 }
 
 .toast.error {

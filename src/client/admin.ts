@@ -40,6 +40,7 @@ let state: AdminStateView | null = null;
 let online = false;
 let sheet: { kind: 'team'; team: Team } | { kind: 'confirm'; what: 'question' | 'game' } | null = null;
 let toastTimer: number | undefined;
+let failToastFor = -1;
 
 const conn = new Connection({
   hello: () => ({ type: 'hello', role: 'admin', token }),
@@ -446,7 +447,10 @@ function revealScreen(key: string): Screen {
         n < top && coming ? `Nästa: ${coming.rank}. ${coming.name ?? ''}${coming.label ? ' · ' + coming.label : ''}` : n >= top ? 'Hela topplistan är visad. Plats 11–15 syns nu som nära skott på telefonerna.' : '',
       );
       setText(next, s.questionIndex + 1 >= s.questionCount ? 'Visa slutresultat' : 'Nästa fråga');
-      if (s.gradeStatus === 'failed') toast('Modellen kunde inte rätta alla svar. Rader med "ogranskad" sätter du för hand.', true);
+      if (s.gradeStatus === 'failed' && failToastFor !== s.questionIndex) {
+        failToastFor = s.questionIndex; // once per question, not on every state update
+        toast('Modellen kunde inte rätta alla svar. Rader med "ogranskad" sätter du för hand.', true);
+      }
       answers.update(s);
     },
   };
