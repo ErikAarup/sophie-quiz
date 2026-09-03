@@ -67,6 +67,17 @@ export interface Grade {
 
 export type GradeStatus = 'idle' | 'running' | 'done' | 'failed';
 
+/**
+ * One call to the grader. The id is the request's identity: the result echoes it back, and a
+ * result whose id is no longer outstanding is ignored, so a late answer to an abandoned request
+ * (reset question, changed text) can never settle or disturb a later one.
+ */
+export interface GradeRequest {
+  id: number;
+  questionIndex: number;
+  answers: { team: Team; text: string }[];
+}
+
 export interface GameState {
   v: 1;
   phase: Phase;
@@ -85,8 +96,14 @@ export interface GameState {
   answers: Record<string, Answer>; // key `${questionIndex}:${team}`
   grades: Record<string, Grade>; // same key
   gradeStatus: Record<string, GradeStatus>; // key `${questionIndex}`
-  /** Grade requests in flight for the current question; reveal starts only when it reaches 0. */
-  gradePending: number;
+  /** Id given to the next grade request. Never rewinds, not even on a full reset, so ids never repeat. */
+  gradeSeq: number;
+  /**
+   * Grade requests sent but not yet answered, by id. Persisted with the state: a Worker restart
+   * re-sends exactly these. The reveal starts, and "Nästa fråga" is allowed, only when none is
+   * left for the current question.
+   */
+  gradeInFlight: Record<string, GradeRequest>;
   /** Whether any grade batch for the question failed (→ status 'failed' once settled). */
   gradeFailed: Record<string, boolean>;
   updatedAt: number;

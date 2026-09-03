@@ -25,7 +25,7 @@ function revealState() {
     [
       {
         type: 'gradeResult',
-        questionIndex: 0,
+        requestId: 0,
         failed: false,
         results: [
           { team: 3, gradedText: 'Portugal', rowIndex: rowIndexOf('Portugal'), needsReview: false, reason: '' },

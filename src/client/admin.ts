@@ -462,6 +462,9 @@ function standingsScreen(key: string): Screen {
   const list = h('div', { class: 'standings stack' });
   const back = h('button', { class: 'btn btn-ghost btn-md', type: 'button', onClick: () => cmd({ type: 'backToReveal' }) }, 'Tillbaka till listan');
   const next = h('button', { class: 'btn btn-primary btn-md', type: 'button', onClick: () => cmd({ type: 'next' }) }, 'Nästa fråga');
+  // A hand-typed answer is still with the grader: the server refuses "Nästa fråga" with a message
+  // until it lands; this line says so before Erik taps.
+  const grading = h('div', { class: 'hidden', 'data-grading': true, style: 'font-size:13px;color:var(--accent);text-align:center' }, 'Rättar ett svar… Nästa fråga väntar tills det är klart.');
   const el = h(
     'div',
     { style: 'display:flex;flex-direction:column;gap:16px;flex-grow:1' },
@@ -469,13 +472,14 @@ function standingsScreen(key: string): Screen {
     h('div', { class: 'display', style: 'font-size:56px;line-height:0.95' }, 'Ställning'),
     h('div', { class: 'eyebrow' }, 'Tryck på ett lag för att ändra dess svar eller plats'),
     list,
-    h('div', { class: 'bottom', style: 'gap:8px' }, back, next),
+    h('div', { class: 'bottom', style: 'gap:8px' }, grading, back, next),
   );
   return {
     key,
     el,
     update(s) {
       setText(label, `Fråga ${s.questionIndex + 1} av ${s.questionCount} · ställning`);
+      toggle(grading, 'hidden', s.gradeStatus !== 'running');
       list.replaceChildren(
         ...s.standings.map((row) => {
           const tv = s.teams[row.team - 1];

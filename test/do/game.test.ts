@@ -1,9 +1,17 @@
 // Durable Object integration: real workerd, real WebSockets, real storage alarm.
 // QUESTION_SECONDS is 2 here (vitest.config.ts), so "lock at zero" is observable in a test.
-import { env, evictDurableObject } from 'cloudflare:test';
+import { env, evictDurableObject, runInDurableObject } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { GameState } from '../../src/shared/types.ts';
 import { GAME_NAME } from '../../src/worker/config.ts';
-import { Client, admin, player, resetGame, sleep } from './client.ts';
+import { Client, TOKEN, admin, player, resetGame, sleep } from './client.ts';
+import { MODEL_CONTROL_URL, type ModelMode } from './model-mock.ts';
+
+/** Switch the mock model (vitest.config.ts `outboundService`) for the rest of a test. */
+async function setModel(mode: ModelMode): Promise<void> {
+  const res = await fetch(MODEL_CONTROL_URL, { method: 'POST', body: JSON.stringify({ mode }) });
+  if (!res.ok) throw new Error(`model mock: ${res.status}`);
+}
 
 let a: Client;
 const open: Client[] = [];
@@ -307,5 +315,112 @@ describe('resilience (§2.9)', () => {
     const off = await a.adminState((x) => x.teams[0]?.status === 'offline', 10_000);
     expect(off.teams[0]?.claimed).toBe(true);
     expect(Date.now() - t0).toBeLessThan(10_000);
+  });
+});
+
+describe('R3 review fix: grade requests have an identity (grade-request-has-no-identity)', () => {
+  const STATE_KEY = 'state'; // the DO's storage key
+  const stub = () => env.GAME.get(env.GAME.idFromName(GAME_NAME));
+
+  /** Question 1 played to the standings: Lag 2 = Portugal (exact hit, 10 points, no model call). */
+  async function standings(): Promise<Client> {
+    const p2 = await joined('device-rrrrrrrr', 2);
+    await a.admin({ type: 'start' });
+    await p2.playerState((x) => x.phase === 'open');
+    p2.send({ type: 'answer', text: 'Portugal' });
+    await p2.until((m) => m.type === 'ok');
+    await a.admin({ type: 'lock' });
+    await a.admin({ type: 'grade' });
+    await a.adminState((x) => x.phase === 'reveal', 8000);
+    await a.admin({ type: 'revealAll' });
+    await a.admin({ type: 'standings' });
+    await a.adminState((x) => x.phase === 'standings');
+    return p2;
+  }
+
+  it('"Nästa fråga" is refused with a message while a hand-typed answer is with the grader, then accepted with the points intact', async () => {
+    const p2 = await standings();
+    // A slow model: 1.5 s, then "Tjekkiet" → Tjeckien (plats 9). The request is in flight long
+    // enough to tap "Nästa fråga" meanwhile.
+    await setModel('slow');
+    try {
+      a.send({ type: 'manualAnswer', team: 3, text: 'Tjekkiet', token: TOKEN });
+      await a.adminState((x) => x.gradeStatus === 'running');
+      a.send({ type: 'next', token: TOKEN });
+      const reply = await a.until((m) => m.type === 'error' || (m.type === 'ok' && m.of === 'next'));
+      expect(reply).toEqual({ type: 'error', code: 'busy', message: 'Rättning pågår – vänta några sekunder och tryck igen.' });
+      const still = await a.adminState((x) => x.phase === 'standings');
+      expect(still.questionIndex).toBe(0);
+
+      // The grade lands (plats 9, 9 points); only now is next accepted, and the points stay.
+      const settled = await a.adminState((x) => x.gradeStatus === 'done' && x.teams[2]?.grade?.rank === 9, 8000);
+      expect(settled.phase).toBe('standings');
+      expect(settled.teams[2]?.grade).toMatchObject({ rank: 9, points: 9, manual: false, needsReview: false });
+      a.send({ type: 'next', token: TOKEN });
+      const ok = await a.until((m) => m.type === 'error' || (m.type === 'ok' && m.of === 'next'));
+      expect(ok).toEqual({ type: 'ok', of: 'next' });
+      const lobby = await p2.playerState((x) => x.phase === 'lobby');
+      expect(lobby.questionIndex).toBe(1);
+      expect(lobby.standings.slice(0, 2)).toEqual([
+        { position: 1, team: 2, points: 10 },
+        { position: 2, team: 3, points: 9 },
+      ]);
+    } finally {
+      await setModel('fail');
+    }
+  });
+
+  it('a restart while a request is out re-sends exactly that request; its grade lands and the game goes on (§2.9)', async () => {
+    await standings();
+    // Freeze the moment between "request persisted" and "result landed": Erik typed Belgien for
+    // Lag 4 from the standings, the request went out as id 7, and the Worker died.
+    await runInDurableObject(stub(), async (_instance, state) => {
+      const s = (await state.storage.get<GameState>(STATE_KEY))!;
+      s.answers['0:4'] = { text: 'Belgien', updatedAt: Date.now(), source: 'admin' };
+      s.gradeInFlight['7'] = { id: 7, questionIndex: 0, answers: [{ team: 4, text: 'Belgien' }] };
+      s.gradeSeq = 8;
+      s.gradeStatus['0'] = 'running';
+      await state.storage.put(STATE_KEY, s);
+    });
+    await evictDurableObject(stub(), { webSockets: 'close' });
+    await sleep(200);
+
+    a = await admin();
+    open.push(a);
+    // The re-sent request is an exact hit (no model needed): rank 8, 8 points, and the question
+    // is settled — still on the standings, nothing skipped.
+    const landed = await a.adminState((x) => x.teams[3]?.grade?.rank === 8 && x.gradeStatus === 'done', 8000);
+    expect(landed.phase).toBe('standings');
+    expect(landed.questionIndex).toBe(0);
+    expect(landed.teams[3]?.grade).toMatchObject({ rank: 8, points: 8, manual: false, needsReview: false });
+    expect(landed.teams[3]?.total).toBe(8);
+    expect(landed.teams[1]?.total).toBe(10);
+    expect((await a.admin({ type: 'next' })).type).toBe('ok');
+    await a.adminState((x) => x.phase === 'lobby' && x.questionIndex === 1);
+  });
+
+  it('a state from the build before request ids (grading, nothing outstanding) is graded afresh after a restart', async () => {
+    const p2 = await joined('device-ssssssss', 2);
+    await a.admin({ type: 'start' });
+    await p2.playerState((x) => x.phase === 'open');
+    p2.send({ type: 'answer', text: 'Portugal' });
+    await p2.until((m) => m.type === 'ok');
+    await a.admin({ type: 'lock' });
+    await a.adminState((x) => x.phase === 'locked');
+    await runInDurableObject(stub(), async (_instance, state) => {
+      const s = (await state.storage.get<GameState>(STATE_KEY))!;
+      const legacy = { ...s, phase: 'grading', gradePending: 1 } as Record<string, unknown>;
+      delete legacy['gradeInFlight'];
+      delete legacy['gradeSeq'];
+      await state.storage.put(STATE_KEY, legacy);
+    });
+    await evictDurableObject(stub(), { webSockets: 'close' });
+    await sleep(200);
+
+    a = await admin();
+    open.push(a);
+    const graded = await a.adminState((x) => x.phase === 'reveal', 8000);
+    expect(graded.teams[1]?.grade).toMatchObject({ rank: 10, points: 10 });
+    expect(graded.gradeStatus).toBe('done');
   });
 });

@@ -13,9 +13,12 @@ import {
   type Answer,
   type GameState,
   type Grade,
+  type GradeRequest,
   type Quiz,
   type Team,
 } from './types.ts';
+
+export type { GradeRequest } from './types.ts';
 
 export const DEFAULT_EXTEND_MS = 30_000;
 
@@ -38,7 +41,8 @@ export type GameEvent =
   | { type: 'alarm' }
   | { type: 'tick' } // "check the clock", nothing else (used for pings)
   | { type: 'grade' }
-  | { type: 'gradeResult'; questionIndex: number; results: GradeResultRow[]; failed: boolean }
+  /** The grader's answer to the request with that id. An id that is not outstanding is ignored. */
+  | { type: 'gradeResult'; requestId: number; results: GradeResultRow[]; failed: boolean }
   | { type: 'override'; team: Team; rank: number }
   | { type: 'revealNext' }
   | { type: 'revealAll' }
@@ -54,11 +58,6 @@ export interface GradeResultRow {
   rowIndex: number | null;
   needsReview: boolean;
   reason: string;
-}
-
-export interface GradeRequest {
-  questionIndex: number;
-  answers: { team: Team; text: string }[];
 }
 
 export type KickReason = 'release' | 'moved' | 'reset';
@@ -92,7 +91,8 @@ export function initialState(now: number): GameState {
     answers: {},
     grades: {},
     gradeStatus: {},
-    gradePending: 0,
+    gradeSeq: 0,
+    gradeInFlight: {},
     gradeFailed: {},
     updatedAt: now,
   };
@@ -101,7 +101,7 @@ export function initialState(now: number): GameState {
 /** Fill in fields a state persisted by an earlier build may lack. */
 export function migrateState(stored: Partial<GameState> & { v: 1 }, now: number): GameState {
   const base = initialState(now);
-  return {
+  const state: GameState = {
     ...base,
     ...stored,
     slots: { ...base.slots, ...(stored.slots ?? {}) },
@@ -109,9 +109,22 @@ export function migrateState(stored: Partial<GameState> & { v: 1 }, now: number)
     answers: stored.answers ?? {},
     grades: stored.grades ?? {},
     gradeStatus: stored.gradeStatus ?? {},
-    gradePending: typeof stored.gradePending === 'number' ? stored.gradePending : 0,
+    gradeSeq: typeof stored.gradeSeq === 'number' ? stored.gradeSeq : 0,
+    gradeInFlight: stored.gradeInFlight ?? {},
     gradeFailed: stored.gradeFailed ?? {},
   };
+  // Builds before request ids kept a bare `gradePending` counter; it carries no requests to resend.
+  delete (state as unknown as Record<string, unknown>)['gradePending'];
+  return state;
+}
+
+/** Grade requests still unanswered for a question (all of them if no question is given). */
+export function gradesInFlight(state: GameState, questionIndex?: number): number {
+  let n = 0;
+  for (const req of Object.values(state.gradeInFlight)) {
+    if (questionIndex === undefined || req.questionIndex === questionIndex) n += 1;
+  }
+  return n;
 }
 
 /** Remaining clock time in ms as the server sees it (0 once locked). */
@@ -144,7 +157,11 @@ function clearQuestion(state: GameState, questionIndex: number): void {
   }
   delete state.gradeStatus[String(questionIndex)];
   delete state.gradeFailed[String(questionIndex)];
-  state.gradePending = 0;
+  // Requests still out for this question are abandoned: their ids are forgotten here, so their
+  // results, whenever they arrive, are ignored rather than settling a later request.
+  for (const [id, req] of Object.entries(state.gradeInFlight)) {
+    if (req.questionIndex === questionIndex) delete state.gradeInFlight[id];
+  }
 }
 
 function gradeFromRow(quiz: Quiz, questionIndex: number, rowIndex: number | null, opts: { manual: boolean; needsReview: boolean; reason: string; gradedText: string }): Grade {
@@ -185,6 +202,15 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
     const out = done();
     out.error = { code, message };
     return out;
+  };
+  /** Hand answers to the grader under a fresh id; the id stays outstanding until its result lands. */
+  const requestGrade = (answers: GradeRequest['answers']): void => {
+    const id = state.gradeSeq;
+    state.gradeSeq += 1;
+    const req: GradeRequest = { id, questionIndex: qi, answers };
+    state.gradeInFlight[String(id)] = req;
+    state.gradeStatus[String(qi)] = 'running';
+    grade = req;
   };
 
   switch (event.type) {
@@ -250,9 +276,7 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
       const existing = state.grades[key];
       if (existing && existing.gradedText !== text) delete state.grades[key];
       if (event.source === 'admin' && state.phase !== 'open' && !state.grades[key]) {
-        grade = { questionIndex: qi, answers: [{ team: event.team, text }] };
-        state.gradePending += 1;
-        state.gradeStatus[String(qi)] = 'running';
+        requestGrade([{ team: event.team, text }]);
       }
       return done();
     }
@@ -265,7 +289,6 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
       state.pausedRemainingMs = null;
       state.totalMs = quiz.durationMs;
       state.revealed = 0;
-      state.gradePending = 0;
       alarm = state.deadlineAt;
       changed = true;
       return done();
@@ -323,7 +346,7 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
 
     case 'grade': {
       if (state.phase === 'open' || state.phase === 'lobby' || state.phase === 'final') return refuse('phase', 'Svaren måste vara låsta först.');
-      if (state.phase === 'grading' || state.gradePending > 0) return refuse('busy', 'Rättning pågår.');
+      if (state.phase === 'grading' || gradesInFlight(state, qi) > 0) return refuse('busy', 'Rättning pågår.');
       if (!question) return refuse('noQuestion', 'Ingen fråga.');
       const answers: GradeRequest['answers'] = [];
       for (const team of TEAMS) {
@@ -336,16 +359,20 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
         state.phase = 'grading';
         state.revealed = 0;
       }
-      state.gradeStatus[String(qi)] = 'running';
       delete state.gradeFailed[String(qi)];
-      state.gradePending += 1;
-      grade = { questionIndex: qi, answers };
+      requestGrade(answers);
       changed = true;
       return done();
     }
 
     case 'gradeResult': {
-      const rqi = event.questionIndex;
+      const id = String(event.requestId);
+      const req = state.gradeInFlight[id];
+      // Not outstanding: the question was reset, or the id was never issued. Nothing it says
+      // may touch the game (the R3 review's route B), and it settles nothing.
+      if (!req) return done();
+      delete state.gradeInFlight[id];
+      const rqi = req.questionIndex;
       for (const r of event.results) {
         if (!isTeam(r.team)) continue;
         const key = answerKey(rqi, r.team);
@@ -360,16 +387,14 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
           gradedText: r.gradedText,
         });
       }
-      if (rqi === qi) {
-        if (event.failed) state.gradeFailed[String(qi)] = true;
-        state.gradePending = Math.max(0, state.gradePending - 1);
-        if (state.gradePending === 0) {
-          // Every outstanding request has settled: now, and only now, the reveal may start.
-          state.gradeStatus[String(qi)] = state.gradeFailed[String(qi)] ? 'failed' : 'done';
-          if (state.phase === 'grading') {
-            state.phase = 'reveal';
-            state.revealed = 0;
-          }
+      if (event.failed) state.gradeFailed[String(rqi)] = true;
+      if (gradesInFlight(state, rqi) === 0) {
+        // Every outstanding request for the question has settled: now, and only now, the reveal
+        // may start.
+        state.gradeStatus[String(rqi)] = state.gradeFailed[String(rqi)] ? 'failed' : 'done';
+        if (rqi === qi && state.phase === 'grading') {
+          state.phase = 'reveal';
+          state.revealed = 0;
         }
       }
       changed = true;
@@ -427,6 +452,10 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
 
     case 'next': {
       if (state.phase !== 'standings' && state.phase !== 'reveal') return refuse('phase', 'Avsluta frågan först.');
+      // A hand-typed answer may still be with the grader (SPELLEDNING: "även efter att ställningen
+      // visats"). Moving on now would leave that team's points for this question ungraded for
+      // good, so the request must land first. Never silent: admin shows this message.
+      if (gradesInFlight(state, qi) > 0) return refuse('busy', 'Rättning pågår – vänta några sekunder och tryck igen.');
       if (qi + 1 < quiz.questions.length) {
         state.phase = 'lobby';
         state.questionIndex = qi + 1;
@@ -439,7 +468,6 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
         state.deadlineAt = null;
         state.pausedRemainingMs = null;
       }
-      state.gradePending = 0;
       alarm = null;
       changed = true;
       return done();
@@ -470,6 +498,9 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
       const fresh = initialState(now);
       // Generations keep counting up across resets, so no phone's remembered claim survives one.
       for (const team of TEAMS) fresh.claimGen[team] = state.claimGen[team] + 1;
+      // Request ids keep counting too: a grader answer to a pre-reset request must never match
+      // a request made after it.
+      fresh.gradeSeq = state.gradeSeq;
       return { state: fresh, changed: true, alarm: null, kicked };
     }
 

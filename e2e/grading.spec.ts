@@ -130,6 +130,45 @@ test('manual entry during an open question is graded with everyone else on Rätt
   expect((await mockStatus()).requests).toHaveLength(0); // both exact: no model call
 });
 
+test('Nästa fråga while a hand-typed answer is being graded is refused with a message; the grade lands and the points stay (R3 route A)', async ({ browser }) => {
+  const p3 = await openPlayer(browser, 3);
+  phones.push(p3);
+  await adminStart(admin.page);
+  await p3.page.getByRole('button', { name: 'Skicka svar' }).waitFor();
+  await answer(p3, 'Portugal'); // exact: no model call
+  await adminLock(admin.page);
+  await adminGrade(admin.page);
+  await admin.page.getByRole('button', { name: 'Visa alla' }).click();
+  await admin.page.getByRole('button', { name: 'Visa ställningen' }).first().click();
+  await expect(admin.page.getByText('Ställning', { exact: true })).toBeVisible();
+  await expect(p3.page.getByText('Ställning', { exact: true })).toBeVisible();
+
+  // The model is slow tonight (3 s). Erik types Lag 6's answer from the standings — the flow
+  // SPELLEDNING offers — and taps "Nästa fråga" before it is graded.
+  await setMock('slow');
+  await admin.page.locator('.standings .row').filter({ hasText: 'Lag 6' }).click();
+  await admin.page.getByRole('dialog').getByPlaceholder('skriv svar för hand…').fill('Tjekkiet');
+  await admin.page.getByRole('dialog').getByRole('button', { name: 'Spara svar' }).click();
+  await expect(admin.page.getByRole('dialog')).toBeHidden();
+  await expect(admin.page.getByText('Rättar ett svar…', { exact: false })).toBeVisible();
+  await admin.page.getByRole('button', { name: 'Nästa fråga' }).click();
+  await expect(admin.page.getByText('Rättning pågår', { exact: false })).toBeVisible();
+  await expect(admin.page.getByText('Ställning', { exact: true })).toBeVisible(); // did not move on
+
+  // The grade lands: plats 9, 9 points, on admin and on every phone's leaderboard.
+  const lag6 = admin.page.locator('.standings .row').filter({ hasText: 'Lag 6' });
+  await expect(lag6).toContainText('plats 9', { timeout: 15_000 });
+  await expect(lag6.locator('.points')).toHaveText('9');
+  await expect(admin.page.getByText('Rättar ett svar…', { exact: false })).toBeHidden();
+  await expect(p3.page.locator('.standings .row').filter({ hasText: 'Lag 6' }).locator('.points')).toHaveText('9');
+  expect((await mockStatus()).requests).toHaveLength(1);
+
+  // Now "Nästa fråga" works, and the points are still there.
+  await admin.page.getByRole('button', { name: 'Nästa fråga' }).click();
+  await expect(admin.page.getByRole('button', { name: 'Starta fråga 2' })).toBeVisible();
+  await expect(p3.page.getByText('Väntar på att Erik startar')).toBeVisible();
+});
+
 test('grader fallback when the model call fails: exact hits are graded, the rest are flagged ogranskad, Erik sets them by hand', async ({ browser }) => {
   await setMock('fail');
   const p3 = await openPlayer(browser, 3);

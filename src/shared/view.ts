@@ -1,6 +1,7 @@
 // Per-role projections of the game state. Players only ever receive what their phone may show
 // (hidden rows stay hidden, their own grade appears the moment the row is revealed).
 
+import { gradesInFlight } from './game.ts';
 import { standings as computeStandings, totals, winners } from './scoring.ts';
 import {
   TEAMS,
@@ -155,6 +156,6 @@ export function adminView(state: GameState, quiz: Quiz, now: number, online: Rec
     ...base(state, quiz, now, false),
     role: 'admin',
     teams,
-    gradeStatus: state.gradePending > 0 ? 'running' : (state.gradeStatus[String(state.questionIndex)] ?? 'idle'),
+    gradeStatus: gradesInFlight(state, state.questionIndex) > 0 ? 'running' : (state.gradeStatus[String(state.questionIndex)] ?? 'idle'),
   };
 }

@@ -159,7 +159,9 @@ Pappersblad enligt `_coach/current/sophie-quiz/design.md`. Skriv ut dem oavsett.
 
 Tryck på ett lag (i rutnätet eller i svarslistan). Där kan du:
 - **Skriva svar för hand** (om deras telefon dog, eller om de ropade svaret till dig). Det
-  rättas som vilket svar som helst.
+  rättas som vilket svar som helst. Gör du det efter att ställningen visats tar rättningen
+  några sekunder; **Nästa fråga** väntar tills den är klar och säger "Rättning pågår" om du
+  trycker för tidigt, så att inga poäng tappas.
 - **Sätta plats för hand**: 0 = utanför listan, 1–15 = raden. Poängen följer direkt, även efter
   att ställningen visats. Rader märkta **ogranskad** måste du sätta så här.
 - **Släppa laget**: platsen blir ledig och en ny telefon kan välja laget. Deras svar och poäng

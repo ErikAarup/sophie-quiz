@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { CONFIRM_WORD, answerKey } from '../../src/shared/types.ts';
-import { remainingMs } from '../../src/shared/game.ts';
+import { CONFIRM_WORD, answerKey, type GameState } from '../../src/shared/types.ts';
+import { gradesInFlight, migrateState, remainingMs } from '../../src/shared/game.ts';
+import { adminView } from '../../src/shared/view.ts';
 import { T0, claimAll, fresh, quiz, run, step } from './helpers.ts';
 
 const DURATION = quiz.durationMs; // 150 000 from data/quiz.json
@@ -155,6 +156,7 @@ describe('grading, override, reveal (§2.5, §2.6)', () => {
     const g = step(locked, { type: 'grade' }, T0 + 3_000);
     expect(g.state.phase).toBe('grading');
     expect(g.grade).toEqual({
+      id: 0,
       questionIndex: 0,
       answers: [
         { team: 1, text: 'Spanien' },
@@ -163,11 +165,12 @@ describe('grading, override, reveal (§2.5, §2.6)', () => {
         { team: 8, text: 'Norge' },
       ],
     });
+    expect(g.state.gradeInFlight).toEqual({ '0': g.grade });
     const result = step(
       g.state,
       {
         type: 'gradeResult',
-        questionIndex: 0,
+        requestId: 0,
         failed: false,
         results: [
           { team: 1, gradedText: 'Spanien', rowIndex: rowIndexOf('Spanien'), needsReview: false, reason: 'exact' },
@@ -186,6 +189,7 @@ describe('grading, override, reveal (§2.5, §2.6)', () => {
     expect(s.phase).toBe('reveal');
     expect(s.revealed).toBe(0);
     expect(s.gradeStatus['0']).toBe('done');
+    expect(s.gradeInFlight).toEqual({});
     expect(s.grades[answerKey(0, 1)]).toMatchObject({ rank: 4, points: 4, manual: false });
     expect(s.grades[answerKey(0, 3)]).toMatchObject({ rank: 10, points: 10 });
     expect(s.grades[answerKey(0, 4)]).toMatchObject({ rank: 11, points: 0 });
@@ -209,7 +213,7 @@ describe('grading, override, reveal (§2.5, §2.6)', () => {
       [
         {
           type: 'gradeResult',
-          questionIndex: 0,
+          requestId: 0,
           failed: true,
           results: [{ team: 2, gradedText: 'Czechia', rowIndex: null, needsReview: true, reason: 'model unavailable' }],
         },
@@ -239,7 +243,7 @@ describe('grading, override, reveal (§2.5, §2.6)', () => {
       [
         {
           type: 'gradeResult',
-          questionIndex: 0,
+          requestId: 0, // the batch
           failed: false,
           results: [
             { team: 5, gradedText: 'Polen', rowIndex: rowIndexOf('Polen'), needsReview: false, reason: '' },
@@ -249,7 +253,8 @@ describe('grading, override, reveal (§2.5, §2.6)', () => {
       ],
       T0 + 2,
     );
-    expect(r.grades[answerKey(0, 5)]).toBeUndefined(); // stale, dropped; the DO grades 'Belgien' separately
+    expect(r.grades[answerKey(0, 5)]).toBeUndefined(); // stale, dropped; the DO grades 'Belgien' separately (request 1)
+    expect(Object.keys(r.gradeInFlight)).toEqual(['1']);
     expect(r.grades[answerKey(0, 6)]).toMatchObject({ rank: 2, points: 2, manual: true });
   });
 
@@ -270,7 +275,7 @@ describe('grading, override, reveal (§2.5, §2.6)', () => {
     const out = step(s, { type: 'answer', team: 6, text: 'Italien', source: 'admin' }, T0);
     expect(out.error).toBeUndefined();
     expect(out.state.answers[answerKey(0, 6)]).toMatchObject({ text: 'Italien', source: 'admin' });
-    expect(out.grade).toEqual({ questionIndex: 0, answers: [{ team: 6, text: 'Italien' }] });
+    expect(out.grade).toEqual({ id: 1, questionIndex: 0, answers: [{ team: 6, text: 'Italien' }] });
   });
 
   it('manual entry while the question is open is graded with everyone else on Rätta', () => {
@@ -307,7 +312,7 @@ describe('standings and moving on (§2.7)', () => {
       [
         {
           type: 'gradeResult',
-          questionIndex: 0,
+          requestId: 0,
           failed: false,
           results: [{ team: 2, gradedText: 'Tyskland', rowIndex: rowIndexOf('Tyskland'), needsReview: false, reason: '' }],
         },
@@ -337,7 +342,7 @@ describe('standings and moving on (§2.7)', () => {
     let s = claimAll(fresh());
     for (let q = 0; q < quiz.questions.length; q++) {
       s = run(s, [{ type: 'start' }, { type: 'lock' }, { type: 'grade' }], T0);
-      s = run(s, [{ type: 'gradeResult', questionIndex: q, failed: false, results: [] }, { type: 'revealAll' }, { type: 'standings' }, { type: 'next' }], T0);
+      s = run(s, [{ type: 'gradeResult', requestId: q, failed: false, results: [] }, { type: 'revealAll' }, { type: 'standings' }, { type: 'next' }], T0);
     }
     expect(s.phase).toBe('final');
     expect(s.questionIndex).toBe(quiz.questions.length - 1);
@@ -410,28 +415,28 @@ describe('R1 review fixes', () => {
     const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
     const locked = run(open, [{ type: 'answer', team: 1, text: 'Tjekkiet', source: 'team' }, { type: 'lock' }], T0);
     const g = step(locked, { type: 'grade' }, T0);
-    expect(g.state.gradePending).toBe(1);
+    expect(gradesInFlight(g.state)).toBe(1);
     const manual = step(g.state, { type: 'answer', team: 2, text: 'Belgien', source: 'admin' }, T0 + 1);
-    expect(manual.grade).toEqual({ questionIndex: 0, answers: [{ team: 2, text: 'Belgien' }] });
-    expect(manual.state.gradePending).toBe(2);
+    expect(manual.grade).toEqual({ id: 1, questionIndex: 0, answers: [{ team: 2, text: 'Belgien' }] });
+    expect(gradesInFlight(manual.state)).toBe(2);
     // The quick one comes back first: still grading, nothing revealed.
     const first = step(
       manual.state,
-      { type: 'gradeResult', questionIndex: 0, failed: false, results: [{ team: 2, gradedText: 'Belgien', rowIndex: rowIndexOf('Belgien'), needsReview: false, reason: 'Exakt träff' }] },
+      { type: 'gradeResult', requestId: 1, failed: false, results: [{ team: 2, gradedText: 'Belgien', rowIndex: rowIndexOf('Belgien'), needsReview: false, reason: 'Exakt träff' }] },
       T0 + 2,
     );
     expect(first.state.phase).toBe('grading');
-    expect(first.state.gradePending).toBe(1);
+    expect(gradesInFlight(first.state)).toBe(1);
     expect(first.state.gradeStatus['0']).toBe('running');
     expect(step(first.state, { type: 'revealNext' }, T0).error?.code).toBe('phase');
     // The batch lands: now the reveal may start, with the batch's failure remembered.
     const second = step(
       first.state,
-      { type: 'gradeResult', questionIndex: 0, failed: true, results: [{ team: 1, gradedText: 'Tjekkiet', rowIndex: null, needsReview: true, reason: 'model down' }] },
+      { type: 'gradeResult', requestId: 0, failed: true, results: [{ team: 1, gradedText: 'Tjekkiet', rowIndex: null, needsReview: true, reason: 'model down' }] },
       T0 + 3,
     );
     expect(second.state.phase).toBe('reveal');
-    expect(second.state.gradePending).toBe(0);
+    expect(gradesInFlight(second.state)).toBe(0);
     expect(second.state.gradeStatus['0']).toBe('failed');
     expect(second.state.grades[answerKey(0, 2)]?.points).toBe(8);
     expect(second.state.grades[answerKey(0, 1)]?.needsReview).toBe(true);
@@ -441,6 +446,161 @@ describe('R1 review fixes', () => {
     const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
     const g = run(open, [{ type: 'lock' }, { type: 'grade' }], T0);
     expect(step(g, { type: 'grade' }, T0).error?.code).toBe('busy');
+  });
+});
+
+describe('R3 review fix: grade requests have an identity (grade-request-has-no-identity)', () => {
+  const ONLINE = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true };
+
+  /** Question 1 graded (Lag 1 = Tyskland, 1 point; request 0 settled) and the standings shown. */
+  function standingsWithLag1Graded(): GameState {
+    const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+    const g = run(open, [{ type: 'answer', team: 1, text: 'Tyskland', source: 'team' }, { type: 'lock' }, { type: 'grade' }], T0);
+    return run(
+      g,
+      [
+        { type: 'gradeResult', requestId: 0, failed: false, results: [{ team: 1, gradedText: 'Tyskland', rowIndex: rowIndexOf('Tyskland'), needsReview: false, reason: '' }] },
+        { type: 'revealAll' },
+        { type: 'standings' },
+      ],
+      T0,
+    );
+  }
+
+  it('route A: "Nästa fråga" is refused, with a message, while a hand-typed answer is being graded; the grade lands, then next works and the points stay', () => {
+    const st = standingsWithLag1Graded();
+    expect(adminView(st, quiz, T0, ONLINE).teams[0]?.total).toBe(1);
+    // Erik corrects Lag 1's answer from the standings (SPELLEDNING: "även efter att ställningen visats").
+    const typed = step(st, { type: 'answer', team: 1, text: 'Spanien', source: 'admin' }, T0 + 1);
+    expect(typed.grade).toEqual({ id: 1, questionIndex: 0, answers: [{ team: 1, text: 'Spanien' }] });
+    expect(typed.state.grades[answerKey(0, 1)]).toBeUndefined(); // the old grade is stale
+    expect(adminView(typed.state, quiz, T0, ONLINE).gradeStatus).toBe('running');
+
+    // Tapping "Nästa fråga" now would drop those points: refused, never silently.
+    const early = step(typed.state, { type: 'next' }, T0 + 2);
+    expect(early.error).toEqual({ code: 'busy', message: 'Rättning pågår – vänta några sekunder och tryck igen.' });
+    expect(early.state.phase).toBe('standings');
+    expect(early.state.questionIndex).toBe(0);
+    expect(gradesInFlight(early.state)).toBe(1);
+
+    // The result lands by id: graded, status done, still on the standings.
+    const landed = step(
+      typed.state,
+      { type: 'gradeResult', requestId: 1, failed: false, results: [{ team: 1, gradedText: 'Spanien', rowIndex: rowIndexOf('Spanien'), needsReview: false, reason: '' }] },
+      T0 + 3,
+    );
+    expect(landed.state.phase).toBe('standings');
+    expect(landed.state.grades[answerKey(0, 1)]).toMatchObject({ rank: 4, points: 4, manual: false });
+    expect(landed.state.gradeStatus['0']).toBe('done');
+    expect(gradesInFlight(landed.state)).toBe(0);
+
+    const nx = step(landed.state, { type: 'next' }, T0 + 4);
+    expect(nx.error).toBeUndefined();
+    expect(nx.state.phase).toBe('lobby');
+    expect(nx.state.questionIndex).toBe(1);
+    expect(adminView(nx.state, quiz, T0, ONLINE).teams[0]?.total).toBe(4); // on every leaderboard from now on
+    expect(adminView(nx.state, quiz, T0, ONLINE).standings[0]).toEqual({ position: 1, team: 1, points: 4 });
+  });
+
+  it('"Nästa fråga" is refused from the reveal too while a request is out, and accepted once it settles', () => {
+    const st = standingsWithLag1Graded();
+    const back = run(st, [{ type: 'backToReveal' }, { type: 'answer', team: 5, text: 'Belgien', source: 'admin' }], T0);
+    expect(step(back, { type: 'next' }, T0).error?.code).toBe('busy');
+    const settled = run(back, [{ type: 'gradeResult', requestId: 1, failed: false, results: [{ team: 5, gradedText: 'Belgien', rowIndex: rowIndexOf('Belgien'), needsReview: false, reason: '' }] }], T0);
+    expect(settled.phase).toBe('reveal');
+    expect(step(settled, { type: 'next' }, T0).error).toBeUndefined();
+  });
+
+  it('route B: a result for a request abandoned by "Nollställ frågan" is ignored, so it cannot end the replay\'s grading', () => {
+    const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+    const g = step(run(open, [{ type: 'answer', team: 1, text: 'gammalt svar', source: 'team' }, { type: 'lock' }], T0), { type: 'grade' }, T0);
+    expect(g.grade?.id).toBe(0);
+    // Reset while request 0 is out, then play the same question again.
+    const reset = run(g.state, [{ type: 'resetQuestion', confirm: CONFIRM_WORD }], T0 + 1);
+    expect(reset.questionIndex).toBe(0);
+    expect(gradesInFlight(reset)).toBe(0);
+    expect(reset.gradeStatus['0']).toBeUndefined();
+    const replay = step(run(reset, [{ type: 'start' }, { type: 'answer', team: 1, text: 'nytt svar', source: 'team' }, { type: 'lock' }], T0 + 2), { type: 'grade' }, T0 + 2);
+    expect(replay.grade?.id).toBe(1);
+    expect(replay.state.phase).toBe('grading');
+
+    // The first request's late result arrives: nothing happens.
+    const stale = step(
+      replay.state,
+      { type: 'gradeResult', requestId: 0, failed: true, results: [{ team: 1, gradedText: 'gammalt svar', rowIndex: null, needsReview: true, reason: 'late' }] },
+      T0 + 3,
+    );
+    expect(stale.changed).toBe(false);
+    expect(stale.error).toBeUndefined();
+    expect(stale.state.phase).toBe('grading');
+    expect(gradesInFlight(stale.state)).toBe(1);
+    expect(stale.state.grades[answerKey(0, 1)]).toBeUndefined();
+    expect(stale.state.gradeStatus['0']).toBe('running');
+    expect(stale.state.gradeFailed['0']).toBeUndefined(); // its failure is not remembered either
+    expect(adminView(stale.state, quiz, T0, ONLINE).gradeStatus).toBe('running');
+
+    // The replay's own result settles it.
+    const real = step(
+      stale.state,
+      { type: 'gradeResult', requestId: 1, failed: false, results: [{ team: 1, gradedText: 'nytt svar', rowIndex: null, needsReview: false, reason: 'Utanför listan' }] },
+      T0 + 4,
+    );
+    expect(real.state.phase).toBe('reveal');
+    expect(real.state.gradeStatus['0']).toBe('done');
+    expect(real.state.grades[answerKey(0, 1)]).toMatchObject({ rank: null, points: 0, needsReview: false });
+  });
+
+  it('a stale result after a reset does not stamp the question\'s grade status (the label stays idle in the lobby)', () => {
+    const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+    const g = run(open, [{ type: 'lock' }, { type: 'grade' }], T0);
+    const reset = run(g, [{ type: 'resetQuestion', confirm: CONFIRM_WORD }], T0);
+    const stale = step(reset, { type: 'gradeResult', requestId: 0, failed: true, results: [] }, T0);
+    expect(stale.changed).toBe(false);
+    expect(stale.state.gradeStatus['0']).toBeUndefined();
+    expect(adminView(stale.state, quiz, T0, ONLINE).gradeStatus).toBe('idle');
+  });
+
+  it('a result whose id was never issued is ignored', () => {
+    const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+    const g = run(open, [{ type: 'lock' }, { type: 'grade' }], T0);
+    const bogus = step(g, { type: 'gradeResult', requestId: 99, failed: false, results: [] }, T0);
+    expect(bogus.changed).toBe(false);
+    expect(bogus.state.phase).toBe('grading');
+    expect(gradesInFlight(bogus.state)).toBe(1);
+  });
+
+  it('request ids never repeat: "Nollställ spelet" forgets the requests but keeps counting', () => {
+    const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+    const g = run(open, [{ type: 'lock' }, { type: 'grade' }], T0);
+    expect(g.gradeSeq).toBe(1);
+    const reset = step(g, { type: 'resetGame', confirm: CONFIRM_WORD }, T0).state;
+    expect(reset.gradeInFlight).toEqual({});
+    expect(reset.gradeSeq).toBe(1);
+    const again = step(run(reset, [{ type: 'claim', team: 1, deviceId: 'x' }, { type: 'start' }, { type: 'lock' }], T0), { type: 'grade' }, T0);
+    expect(again.grade?.id).toBe(1);
+    // The pre-reset request's result (id 0) cannot touch the new game.
+    const stale = step(again.state, { type: 'gradeResult', requestId: 0, failed: false, results: [] }, T0);
+    expect(stale.changed).toBe(false);
+    expect(stale.state.phase).toBe('grading');
+  });
+
+  it('restart recovery: the in-flight requests are persisted with the state, and a legacy gradePending counter is dropped on load', () => {
+    const st = standingsWithLag1Graded();
+    const typed = step(st, { type: 'answer', team: 1, text: 'Spanien', source: 'admin' }, T0 + 1);
+    // What the DO writes to storage before the request goes out: the request itself, by id.
+    const persisted = JSON.parse(JSON.stringify(typed.state)) as GameState;
+    expect(persisted.gradeInFlight['1']).toEqual({ id: 1, questionIndex: 0, answers: [{ team: 1, text: 'Spanien' }] });
+    const reloaded = migrateState(persisted, T0 + 2);
+    expect(reloaded.gradeInFlight).toEqual(typed.state.gradeInFlight);
+    expect(reloaded.gradeSeq).toBe(2);
+    // A state from the build before request ids: no requests to resend, counter gone.
+    const legacy = { ...JSON.parse(JSON.stringify(st)), gradePending: 1 } as Partial<GameState> & { v: 1 };
+    delete (legacy as { gradeInFlight?: unknown }).gradeInFlight;
+    delete (legacy as { gradeSeq?: unknown }).gradeSeq;
+    const migrated = migrateState(legacy, T0);
+    expect(migrated.gradeInFlight).toEqual({});
+    expect(migrated.gradeSeq).toBe(0);
+    expect('gradePending' in migrated).toBe(false);
   });
 });
 

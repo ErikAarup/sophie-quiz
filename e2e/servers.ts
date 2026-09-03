@@ -1,6 +1,6 @@
 // The e2e harness's two servers, living in the Playwright runner process:
 //  1. a mock of the Anthropic Messages API (what the Worker's grader talks to during e2e), with
-//     switchable modes: ok | fail | timeout;
+//     switchable modes: ok | fail | timeout | slow (3 s, then ok);
 //  2. a control endpoint the tests use to switch the mock and to kill/restart `wrangler dev`
 //     (the "worker restart mid-question" scenario).
 import { execSync, spawn, type ChildProcess } from 'node:child_process';
@@ -10,7 +10,10 @@ import { resolve } from 'node:path';
 import { normalize } from '../src/shared/normalize.ts';
 import { BASE_URL, E2E_PORT, LOG_DIR, MOCK_PORT, PERSIST_DIR, ROOT } from './env.ts';
 
-export type MockMode = 'ok' | 'fail' | 'timeout';
+export type MockMode = 'ok' | 'fail' | 'timeout' | 'slow';
+
+/** `slow` mode: how long the mock model thinks before answering (inside the grader's 8 s timeout). */
+export const SLOW_MODEL_MS = 3_000;
 
 interface Harness {
   server: Server;
@@ -123,6 +126,7 @@ async function handleMessages(h: Harness, req: IncomingMessage, res: ServerRespo
     json(res, 500, { type: 'error', error: { type: 'api_error', message: 'mock: too slow' } });
     return;
   }
+  if (h.mode === 'slow') await new Promise((r) => setTimeout(r, SLOW_MODEL_MS));
   const results = payload ? gradeLikeAModel(payload) : [];
   json(res, 200, {
     id: 'msg_mock_' + Date.now(),

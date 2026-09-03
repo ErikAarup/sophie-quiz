@@ -8,7 +8,7 @@
 // - Full state on every change and on connect; no deltas.
 
 import { DurableObject } from 'cloudflare:workers';
-import { initialState, migrateState, reduce, type GameEvent, type GradeRequest, type KickReason, type Outcome } from '../shared/game.ts';
+import { initialState, migrateState, reduce, type GameEvent, type GradeRequest, type GradeResultRow, type KickReason, type Outcome } from '../shared/game.ts';
 import {
   CONFIRM_WORD,
   TEAMS,
@@ -41,7 +41,13 @@ const STATE_KEY = 'state';
 export class Game extends DurableObject<Env> {
   private state: GameState = initialState(0);
   private readonly quiz: Quiz;
-  private resumeGrading = false;
+  /**
+   * Set by the constructor when we came back from a restart with grading unfinished; the alarm
+   * it arms does the work. `resend`: send the persisted in-flight requests again, as they were.
+   * `regrade`: nothing is in flight but the phase says grading (a state from before request ids
+   * existed): back to locked and run "Rätta" afresh.
+   */
+  private resume: 'resend' | 'regrade' | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -54,12 +60,18 @@ export class Game extends DurableObject<Env> {
       const stored = await ctx.storage.get<GameState>(STATE_KEY);
       if (stored && stored.v === 1) {
         this.state = migrateState(stored, Date.now());
-        if (this.state.phase === 'grading' || this.state.gradePending > 0) {
-          // We died with grading in flight. Nothing is outstanding any more: back to locked if we
-          // were grading, and grade again on the next alarm (manual grades are never overwritten).
-          if (this.state.phase === 'grading') this.state.phase = 'locked';
-          this.state.gradePending = 0;
-          this.resumeGrading = true;
+        if (Object.keys(this.state.gradeInFlight).length > 0) {
+          // We died with grade requests out. Their ids and answers are persisted, so they are
+          // simply sent again on the next alarm; the game waits exactly as it did before the
+          // restart (still grading, or still refusing "Nästa fråga" until they land).
+          this.resume = 'resend';
+          await ctx.storage.put(STATE_KEY, this.state);
+          await ctx.storage.setAlarm(Date.now() + 500);
+        } else if (this.state.phase === 'grading') {
+          // Grading with nothing outstanding: a state written before requests had ids. Back to
+          // locked and grade again (manual grades are never overwritten).
+          this.state.phase = 'locked';
+          this.resume = 'regrade';
           await ctx.storage.put(STATE_KEY, this.state);
           await ctx.storage.setAlarm(Date.now() + 500);
         }
@@ -174,8 +186,11 @@ export class Game extends DurableObject<Env> {
       // Fired early (clock skew): try again at the deadline.
       await this.ctx.storage.setAlarm(s.deadlineAt);
     }
-    if (this.resumeGrading) {
-      this.resumeGrading = false;
+    const resume = this.resume;
+    this.resume = null;
+    if (resume === 'resend') {
+      await Promise.all(Object.values(this.state.gradeInFlight).map((req) => this.runGrader(req)));
+    } else if (resume === 'regrade') {
       if (s.phase === 'locked' || s.phase === 'reveal' || s.phase === 'standings') await this.apply({ type: 'grade' });
     }
   }
@@ -312,12 +327,24 @@ export class Game extends DurableObject<Env> {
 
   private async runGrader(req: GradeRequest): Promise<void> {
     const question = this.quiz.questions[req.questionIndex];
-    if (!question) return;
-    const result = await gradeAnswers(question, req.answers, {
-      apiKey: this.env.ANTHROPIC_API_KEY,
-      baseURL: this.env.ANTHROPIC_BASE_URL,
-    });
-    await this.apply({ type: 'gradeResult', questionIndex: req.questionIndex, results: result.rows, failed: result.failed });
+    let rows: GradeResultRow[];
+    let failed: boolean;
+    try {
+      if (!question) throw new Error(`no question ${req.questionIndex}`);
+      const result = await gradeAnswers(question, req.answers, {
+        apiKey: this.env.ANTHROPIC_API_KEY,
+        baseURL: this.env.ANTHROPIC_BASE_URL,
+      });
+      rows = result.rows;
+      failed = result.failed;
+    } catch (err) {
+      // gradeAnswers never throws by contract; should it ever, the request must still settle
+      // (an id left in flight would hold "Nästa fråga" until a restart). Everything goes to Erik.
+      const reason = `Rättningen kraschade (${err instanceof Error ? err.message.slice(0, 120) : String(err)})`;
+      rows = req.answers.map((a) => ({ team: a.team, gradedText: a.text, rowIndex: null, needsReview: true, reason }));
+      failed = true;
+    }
+    await this.apply({ type: 'gradeResult', requestId: req.id, results: rows, failed });
   }
 
   private presence(now: number): Record<Team, boolean> {
