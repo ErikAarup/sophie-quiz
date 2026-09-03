@@ -1,0 +1,26 @@
+{
+  // Sophies topp tio — one Worker, one Durable Object (`Game`), static assets from dist/public.
+  // Secrets (never here, never in the bundle): ANTHROPIC_API_KEY, ADMIN_TOKEN via `wrangler secret put`
+  // or `.dev.vars` locally. See SPELLEDNING.md.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sophie-quiz",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist/public",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none",
+    "run_worker_first": ["/ws", "/health"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "GAME", "class_name": "Game" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Game"] }],
+  "vars": {
+    // QUESTION_SECONDS overrides data/quiz.json durationSeconds when set (the e2e suite sets it
+    // to a few seconds via `wrangler dev --var`). Leave unset in production.
+  },
+  "observability": { "enabled": true }
+}

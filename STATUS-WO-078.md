@@ -1,32 +1,37 @@
-# STATUS — WO-078 (sophie-quiz)
+# WO-078 — build heartbeat
 
-> Heartbeat file. **File mtime = liveness**, never task state. The PR-loop watcher reads
-> this file's mtime: older than the stall threshold while the queue record says `running`
-> means the build is stalled, and the loop repairs or parks it.
->
-> Touch it at every phase boundary **and at least every ~15 minutes during any
-> long operation** (WO-014 §2.7) — a phase that outlives the stall threshold looks exactly
-> like a crash from the outside, and on 2026-08-17 that parked a live builder.
->
-> Per-work-order filename (WO-014 §2.6): a shared repo-root `STATUS.md` is what made every
-> parallel build hand-resolve the same merge conflict.
+**Branch:** `build/wo-078` · **Worktree:** `C:\Users\erika\projects\sophie-quiz\.claude\worktrees\wo-078`
+**Stamped by the loop at dispatch:** 2026-09-03T14:51:02.979Z
+**Phase:** 1 — scaffold + state machine + tests (shared core written, unit tests written, installing deps)
+**Last touch:** 2026-09-03 17:05 +02:00
 
-- **phase:** not started
-- **state:** queued
-- **last update:** (set by the build agent — read the clock, never state a time from memory)
-- **blocker:** none
+> Reset at dispatch so this file can never show the PREVIOUS work order's status
+> (WO-019 §2.6). Everything below this line is written by WO-078
+> and by nothing else. If it still reads like this well past dispatch, the builder never
+> got going — that is a real signal, not a stale file.
 
-## Acceptance criteria
+## Goal (restated at every phase boundary)
 
-Restated verbatim from `WORK_ORDER.md` §2 at every phase boundary — the goal-drift counter.
+Build the phone app for the top-ten quiz at Sophie's 25th on Saturday 5 Sept 2026: eight
+teams (Lag 1–8) claim a slot, see the question and a shared 150-second clock, type one
+answer, a model matches it against the list, Erik reveals the list row by row from his
+phone, and a leaderboard shows between questions. Cloudflare Workers + Durable Objects only.
 
-## Decision ledger
+## §2 Acceptance criteria (verbatim)
 
-| # | Decision | Why | Commit |
-|---|---|---|---|
+1. **Join.** A guest opens the app's URL on a phone (scanned from a QR code the repo provides as a printable page), sees eight big tiles Lag 1 to Lag 8, taps one, and is in. A second phone tapping the same tile is refused with "Lag 3 är redan taget" and can pick another. Erik can release any slot from admin; the released phone is sent back to the tiles with a message.
+2. **Question.** When Erik taps "Starta fråga N" on admin, every joined phone shows the question text and a 150-second countdown within two seconds of each other. The countdown is server-authoritative: phones display the same remaining time (±1 s) even after a page reload, and answers lock on the server at zero regardless of what any phone shows.
+3. **Pause and control.** Erik can pause and resume the countdown, add 30 seconds, or lock the answers early. Every phone follows within two seconds. A paused clock stays paused across an admin page reload.
+4. **Answer.** A team types one free-text answer and taps send. The phone shows "Svar skickat" and the text; the team may change it any number of times until lock; the last text before lock is the one graded. An answer sent after lock is refused with a message. Admin shows, per team, "svar" / "väntar" / "offline" live.
+5. **Grade.** On "Rätta", every submitted answer is matched to a row of the question's 15-row list or to "utanför listan": misspellings, casing, diacritics, Swedish/English names and obvious synonyms match ("tjeckien", "Czechia", "Czech Republic" all match Tjeckien). Points = matched rank for ranks 1–10; ranks 11–15 and no match score 0 but the position 11–15 is still shown. Grading completes within 20 seconds; if the model is unavailable, exact-match grading applies and the rest are flagged "ogranskad" for Erik. Erik can tap any team's row on admin and set the rank by hand (0–15), before or after the reveal; the leaderboard follows.
+6. **Reveal.** Erik taps "Visa nästa rad" up to ten times; phones show rows 1..n revealed and the rest hidden. The moment a team's matched row is revealed, its phone highlights "Ert svar: Portugal — plats 10 — 10 poäng". After row 10, rows 11–15 appear as "nära skott". "Visa alla" reveals everything at once.
+7. **Standings.** "Visa ställningen" shows the cumulative leaderboard on every phone, the team's own row highlighted; ties share a position. "Nästa fråga" moves everyone on. After question 10, a final standings screen names the winner.
+8. **Manual entry.** For any team, at any point of a question, Erik can type that team's answer on admin; it is graded and shown like any other.
+9. **Resilience.** A phone that loses connection or is reloaded comes back to exactly the state the game is in, still as its team, with its answer intact. Killing and restarting the worker loses nothing: the whole game state is persisted. Admin shows "offline" for a team within 10 seconds of its socket dropping.
+10. **Erik's runbook.** `SPELLEDNING.md` (Swedish) tells Erik, step by step, what to do Friday (set secrets, choose lists, deploy, smoke test with two phones, print QR) and Saturday (open admin, what each button does, what to do if a phone dies, how to reset a question, how to reset the whole game). Every command in it has been run by the builder.
 
-## Parked for Erik (needs-erik)
+## Progress log
 
-_none_
-
-## Phase log
+- 2026-09-03 16:51 — Builder started. Read dispatch + WORK_ORDER.md. Phase 0: orientation.
+- 2026-09-03 16:58 — Orientation done: wrangler whoami OK (deploy is on); ANTHROPIC_API_KEY present in shared `.dev.vars` (copied to worktree, ADMIN_TOKEN generated locally, gitignored); bank = 100 lists; `design/claude-design/` has no export yet (building from §E + reference sketches).
+- 2026-09-03 17:05 — Phase 1 in progress: package.json/tsconfigs/wrangler.jsonc, data (bank snapshot, quiz.json with ten verified placeholders, aliases.json), src/shared (types, game reducer, scoring, normalize, format, view), unit tests written. Running `npm install` (first attempt hit a workers-types peer conflict; bumped to 5.x).

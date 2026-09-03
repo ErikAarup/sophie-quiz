@@ -1,0 +1,3 @@
+# Copy to .dev.vars (gitignored). Same names go to Cloudflare with `wrangler secret put`.
+ANTHROPIC_API_KEY=sk-ant-...
+ADMIN_TOKEN=a-long-random-string-only-erik-knows
