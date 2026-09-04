@@ -1233,7 +1233,9 @@
   "highest-grossing-film-franchises": {
     "Marvel Cinematic Universe": [
       "mcu",
-      "marvel"
+      "marvel",
+      "Marvel-filmerna",
+      "Marvels filmuniversum"
     ],
     "Spider-Man": [
       "spiderman",
