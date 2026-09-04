@@ -1,11 +1,11 @@
 // Per-role projections of the game state. Players only ever receive what their phone may show
 // (hidden rows stay hidden, their own grade appears the moment the row is revealed).
 
-import { gradesInFlight } from './game.ts';
+import { gradesInFlight, teamCountLock } from './game.ts';
 import { standings as computeStandings, totals, winners } from './scoring.ts';
 import {
-  TEAMS,
   answerKey,
+  teamsUpTo,
   type AdminStateView,
   type AdminTeamView,
   type BaseStateView,
@@ -46,6 +46,7 @@ function base(state: GameState, quiz: Quiz, now: number, maskHidden: boolean): B
     phase: state.phase,
     questionIndex: state.questionIndex,
     questionCount: quiz.questions.length,
+    teamCount: state.teamCount,
     question: questionVisible
       ? {
           number: state.questionIndex + 1,
@@ -64,8 +65,8 @@ function base(state: GameState, quiz: Quiz, now: number, maskHidden: boolean): B
     revealed: state.revealed,
     visibleRows: visible,
     rows,
-    standings: computeStandings(state.grades),
-    winners: state.phase === 'final' ? winners(state.grades) : [],
+    standings: computeStandings(state.grades, state.teamCount),
+    winners: state.phase === 'final' ? winners(state.grades, state.teamCount) : [],
   };
 }
 
@@ -99,7 +100,7 @@ function lastLine(state: GameState, question: QuizQuestion | undefined, team: Te
 
 export function playerView(state: GameState, quiz: Quiz, now: number, team: Team | null, deviceId: string | null): PlayerStateView {
   const question = quiz.questions[state.questionIndex];
-  const taken = TEAMS.filter((t) => {
+  const taken = teamsUpTo(state.teamCount).filter((t) => {
     const slot = state.slots[t];
     return slot !== null && slot.deviceId !== deviceId;
   });
@@ -120,8 +121,8 @@ export function playerView(state: GameState, quiz: Quiz, now: number, team: Team
 
 export function adminView(state: GameState, quiz: Quiz, now: number, online: Record<Team, boolean>): AdminStateView {
   const question = quiz.questions[state.questionIndex];
-  const sums = totals(state.grades);
-  const teams: AdminTeamView[] = TEAMS.map((team) => {
+  const sums = totals(state.grades, state.teamCount);
+  const teams: AdminTeamView[] = teamsUpTo(state.teamCount).map((team) => {
     const claimed = state.slots[team] !== null;
     const key = answerKey(state.questionIndex, team);
     const answer = state.answers[key];
@@ -157,5 +158,6 @@ export function adminView(state: GameState, quiz: Quiz, now: number, online: Rec
     role: 'admin',
     teams,
     gradeStatus: gradesInFlight(state, state.questionIndex) > 0 ? 'running' : (state.gradeStatus[String(state.questionIndex)] ?? 'idle'),
+    teamCountLock: teamCountLock(state),
   };
 }

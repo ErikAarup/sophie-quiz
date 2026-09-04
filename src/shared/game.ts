@@ -4,17 +4,24 @@
 
 import { pointsForRank } from './scoring.ts';
 import {
+  ALL_TEAMS,
   CONFIRM_WORD,
   MAX_ANSWER_LENGTH,
-  TEAMS,
+  MAX_TEAM_COUNT,
+  MIN_TEAM_COUNT,
+  TEAM_COUNT,
   answerKey,
+  clampTeamCount,
   isTeam,
+  isTeamCount,
   teamName,
+  teamsUpTo,
   type Answer,
   type GameState,
   type Grade,
   type GradeRequest,
   type Quiz,
+  type Slot,
   type Team,
 } from './types.ts';
 
@@ -50,7 +57,8 @@ export type GameEvent =
   | { type: 'backToReveal' }
   | { type: 'next' }
   | { type: 'resetQuestion'; confirm: string }
-  | { type: 'resetGame'; confirm: string };
+  | { type: 'resetGame'; confirm: string }
+  | { type: 'setTeamCount'; count: number };
 
 export interface GradeResultRow {
   team: Team;
@@ -75,18 +83,21 @@ export interface Outcome {
   grade?: GradeRequest;
 }
 
-const ZERO_BY_TEAM = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 } as Record<Team, number>;
+/** The per-team records are keyed over the whole 1..12 space; only `teamCount` of them are in play. */
+const ZERO_BY_TEAM = Object.fromEntries(ALL_TEAMS.map((t) => [t, 0])) as Record<Team, number>;
+const NULL_BY_TEAM = () => Object.fromEntries(ALL_TEAMS.map((t) => [t, null])) as Record<Team, Slot | null>;
 
 export function initialState(now: number): GameState {
   return {
     v: 1,
     phase: 'lobby',
+    teamCount: TEAM_COUNT,
     questionIndex: 0,
     deadlineAt: null,
     pausedRemainingMs: null,
     totalMs: 0,
     revealed: 0,
-    slots: { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null },
+    slots: NULL_BY_TEAM(),
     claimGen: { ...ZERO_BY_TEAM },
     answers: {},
     grades: {},
@@ -104,6 +115,8 @@ export function migrateState(stored: Partial<GameState> & { v: 1 }, now: number)
   const state: GameState = {
     ...base,
     ...stored,
+    // A state written before WO-084 has no team count: it was an eight-team game, and stays one.
+    teamCount: clampTeamCount(stored.teamCount ?? TEAM_COUNT),
     slots: { ...base.slots, ...(stored.slots ?? {}) },
     claimGen: { ...base.claimGen, ...(stored.claimGen ?? {}) },
     answers: stored.answers ?? {},
@@ -116,6 +129,23 @@ export function migrateState(stored: Partial<GameState> & { v: 1 }, now: number)
   // Builds before request ids kept a bare `gradePending` counter; it carries no requests to resend.
   delete (state as unknown as Record<string, unknown>)['gradePending'];
   return state;
+}
+
+/**
+ * Why "Antal lag" is locked, or null when it may still be changed (WO-084 AC1): only on the very
+ * first lobby, before any phone has taken a tile and before any answer or grade exists. Shared by
+ * the reducer (which refuses) and the admin view (which greys the stepper out and says why), so
+ * the two can never disagree.
+ */
+export function teamCountLock(state: GameState): 'started' | 'held' | null {
+  const started =
+    state.phase !== 'lobby' ||
+    state.questionIndex !== 0 ||
+    Object.keys(state.answers).length > 0 ||
+    Object.keys(state.grades).length > 0;
+  if (started) return 'started';
+  if (ALL_TEAMS.some((t) => state.slots[t] !== null)) return 'held';
+  return null;
 }
 
 /** Grade requests still unanswered for a question (all of them if no question is given). */
@@ -216,6 +246,9 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
   switch (event.type) {
     case 'claim': {
       if (!isTeam(event.team)) return refuse('badTeam', 'Ogiltigt lag.');
+      // Above the count the team does not exist tonight: a stale phone (or an old tile) is told so
+      // rather than being given a slot nobody scores.
+      if (event.team > state.teamCount) return refuse('noTeam', `${teamName(event.team)} är inte med i kvällens spel.`);
       const slot = state.slots[event.team];
       if (slot && slot.deviceId !== event.deviceId) {
         return refuse('taken', `${teamName(event.team)} är redan taget`);
@@ -229,7 +262,7 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
       }
       // One slot per device: a device that already holds another team is moved, and the socket
       // bound to that other team is told to go back to the tiles.
-      for (const other of TEAMS) {
+      for (const other of ALL_TEAMS) {
         if (other === event.team) continue;
         const s = state.slots[other];
         if (s && s.deviceId === event.deviceId) {
@@ -353,7 +386,7 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
       // can never move points that are already on the board.
       const onlyUngraded = state.phase === 'reveal' || state.phase === 'standings';
       const answers: GradeRequest['answers'] = [];
-      for (const team of TEAMS) {
+      for (const team of teamsUpTo(state.teamCount)) {
         const key = answerKey(qi, team);
         const answer = state.answers[key];
         const existing = state.grades[key];
@@ -486,6 +519,18 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
       return done();
     }
 
+    case 'setTeamCount': {
+      if (!isTeamCount(event.count)) return refuse('badCount', `Antal lag måste vara ${MIN_TEAM_COUNT}–${MAX_TEAM_COUNT}.`);
+      const lock = teamCountLock(state);
+      if (lock === 'started') return refuse('started', 'Går inte att ändra när spelet startat.');
+      if (lock === 'held') return refuse('held', 'Släpp lagen först.');
+      if (state.teamCount !== event.count) {
+        state.teamCount = event.count;
+        changed = true;
+      }
+      return done();
+    }
+
     case 'resetQuestion': {
       if (event.confirm !== CONFIRM_WORD) return refuse('confirm', 'Bekräfta med NOLLSTÄLL.');
       if (state.phase === 'lobby') return refuse('phase', 'Frågan har inte startat.');
@@ -504,13 +549,16 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
 
     case 'resetGame': {
       if (event.confirm !== CONFIRM_WORD) return refuse('confirm', 'Bekräfta med NOLLSTÄLL.');
-      for (const team of TEAMS) {
+      for (const team of ALL_TEAMS) {
         const slot = state.slots[team];
         if (slot) kicked.push({ team, deviceId: slot.deviceId, reason: 'reset' });
       }
       const fresh = initialState(now);
+      // "Nollställ spelet" is what Erik presses before the guests arrive, after he has set the
+      // count: the evening's team count is the one thing a reset must keep (WO-084 AC3).
+      fresh.teamCount = state.teamCount;
       // Generations keep counting up across resets, so no phone's remembered claim survives one.
-      for (const team of TEAMS) fresh.claimGen[team] = state.claimGen[team] + 1;
+      for (const team of ALL_TEAMS) fresh.claimGen[team] = state.claimGen[team] + 1;
       // Request ids keep counting too: a grader answer to a pre-reset request must never match
       // a request made after it.
       fresh.gradeSeq = state.gradeSeq;

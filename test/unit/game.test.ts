@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CONFIRM_WORD, answerKey, type GameState } from '../../src/shared/types.ts';
 import { gradesInFlight, migrateState, remainingMs } from '../../src/shared/game.ts';
 import { adminView } from '../../src/shared/view.ts';
-import { FIXTURE_SLUGS, T0, claimAll, eu, fresh, quiz, run, step } from './helpers.ts';
+import { FIXTURE_SLUGS, T0, allOnline, claimAll, eu, fresh, quiz, run, step } from './helpers.ts';
 
 const DURATION = quiz.durationMs; // the fixture's 2:30
 const rowIndexOf = (name: string) => eu.rows.findIndex((r) => r.name === name);
@@ -557,7 +557,7 @@ describe('R1 review fixes', () => {
 });
 
 describe('R3 review fix: grade requests have an identity (grade-request-has-no-identity)', () => {
-  const ONLINE = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true };
+  const ONLINE = allOnline();
 
   /** Question 1 graded (Lag 1 = Tyskland, 1 point; request 0 settled) and the standings shown. */
   function standingsWithLag1Graded(): GameState {

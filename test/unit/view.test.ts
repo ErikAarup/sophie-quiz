@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { adminView, playerView } from '../../src/shared/view.ts';
 import type { Team } from '../../src/shared/types.ts';
-import { T0, claimAll, eu, fresh, quiz, run } from './helpers.ts';
+import { T0, allOnline, claimAll, eu, fresh, quiz, run } from './helpers.ts';
 
 const rowIndexOf = (name: string) => eu.rows.findIndex((r) => r.name === name);
-const allOnline = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true } as Record<Team, boolean>;
+const online = allOnline();
 
 function revealState() {
   const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
@@ -88,7 +88,7 @@ describe('playerView', () => {
     const lv = playerView(lobby, quiz, T0, 1, 'dev-1');
     expect(lv.question).toBeNull();
     expect(lv.rows).toEqual([]);
-    expect(adminView(lobby, quiz, T0, allOnline).question?.question).toContain('folkrikaste'); // Erik needs it
+    expect(adminView(lobby, quiz, T0, online).question?.question).toContain('folkrikaste'); // Erik needs it
     const open = run(lobby, [{ type: 'start' }], T0);
     const v = playerView(open, quiz, T0, 1, 'dev-1');
     expect(v.rows.every((r) => r.name === null)).toBe(true);
@@ -100,7 +100,7 @@ describe('playerView', () => {
     expect(playerView(s, quiz, T0, 2, 'a').claimToken).toBe(s.claimGen[2]);
     expect(playerView(s, quiz, T0, null, 'zzz').claimToken).toBeNull();
     const g = run(claimAll(fresh()), [{ type: 'start' }, { type: 'answer', team: 1, text: 'Tjekkiet', source: 'team' }, { type: 'lock' }, { type: 'grade' }], T0);
-    expect(adminView(g, quiz, T0, allOnline).gradeStatus).toBe('running');
+    expect(adminView(g, quiz, T0, online).gradeStatus).toBe('running');
   });
 });
 
@@ -116,7 +116,7 @@ describe('adminView', () => {
       ],
       T0,
     );
-    const v = adminView(s2, quiz, T0, { ...allOnline, 6: false });
+    const v = adminView(s2, quiz, T0, { ...online, 6: false });
     const status = Object.fromEntries(v.teams.map((t) => [t.team, t.status]));
     expect(status).toEqual({ 1: 'svar', 2: 'väntar', 3: 'väntar', 4: 'väntar', 5: 'väntar', 6: 'offline', 7: 'väntar', 8: 'svar' });
     expect(v.rows[0]).toEqual({ rank: 1, name: 'Tyskland', label: '83,6 milj', near: false });
@@ -126,7 +126,7 @@ describe('adminView', () => {
 
   it('carries grades with row names and manual/needsReview flags', () => {
     const s = run(revealState(), [{ type: 'override', team: 1, rank: 5 }], T0);
-    const v = adminView(s, quiz, T0, allOnline);
+    const v = adminView(s, quiz, T0, online);
     expect(v.gradeStatus).toBe('done');
     expect(v.teams[2]?.grade).toEqual({ rank: 10, points: 10, manual: false, needsReview: false, rowName: 'Portugal' });
     expect(v.teams[0]?.grade).toEqual({ rank: 5, points: 5, manual: true, needsReview: false, rowName: 'Polen' });

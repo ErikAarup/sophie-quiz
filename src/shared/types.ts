@@ -1,13 +1,38 @@
 // Domain and wire types shared by the Durable Object, the clients and the tests.
 // The DO is the single source of truth; clients render what they are sent (WORK_ORDER §B).
 
+/** The count a new game starts with, and the one an older persisted state is migrated to. */
 export const TEAM_COUNT = 8;
-export type Team = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-export const TEAMS: readonly Team[] = [1, 2, 3, 4, 5, 6, 7, 8];
+export const MIN_TEAM_COUNT = 2;
+export const MAX_TEAM_COUNT = 12;
+export type Team = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+/**
+ * Every team number the wire type allows — the key space of the per-team records, not the teams
+ * in play. How many are playing is `GameState.teamCount`; iterate with `teamsUpTo(count)`.
+ * (WO-084: the old `TEAMS` meant "the eight teams", so it was renamed rather than widened —
+ * the compiler then had to be shown every place that assumed eight.)
+ */
+export const ALL_TEAMS: readonly Team[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 export const MAX_ANSWER_LENGTH = 80;
 
+/** A team number the protocol knows (1..12). Whether it is *in play* also needs the count. */
 export function isTeam(x: unknown): x is Team {
-  return typeof x === 'number' && Number.isInteger(x) && x >= 1 && x <= TEAM_COUNT;
+  return typeof x === 'number' && Number.isInteger(x) && x >= 1 && x <= MAX_TEAM_COUNT;
+}
+
+export function isTeamCount(x: unknown): x is number {
+  return typeof x === 'number' && Number.isInteger(x) && x >= MIN_TEAM_COUNT && x <= MAX_TEAM_COUNT;
+}
+
+/** Force any stored/received number into the allowed range (used when migrating old state). */
+export function clampTeamCount(x: unknown): number {
+  if (typeof x !== 'number' || !Number.isFinite(x)) return TEAM_COUNT;
+  return Math.min(MAX_TEAM_COUNT, Math.max(MIN_TEAM_COUNT, Math.round(x)));
+}
+
+/** The teams in play, in order: `[1..count]`. */
+export function teamsUpTo(count: number): readonly Team[] {
+  return ALL_TEAMS.slice(0, clampTeamCount(count));
 }
 
 export function teamName(team: Team): string {
@@ -81,6 +106,8 @@ export interface GradeRequest {
 export interface GameState {
   v: 1;
   phase: Phase;
+  /** How many teams play tonight (2..12). Set from admin before question 1; survives a game reset. */
+  teamCount: number;
   questionIndex: number; // 0-based. In 'lobby' it is the question that "Starta fråga N" will open.
   deadlineAt: number | null; // epoch ms while the clock runs (open, not paused); kept after lock for display
   pausedRemainingMs: number | null; // set while paused
@@ -142,7 +169,8 @@ export type AdminCommand =
   | { type: 'manualAnswer'; team: Team; text: string }
   | { type: 'override'; team: Team; rank: number } // 0 = utanför listan, 1..15 = row rank
   | { type: 'resetQuestion'; confirm: string }
-  | { type: 'resetGame'; confirm: string };
+  | { type: 'resetGame'; confirm: string }
+  | { type: 'setTeamCount'; count: number };
 
 export const CONFIRM_WORD = 'NOLLSTÄLL';
 
@@ -178,6 +206,7 @@ export interface BaseStateView {
   phase: Phase;
   questionIndex: number;
   questionCount: number;
+  teamCount: number;
   question: QuestionView | null;
   deadlineAt: number | null;
   pausedRemainingMs: number | null;
@@ -227,10 +256,15 @@ export interface AdminTeamView {
   total: number; // cumulative points
 }
 
+/** Why "Antal lag" cannot be changed right now, or null when it can (WO-084 AC1). */
+export type TeamCountLock = 'started' | 'held';
+
 export interface AdminStateView extends BaseStateView {
   role: 'admin';
   teams: AdminTeamView[];
   gradeStatus: GradeStatus;
+  /** null = the stepper is live. Otherwise the reason, so the client shows what the server would say. */
+  teamCountLock: TeamCountLock | null;
 }
 
 export type ServerMessage =

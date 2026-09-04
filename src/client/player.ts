@@ -2,7 +2,7 @@
 // clock display (server deadline minus offset-corrected local time).
 
 import { formatClock } from '../shared/format.ts';
-import { TEAMS, teamName, type PlayerResult, type PlayerStateView, type ServerMessage, type Team } from '../shared/types.ts';
+import { isTeam, teamName, teamsUpTo, type PlayerResult, type PlayerStateView, type ServerMessage, type Team } from '../shared/types.ts';
 import { byId, h, setText, svg, toggle } from './dom.ts';
 import { Connection } from './ws.ts';
 
@@ -46,7 +46,9 @@ const TOKEN_KEY = 'sq.token';
 
 let team: Team | null = (() => {
   const t = Number(storageGet(TEAM_KEY));
-  return t >= 1 && t <= 8 ? (t as Team) : null;
+  // Any team the protocol knows: whether it is in play tonight is the server's call (it refuses a
+  // remembered team above the count and sends the phone back to the tiles).
+  return isTeam(t) ? t : null;
 })();
 /** The claim generation the server gave us; sent back in hello so a released claim is not resurrected. */
 let claimToken: number | null = (() => {
@@ -138,7 +140,8 @@ let current: Screen | null = null;
 let ticker: number | undefined;
 
 function screenKey(s: PlayerStateView): string {
-  if (s.team === null) return 'tiles';
+  // The count is part of the tiles key: change it from admin and every waiting phone rebuilds.
+  if (s.team === null) return `tiles:${s.teamCount}`;
   if (s.phase === 'final') return 'final';
   return `${s.phase === 'grading' ? 'locked' : s.phase}:${s.questionIndex}:${s.team}`;
 }
@@ -183,7 +186,7 @@ function topbar(s: PlayerStateView, right: string): HTMLElement {
 }
 
 function buildScreen(s: PlayerStateView, key: string): Screen {
-  if (key === 'tiles') return tilesScreen(key);
+  if (key.startsWith('tiles:')) return tilesScreen(s, key);
   if (key === 'final') return finalScreen(key);
   switch (s.phase) {
     case 'lobby':
@@ -203,8 +206,9 @@ function buildScreen(s: PlayerStateView, key: string): Screen {
 }
 
 // ---- 1. Välj lag ----
-function tilesScreen(key: string): Screen {
-  const tiles = TEAMS.map((t) =>
+function tilesScreen(s: PlayerStateView, key: string): Screen {
+  const teams = teamsUpTo(s.teamCount);
+  const tiles = teams.map((t) =>
     h(
       'button',
       {
@@ -237,7 +241,7 @@ function tilesScreen(key: string): Screen {
       h('div', { class: 'display', style: 'font-size:64px;line-height:0.95' }, 'Topp ', h('br'), 'tio'),
       h('div', { style: 'font-size:16px;color:var(--text-2);margin-top:8px' }, 'Välj ert lag. En telefon per lag.'),
     ),
-    h('div', { class: 'tiles' }, tiles),
+    h('div', { class: 'tiles' + (teams.length > 8 ? ' many' : '') }, tiles),
     noticeEl,
     h('div', { class: 'bottom center', style: 'font-size:13px;color:var(--muted)' }, 'Fel lag? Säg till Erik så släpper han det.'),
   );
@@ -246,7 +250,7 @@ function tilesScreen(key: string): Screen {
     el,
     update(st) {
       tiles.forEach((tile, i) => {
-        const t = TEAMS[i]!;
+        const t = teams[i]!;
         const taken = st.taken.includes(t);
         // Dimmed with "TAGET" but still tappable: the server is the one that refuses (§2.1), so a
         // phone with a stale view gets the real answer, "Lag 3 är redan taget".

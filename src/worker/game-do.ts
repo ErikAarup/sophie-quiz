@@ -10,8 +10,8 @@
 import { DurableObject } from 'cloudflare:workers';
 import { initialState, migrateState, reduce, type GameEvent, type GradeRequest, type GradeResultRow, type KickReason, type Outcome } from '../shared/game.ts';
 import {
+  ALL_TEAMS,
   CONFIRM_WORD,
-  TEAMS,
   isTeam,
   teamName,
   type AdminCommand,
@@ -48,6 +48,17 @@ export class Game extends DurableObject<Env> {
    * existed): back to locked and run "Rätta" afresh.
    */
   private resume: 'resend' | 'regrade' | null = null;
+  /**
+   * WO-084 AC4. Every message is its own async invocation, and `adminCommand()` awaits `tokenOk()`
+   * before it ever reaches the reducer. Two "Rätta" taps arriving together on one socket both got
+   * through that gap and, on the exact-hit path (no model call, so nothing else to wait on), both
+   * were accepted: the reducer's busy check never saw the first one's state because it had not
+   * been written yet. Everything that reduces-and-persists now queues on this chain, so a second
+   * event always sees the first one's result and is refused properly. The grader call is
+   * deliberately *outside* the chain (see `apply`): it may take twenty seconds, and holding the
+   * lock that long would turn "Rättning pågår" into a twenty-second silence.
+   */
+  private chain: Promise<unknown> = Promise.resolve();
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -295,7 +306,26 @@ export class Game extends DurableObject<Env> {
 
   // ---------- Core: reduce, persist, effects, broadcast ----------
 
+  /** Run `fn` after everything already queued; refusals and crashes never break the chain. */
+  private serialise<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.chain.then(fn, fn);
+    this.chain = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
   private async apply(event: GameEvent): Promise<Outcome> {
+    const out = await this.serialise(() => this.applyNow(event));
+    // Outside the chain on purpose: the grader is I/O, and the next command must be able to see
+    // (and be refused by) the state this one already wrote while the model is still thinking.
+    if (out.grade) await this.runGrader(out.grade);
+    return out;
+  }
+
+  /** Reduce, persist, and tell everyone — one event at a time, never interleaved with another. */
+  private async applyNow(event: GameEvent): Promise<Outcome> {
     const out = reduce(this.state, event, Date.now(), this.quiz);
     if (out.changed) {
       this.state = out.state;
@@ -306,7 +336,6 @@ export class Game extends DurableObject<Env> {
 
     for (const k of out.kicked) this.kick(k.deviceId, k.team, k.reason);
     if (out.changed) this.broadcastAll();
-    if (out.grade) await this.runGrader(out.grade);
     return out;
   }
 
@@ -351,7 +380,7 @@ export class Game extends DurableObject<Env> {
   }
 
   private presence(now: number): Record<Team, boolean> {
-    const online = { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false, 8: false } as Record<Team, boolean>;
+    const online = Object.fromEntries(ALL_TEAMS.map((t) => [t, false])) as Record<Team, boolean>;
     for (const ws of this.ctx.getWebSockets()) {
       const att = this.attachment(ws);
       if (att.role !== 'player' || att.team === null) continue;
@@ -449,9 +478,11 @@ function toEvent(cmd: AdminCommand): GameEvent | null {
       return { type: 'resetQuestion', confirm: String(cmd.confirm ?? '') };
     case 'resetGame':
       return { type: 'resetGame', confirm: String(cmd.confirm ?? '') };
+    case 'setTeamCount':
+      return { type: 'setTeamCount', count: Number(cmd.count) };
     default:
       return null;
   }
 }
 
-export { CONFIRM_WORD, TEAMS };
+export { ALL_TEAMS, CONFIRM_WORD };

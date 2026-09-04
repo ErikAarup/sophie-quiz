@@ -4,7 +4,7 @@
 // whatever order. `data/quiz.json` itself is checked by exactly one test: test/unit/data.test.ts.
 import { buildQuestion, listBySlug } from '../../src/worker/bank.ts';
 import { initialState, reduce, type GameEvent, type Outcome } from '../../src/shared/game.ts';
-import type { GameState, Quiz, Team } from '../../src/shared/types.ts';
+import { ALL_TEAMS, teamsUpTo, type GameState, type Quiz, type Team } from '../../src/shared/types.ts';
 import { TEST_QUESTIONS } from '../fixtures/questions.ts';
 
 /** Ten bank lists, in a fixed order. Question 1 is the EU list every expectation below is written against. */
@@ -70,11 +70,17 @@ export function fresh(now = T0): GameState {
   return initialState(now);
 }
 
+/** Every team in play takes a tile (WO-084: as many as `state.teamCount` says, not always eight). */
 export function claimAll(state: GameState, now = T0): GameState {
-  const events: GameEvent[] = ([1, 2, 3, 4, 5, 6, 7, 8] as Team[]).map((team) => ({
+  const events: GameEvent[] = teamsUpTo(state.teamCount).map((team) => ({
     type: 'claim',
     team,
     deviceId: `dev-${team}`,
   }));
   return run(state, events, now);
+}
+
+/** Presence record for `adminView`: keyed over the whole 1..12 space, everyone online. */
+export function allOnline(): Record<Team, boolean> {
+  return Object.fromEntries(ALL_TEAMS.map((t) => [t, true])) as Record<Team, boolean>;
 }

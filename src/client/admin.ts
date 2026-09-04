@@ -4,6 +4,8 @@
 import { formatClock } from '../shared/format.ts';
 import {
   CONFIRM_WORD,
+  MAX_TEAM_COUNT,
+  MIN_TEAM_COUNT,
   teamName,
   type AdminCommand,
   type AdminStateView,
@@ -16,24 +18,35 @@ import { Connection } from './ws.ts';
 
 const TOKEN_KEY = 'sq.admin';
 
-function readToken(): string {
+/**
+ * WO-084 AC5. The token in `?t=` used to be written to localStorage on sight, so one visit to a
+ * link with a typo replaced the good key Erik's bookmark had put there, and every later plain
+ * `/admin` was dead until he found the full link again. Now the URL's token is only *used*; it is
+ * remembered when — and only when — the server has answered the admin hello with a state.
+ */
+function readToken(): { value: string; fromUrl: boolean } {
   const fromUrl = new URLSearchParams(location.search).get('t');
-  if (fromUrl) {
-    try {
-      localStorage.setItem(TOKEN_KEY, fromUrl);
-    } catch {
-      // ignore
-    }
-    return fromUrl;
-  }
+  if (fromUrl) return { value: fromUrl, fromUrl: true };
   try {
-    return localStorage.getItem(TOKEN_KEY) ?? '';
+    return { value: localStorage.getItem(TOKEN_KEY) ?? '', fromUrl: false };
   } catch {
-    return '';
+    return { value: '', fromUrl: false };
   }
 }
 
-const token = readToken();
+const { value: token, fromUrl: tokenFromUrl } = readToken();
+/** A token read out of storage is already stored; one from the URL waits for the server's word. */
+let tokenAccepted = !tokenFromUrl;
+
+function rememberToken(): void {
+  if (tokenAccepted) return;
+  tokenAccepted = true;
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    // private mode: the link works for this page load, the bookmark keeps the key
+  }
+}
 const app = byId('app');
 
 let state: AdminStateView | null = null;
@@ -56,6 +69,7 @@ function onMessage(m: ServerMessage): void {
   switch (m.type) {
     case 'state':
       if (m.role !== 'admin') return;
+      rememberToken(); // the server accepted this token: only now may it replace the cached one
       state = m;
       render();
       break;
@@ -158,7 +172,7 @@ function remainingMs(s: AdminStateView): number {
 function buildScreen(s: AdminStateView, key: string): Screen {
   switch (s.phase) {
     case 'lobby':
-      return lobbyScreen(key);
+      return lobbyScreen(key, s.questionIndex === 0);
     case 'open':
     case 'locked':
     case 'grading':
@@ -172,36 +186,75 @@ function buildScreen(s: AdminStateView, key: string): Screen {
   }
 }
 
-// ---- team grid (2×4) ----
+// ---- team grid (two columns, one row per team in play) ----
 function teamGrid(): { el: HTMLElement; update: (s: AdminStateView) => void } {
-  const cells = ([1, 2, 3, 4, 5, 6, 7, 8] as Team[]).map((t) => {
-    const status = h('div', { class: 'status' });
-    const cell = h(
-      'button',
-      {
-        class: 'row',
-        type: 'button',
-        'data-team': t,
-        onClick: () => {
-          sheet = { kind: 'team', team: t };
-          renderSheet();
-        },
-      },
-      h('div', { class: 'grow', style: 'font-size:15px;font-weight:600' }, teamName(t)),
-      status,
-    );
-    return { cell, status };
-  });
-  const el = h('div', { class: 'team-grid' }, cells.map((c) => c.cell));
+  const el = h('div', { class: 'team-grid' });
+  let cells: { cell: HTMLElement; status: HTMLElement }[] = [];
+  let builtFor = -1;
   return {
     el,
     update(s) {
+      // Rebuilt only when the count changes (Erik taps the stepper), never on an ordinary broadcast.
+      if (builtFor !== s.teams.length) {
+        builtFor = s.teams.length;
+        cells = s.teams.map((tv) => {
+          const t: Team = tv.team;
+          const status = h('div', { class: 'status' });
+          const cell = h(
+            'button',
+            {
+              class: 'row',
+              type: 'button',
+              'data-team': t,
+              onClick: () => {
+                sheet = { kind: 'team', team: t };
+                renderSheet();
+              },
+            },
+            h('div', { class: 'grow', style: 'font-size:15px;font-weight:600' }, teamName(t)),
+            status,
+          );
+          return { cell, status };
+        });
+        el.replaceChildren(...cells.map((c) => c.cell));
+      }
       s.teams.forEach((tv, i) => {
         const c = cells[i]!;
         c.status.className = `status ${tv.status}`;
         setText(c.status, tv.status);
         toggle(c.cell, 'offline', tv.status === 'offline');
       });
+    },
+  };
+}
+
+/**
+ * WO-084 AC1: "Antal lag" on the first lobby. Live only before anyone has taken a tile and before
+ * the first question has started; otherwise the two buttons are dead and the reason stands under
+ * them, in the same words the server refuses with.
+ */
+function teamCountControl(): { el: HTMLElement; update: (s: AdminStateView) => void } {
+  let count = 0;
+  const bump = (d: number): void => {
+    const next = count + d;
+    if (next < MIN_TEAM_COUNT || next > MAX_TEAM_COUNT) return;
+    cmd({ type: 'setTeamCount', count: next });
+  };
+  const minus = h('button', { class: 'btn btn-ghost step', type: 'button', 'data-step': 'down', 'aria-label': 'Färre lag', onClick: () => bump(-1) }, '−');
+  const plus = h('button', { class: 'btn btn-ghost step', type: 'button', 'data-step': 'up', 'aria-label': 'Fler lag', onClick: () => bump(1) }, '+');
+  const value = h('div', { class: 'team-count-value', 'data-team-count': true });
+  const reason = h('div', { class: 'muted hidden', style: 'font-size:12px;text-align:center' });
+  const el = h('div', { class: 'card team-count', style: 'padding:10px 12px;gap:6px' }, h('div', { class: 'team-count-row' }, minus, value, plus), reason);
+  return {
+    el,
+    update(s) {
+      count = s.teamCount;
+      setText(value, `Antal lag: ${s.teamCount}`);
+      const locked = s.teamCountLock !== null;
+      minus.disabled = locked || s.teamCount <= MIN_TEAM_COUNT;
+      plus.disabled = locked || s.teamCount >= MAX_TEAM_COUNT;
+      setText(reason, s.teamCountLock === 'held' ? 'Släpp lagen först.' : s.teamCountLock === 'started' ? 'Går inte att ändra när spelet startat.' : '');
+      toggle(reason, 'hidden', !locked);
     },
   };
 }
@@ -256,8 +309,11 @@ function moreMenu(): { button: HTMLElement; panel: HTMLElement } {
 }
 
 // ---- Lobby: "Starta fråga N" ----
-function lobbyScreen(key: string): Screen {
+function lobbyScreen(key: string, first: boolean): Screen {
   const label = h('div', { class: 'eyebrow' });
+  // Only the first lobby carries it: once the evening is running the count is fixed, and a dead
+  // control on all nine later lobbies would be clutter (the server refuses either way).
+  const teamCount = first ? teamCountControl() : null;
   const title = h('div', { style: 'font-size:15px;font-weight:600;line-height:1.3' });
   const question = h('div', { class: 'muted', style: 'font-size:14px;line-height:1.5' });
   const grid = teamGrid();
@@ -267,6 +323,7 @@ function lobbyScreen(key: string): Screen {
     { style: 'display:flex;flex-direction:column;gap:16px;flex-grow:1' },
     topbar(label),
     h('div', { class: 'stack', style: 'gap:6px' }, h('div', { class: 'eyebrow' }, 'Nästa lista'), title, question),
+    teamCount ? teamCount.el : null,
     h('div', { class: 'eyebrow' }, 'Lagen · tryck för att släppa en plats'),
     grid.el,
     h(
@@ -285,6 +342,7 @@ function lobbyScreen(key: string): Screen {
       setText(title, s.question?.title ?? '');
       setText(question, s.question?.question ?? '');
       setText(start, `Starta fråga ${s.questionIndex + 1}`);
+      teamCount?.update(s);
       grid.update(s);
     },
   };
@@ -348,9 +406,9 @@ function questionScreen(key: string): Screen {
       setText(
         note,
         s.phase === 'open'
-          ? `Låses av sig själv på 0:00. ${answered} av 8 har svarat. Rättning tar några sekunder.`
+          ? `Låses av sig själv på 0:00. ${answered} av ${s.teams.length} har svarat. Rättning tar några sekunder.`
           : s.phase === 'locked'
-            ? `Svaren är låsta (${answered} av 8). Tryck Rätta när du är redo att läsa listan.`
+            ? `Svaren är låsta (${answered} av ${s.teams.length}). Tryck Rätta när du är redo att läsa listan.`
             : 'Modellen matchar svaren mot listan. Fastnar den får du rätta för hand.',
       );
       grid.update(s);
