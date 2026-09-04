@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import { cloudflareTest } from '@cloudflare/vitest-pool-workers';
 import { createModelMock } from './test/do/model-mock.ts';
+import { TEST_QUESTIONS } from './test/fixtures/questions.ts';
 
 // Three projects: `unit` (pure modules, Node), `do` (the Durable Object inside workerd via the
 // workers pool), `live` (one real model call; skipped unless ANTHROPIC_API_KEY is set — see
@@ -35,6 +36,7 @@ export default defineConfig({
               bindings: {
                 ADMIN_TOKEN: 'test-admin-token',
                 QUESTION_SECONDS: '2',
+                QUIZ_QUESTIONS: JSON.stringify(TEST_QUESTIONS),
                 ANTHROPIC_API_KEY: 'do-test-dummy-key',
                 ANTHROPIC_BASE_URL: 'http://127.0.0.1:9',
               },

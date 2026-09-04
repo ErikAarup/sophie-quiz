@@ -75,11 +75,17 @@ export function buildQuestion(list: BankList, aliases: Record<string, string[]> 
 export interface BuildQuizOptions {
   /** Overrides quiz.json's durationSeconds (the e2e suite shortens the clock). */
   durationSeconds?: number | undefined;
+  /**
+   * Overrides quiz.json's question slugs (the test suites pin their own ten so the evening's
+   * real lists can change without touching a test). Production never sets this.
+   */
+  questions?: string[] | undefined;
 }
 
 /** Throws with a clear message if quiz.json names a slug that is missing or not verified/corrected. */
 export function buildQuiz(opts: BuildQuizOptions = {}): Quiz {
-  const questions = quizFile.questions.map((slug) => {
+  const slugs = opts.questions ?? quizFile.questions;
+  const questions = slugs.map((slug) => {
     const list = listBySlug(slug);
     if (!list) throw new Error(`quiz.json: no list with slug "${slug}" in data/bank.json (run npm run sync-bank?)`);
     if (list.verdict !== 'verified' && list.verdict !== 'corrected') {

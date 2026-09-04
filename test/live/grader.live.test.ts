@@ -28,7 +28,7 @@ const fixture = JSON.parse(readFileSync(resolve(import.meta.dirname, '..', 'fixt
 
 describe.skipIf(!apiKey)('live grader (real model)', () => {
   it(`grades the sample answers with ${GRADER_MODEL} within 20 s`, async () => {
-    const quiz = buildQuiz();
+    const quiz = buildQuiz({ questions: [fixture.slug] });
     const question = quiz.questions.find((q) => q.slug === fixture.slug);
     expect(question).toBeDefined();
     const t0 = Date.now();

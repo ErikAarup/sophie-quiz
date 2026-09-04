@@ -1,173 +1,1599 @@
 {
   "_comment": "Extra spellings the deterministic pre-pass accepts as exact hits (WORK_ORDER §D). Keyed by list slug, then by the row's name_sv. English names, common short forms. Casing, diacritics and punctuation do not matter. Erik adds his Friday lists the same way; anything not here goes to the model.",
   "most-populous-eu-countries": {
-    "Tyskland": ["Germany", "Deutschland"],
-    "Frankrike": ["France"],
-    "Italien": ["Italy", "Italia"],
-    "Spanien": ["Spain", "España"],
-    "Polen": ["Poland", "Polska"],
-    "Rumänien": ["Romania"],
-    "Nederländerna": ["Netherlands", "The Netherlands", "Holland", "Nederland"],
-    "Belgien": ["Belgium"],
-    "Tjeckien": ["Czechia", "Czech Republic", "Tjeckiska republiken", "Czech"],
+    "Tyskland": [
+      "Germany",
+      "Deutschland"
+    ],
+    "Frankrike": [
+      "France"
+    ],
+    "Italien": [
+      "Italy",
+      "Italia"
+    ],
+    "Spanien": [
+      "Spain",
+      "España"
+    ],
+    "Polen": [
+      "Poland",
+      "Polska"
+    ],
+    "Rumänien": [
+      "Romania"
+    ],
+    "Nederländerna": [
+      "Netherlands",
+      "The Netherlands",
+      "Holland",
+      "Nederland"
+    ],
+    "Belgien": [
+      "Belgium"
+    ],
+    "Tjeckien": [
+      "Czechia",
+      "Czech Republic",
+      "Tjeckiska republiken",
+      "Czech"
+    ],
     "Portugal": [],
-    "Sverige": ["Sweden"],
-    "Grekland": ["Greece", "Hellas"],
-    "Ungern": ["Hungary"],
-    "Österrike": ["Austria"],
-    "Bulgarien": ["Bulgaria"]
+    "Sverige": [
+      "Sweden"
+    ],
+    "Grekland": [
+      "Greece",
+      "Hellas"
+    ],
+    "Ungern": [
+      "Hungary"
+    ],
+    "Österrike": [
+      "Austria"
+    ],
+    "Bulgarien": [
+      "Bulgaria"
+    ]
   },
   "largest-european-countries-by-area": {
-    "Ryssland": ["Russia", "Russian Federation", "Ryska federationen"],
-    "Ukraina": ["Ukraine"],
-    "Frankrike": ["France"],
-    "Spanien": ["Spain"],
-    "Sverige": ["Sweden"],
-    "Norge": ["Norway"],
-    "Tyskland": ["Germany"],
-    "Finland": ["Suomi"],
-    "Polen": ["Poland"],
-    "Italien": ["Italy"],
-    "Storbritannien": ["United Kingdom", "UK", "Great Britain", "Britain", "England"],
-    "Rumänien": ["Romania"],
-    "Belarus": ["Vitryssland", "Belarus"],
-    "Kazakstan": ["Kazakhstan"],
-    "Grekland": ["Greece"]
+    "Ryssland": [
+      "Russia",
+      "Russian Federation",
+      "Ryska federationen"
+    ],
+    "Ukraina": [
+      "Ukraine"
+    ],
+    "Frankrike": [
+      "France"
+    ],
+    "Spanien": [
+      "Spain"
+    ],
+    "Sverige": [
+      "Sweden"
+    ],
+    "Norge": [
+      "Norway"
+    ],
+    "Tyskland": [
+      "Germany"
+    ],
+    "Finland": [
+      "Suomi"
+    ],
+    "Polen": [
+      "Poland"
+    ],
+    "Italien": [
+      "Italy"
+    ],
+    "Storbritannien": [
+      "United Kingdom",
+      "UK",
+      "Great Britain",
+      "Britain",
+      "England"
+    ],
+    "Rumänien": [
+      "Romania"
+    ],
+    "Belarus": [
+      "Vitryssland",
+      "Belarus"
+    ],
+    "Kazakstan": [
+      "Kazakhstan"
+    ],
+    "Grekland": [
+      "Greece"
+    ]
   },
   "countries-by-population": {
-    "Indien": ["India"],
-    "Kina": ["China", "PRC"],
-    "USA": ["United States", "United States of America", "Förenta staterna", "America", "Amerika", "US"],
-    "Indonesien": ["Indonesia"],
+    "Indien": [
+      "India"
+    ],
+    "Kina": [
+      "China",
+      "PRC"
+    ],
+    "USA": [
+      "United States",
+      "United States of America",
+      "Förenta staterna",
+      "America",
+      "Amerika",
+      "US"
+    ],
+    "Indonesien": [
+      "Indonesia"
+    ],
     "Pakistan": [],
     "Nigeria": [],
-    "Brasilien": ["Brazil", "Brasil"],
+    "Brasilien": [
+      "Brazil",
+      "Brasil"
+    ],
     "Bangladesh": [],
-    "Ryssland": ["Russia"],
-    "Mexiko": ["Mexico", "México"],
-    "Etiopien": ["Ethiopia"],
+    "Ryssland": [
+      "Russia"
+    ],
+    "Mexiko": [
+      "Mexico",
+      "México"
+    ],
+    "Etiopien": [
+      "Ethiopia"
+    ],
     "Japan": [],
-    "Filippinerna": ["Philippines", "The Philippines"],
-    "Egypten": ["Egypt"],
-    "Kongo-Kinshasa": ["DR Kongo", "DRC", "Demokratiska republiken Kongo", "Democratic Republic of the Congo", "Congo", "Kongo"]
+    "Filippinerna": [
+      "Philippines",
+      "The Philippines"
+    ],
+    "Egypten": [
+      "Egypt"
+    ],
+    "Kongo-Kinshasa": [
+      "DR Kongo",
+      "DRC",
+      "Demokratiska republiken Kongo",
+      "Democratic Republic of the Congo",
+      "Congo",
+      "Kongo"
+    ]
   },
   "tallest-mountains-world": {
-    "Mount Everest": ["Everest", "Sagarmatha", "Chomolungma"],
-    "K2": ["Godwin-Austen", "Mount Godwin-Austen", "Chhogori"],
-    "Kangchenjunga": ["Kanchenjunga"],
+    "Mount Everest": [
+      "Everest",
+      "Sagarmatha",
+      "Chomolungma"
+    ],
+    "K2": [
+      "Godwin-Austen",
+      "Mount Godwin-Austen",
+      "Chhogori"
+    ],
+    "Kangchenjunga": [
+      "Kanchenjunga"
+    ],
     "Lhotse": [],
     "Makalu": [],
     "Cho Oyu": [],
-    "Dhaulagiri": ["Dhaulagiri I"],
+    "Dhaulagiri": [
+      "Dhaulagiri I"
+    ],
     "Manaslu": [],
     "Nanga Parbat": [],
-    "Annapurna": ["Annapurna I"],
-    "Gasherbrum I": ["Hidden Peak", "K5"],
-    "Broad Peak": ["K3"],
-    "Gasherbrum II": ["K4"],
-    "Shishapangma": ["Shisha Pangma", "Gosainthan"],
+    "Annapurna": [
+      "Annapurna I"
+    ],
+    "Gasherbrum I": [
+      "Hidden Peak",
+      "K5"
+    ],
+    "Broad Peak": [
+      "K3"
+    ],
+    "Gasherbrum II": [
+      "K4"
+    ],
+    "Shishapangma": [
+      "Shisha Pangma",
+      "Gosainthan"
+    ],
     "Gyachung Kang": []
   },
   "swedish-municipalities-by-population": {
-    "Stockholm": ["Stockholms kommun", "Stockholms stad"],
-    "Göteborg": ["Gothenburg", "Göteborgs stad", "Göteborgs kommun"],
-    "Malmö": ["Malmö stad", "Malmö kommun"],
-    "Uppsala": ["Uppsala kommun"],
-    "Linköping": ["Linköpings kommun"],
-    "Västerås": ["Västerås stad", "Västerås kommun"],
-    "Örebro": ["Örebro kommun"],
-    "Helsingborg": ["Helsingborgs stad", "Helsingborgs kommun"],
-    "Jönköping": ["Jönköpings kommun"],
-    "Norrköping": ["Norrköpings kommun"],
-    "Lund": ["Lunds kommun"],
-    "Borås": ["Borås stad", "Borås kommun"],
-    "Huddinge": ["Huddinge kommun"],
-    "Eskilstuna": ["Eskilstuna kommun"],
-    "Halmstad": ["Halmstads kommun"]
+    "Stockholm": [
+      "Stockholms kommun",
+      "Stockholms stad"
+    ],
+    "Göteborg": [
+      "Gothenburg",
+      "Göteborgs stad",
+      "Göteborgs kommun"
+    ],
+    "Malmö": [
+      "Malmö stad",
+      "Malmö kommun"
+    ],
+    "Uppsala": [
+      "Uppsala kommun"
+    ],
+    "Linköping": [
+      "Linköpings kommun"
+    ],
+    "Västerås": [
+      "Västerås stad",
+      "Västerås kommun"
+    ],
+    "Örebro": [
+      "Örebro kommun"
+    ],
+    "Helsingborg": [
+      "Helsingborgs stad",
+      "Helsingborgs kommun"
+    ],
+    "Jönköping": [
+      "Jönköpings kommun"
+    ],
+    "Norrköping": [
+      "Norrköpings kommun"
+    ],
+    "Lund": [
+      "Lunds kommun"
+    ],
+    "Borås": [
+      "Borås stad",
+      "Borås kommun"
+    ],
+    "Huddinge": [
+      "Huddinge kommun"
+    ],
+    "Eskilstuna": [
+      "Eskilstuna kommun"
+    ],
+    "Halmstad": [
+      "Halmstads kommun"
+    ]
   },
   "countries-by-area": {
-    "Ryssland": ["Russia"],
-    "Kanada": ["Canada"],
-    "Kina": ["China"],
-    "USA": ["United States", "United States of America", "Förenta staterna", "America", "Amerika", "US"],
-    "Brasilien": ["Brazil", "Brasil"],
-    "Australien": ["Australia"],
-    "Indien": ["India"],
+    "Ryssland": [
+      "Russia"
+    ],
+    "Kanada": [
+      "Canada"
+    ],
+    "Kina": [
+      "China"
+    ],
+    "USA": [
+      "United States",
+      "United States of America",
+      "Förenta staterna",
+      "America",
+      "Amerika",
+      "US"
+    ],
+    "Brasilien": [
+      "Brazil",
+      "Brasil"
+    ],
+    "Australien": [
+      "Australia"
+    ],
+    "Indien": [
+      "India"
+    ],
     "Argentina": [],
-    "Kazakstan": ["Kazakhstan"],
-    "Algeriet": ["Algeria"],
-    "Kongo-Kinshasa": ["DR Kongo", "DRC", "Demokratiska republiken Kongo", "Democratic Republic of the Congo", "Congo", "Kongo"],
-    "Saudiarabien": ["Saudi Arabia", "Saudi"],
-    "Mexiko": ["Mexico"],
-    "Indonesien": ["Indonesia"],
+    "Kazakstan": [
+      "Kazakhstan"
+    ],
+    "Algeriet": [
+      "Algeria"
+    ],
+    "Kongo-Kinshasa": [
+      "DR Kongo",
+      "DRC",
+      "Demokratiska republiken Kongo",
+      "Democratic Republic of the Congo",
+      "Congo",
+      "Kongo"
+    ],
+    "Saudiarabien": [
+      "Saudi Arabia",
+      "Saudi"
+    ],
+    "Mexiko": [
+      "Mexico"
+    ],
+    "Indonesien": [
+      "Indonesia"
+    ],
     "Sudan": []
   },
   "largest-lakes-world": {
-    "Kaspiska havet": ["Caspian Sea", "Kaspiska sjön", "Kaspiska"],
-    "Lake Superior": ["Superior", "Övre sjön"],
-    "Victoriasjön": ["Lake Victoria", "Victoria"],
-    "Lake Huron": ["Huron", "Huronsjön"],
-    "Lake Michigan": ["Michigan", "Michigansjön"],
-    "Tanganyikasjön": ["Lake Tanganyika", "Tanganyika"],
-    "Bajkalsjön": ["Lake Baikal", "Baikal", "Bajkal"],
-    "Great Bear Lake": ["Stora Björnsjön"],
-    "Malawisjön": ["Lake Malawi", "Malawi", "Nyasa", "Lake Nyasa"],
-    "Great Slave Lake": ["Stora Slavsjön"],
-    "Lake Erie": ["Erie", "Eriesjön"],
-    "Winnipegsjön": ["Lake Winnipeg", "Winnipeg"],
-    "Lake Ontario": ["Ontario", "Ontariosjön"],
-    "Ladoga": ["Lake Ladoga", "Ladogasjön"],
-    "Balchashsjön": ["Lake Balkhash", "Balkhash", "Balchasj"]
+    "Kaspiska havet": [
+      "Caspian Sea",
+      "Kaspiska sjön",
+      "Kaspiska"
+    ],
+    "Lake Superior": [
+      "Superior",
+      "Övre sjön"
+    ],
+    "Victoriasjön": [
+      "Lake Victoria",
+      "Victoria"
+    ],
+    "Lake Huron": [
+      "Huron",
+      "Huronsjön"
+    ],
+    "Lake Michigan": [
+      "Michigan",
+      "Michigansjön"
+    ],
+    "Tanganyikasjön": [
+      "Lake Tanganyika",
+      "Tanganyika"
+    ],
+    "Bajkalsjön": [
+      "Lake Baikal",
+      "Baikal",
+      "Bajkal"
+    ],
+    "Great Bear Lake": [
+      "Stora Björnsjön"
+    ],
+    "Malawisjön": [
+      "Lake Malawi",
+      "Malawi",
+      "Nyasa",
+      "Lake Nyasa"
+    ],
+    "Great Slave Lake": [
+      "Stora Slavsjön"
+    ],
+    "Lake Erie": [
+      "Erie",
+      "Eriesjön"
+    ],
+    "Winnipegsjön": [
+      "Lake Winnipeg",
+      "Winnipeg"
+    ],
+    "Lake Ontario": [
+      "Ontario",
+      "Ontariosjön"
+    ],
+    "Ladoga": [
+      "Lake Ladoga",
+      "Ladogasjön"
+    ],
+    "Balchashsjön": [
+      "Lake Balkhash",
+      "Balkhash",
+      "Balchasj"
+    ]
   },
   "highest-grossing-films-worldwide": {
-    "Avatar": ["Avatar 1", "Avatar (2009)"],
-    "Avengers: Endgame": ["Endgame", "Avengers Endgame"],
-    "Spider-Man: Brand New Day": ["Brand New Day", "Spider-Man Brand New Day", "Spiderman Brand New Day"],
-    "Avatar: The Way of Water": ["Avatar 2", "The Way of Water", "Avatar The Way of Water"],
+    "Avatar": [
+      "Avatar 1",
+      "Avatar (2009)"
+    ],
+    "Avengers: Endgame": [
+      "Endgame",
+      "Avengers Endgame"
+    ],
+    "Spider-Man: Brand New Day": [
+      "Brand New Day",
+      "Spider-Man Brand New Day",
+      "Spiderman Brand New Day"
+    ],
+    "Avatar: The Way of Water": [
+      "Avatar 2",
+      "The Way of Water",
+      "Avatar The Way of Water"
+    ],
     "Titanic": [],
-    "Ne Zha 2": ["Nezha 2"],
-    "Star Wars: The Force Awakens": ["The Force Awakens", "Star Wars 7", "Star Wars VII", "Episode VII", "Episode 7"],
-    "Avengers: Infinity War": ["Infinity War", "Avengers Infinity War"],
-    "Spider-Man: No Way Home": ["No Way Home", "Spider-Man No Way Home", "Spiderman No Way Home"],
-    "Zootopia 2": ["Zootropolis 2"],
-    "Inside Out 2": ["Insidan ut 2"],
+    "Ne Zha 2": [
+      "Nezha 2"
+    ],
+    "Star Wars: The Force Awakens": [
+      "The Force Awakens",
+      "Star Wars 7",
+      "Star Wars VII",
+      "Episode VII",
+      "Episode 7"
+    ],
+    "Avengers: Infinity War": [
+      "Infinity War",
+      "Avengers Infinity War"
+    ],
+    "Spider-Man: No Way Home": [
+      "No Way Home",
+      "Spider-Man No Way Home",
+      "Spiderman No Way Home"
+    ],
+    "Zootopia 2": [
+      "Zootropolis 2"
+    ],
+    "Inside Out 2": [
+      "Insidan ut 2"
+    ],
     "Jurassic World": [],
-    "The Lion King": ["Lion King", "Lejonkungen", "The Lion King (2019)"],
-    "The Odyssey": ["Odyssey", "Odysseen"],
-    "The Avengers": ["Avengers", "Avengers (2012)", "Avengers 1"]
+    "The Lion King": [
+      "Lion King",
+      "Lejonkungen",
+      "The Lion King (2019)"
+    ],
+    "The Odyssey": [
+      "Odyssey",
+      "Odysseen"
+    ],
+    "The Avengers": [
+      "Avengers",
+      "Avengers (2012)",
+      "Avengers 1"
+    ]
   },
   "best-selling-game-consoles-all-time": {
-    "PlayStation 2": ["PS2", "Playstation 2"],
-    "Nintendo Switch": ["Switch"],
-    "Nintendo DS": ["DS"],
-    "Game Boy": ["Gameboy", "Game Boy Color", "Gameboy Color", "GBC"],
-    "PlayStation 4": ["PS4"],
-    "PlayStation": ["PS1", "PSX", "PlayStation 1", "Playstation 1"],
-    "Wii": ["Nintendo Wii"],
-    "PlayStation 5": ["PS5"],
-    "PlayStation 3": ["PS3"],
-    "Xbox 360": ["360"],
-    "Game Boy Advance": ["GBA", "Gameboy Advance"],
-    "PlayStation Portable": ["PSP"],
-    "Nintendo 3DS": ["3DS"],
-    "NES": ["Nintendo Entertainment System", "Nintendo 8-bit", "8-bitars Nintendo"],
-    "Xbox One": ["Xbone"]
+    "PlayStation 2": [
+      "PS2",
+      "Playstation 2"
+    ],
+    "Nintendo Switch": [
+      "Switch"
+    ],
+    "Nintendo DS": [
+      "DS"
+    ],
+    "Game Boy": [
+      "Gameboy",
+      "Game Boy Color",
+      "Gameboy Color",
+      "GBC"
+    ],
+    "PlayStation 4": [
+      "PS4"
+    ],
+    "PlayStation": [
+      "PS1",
+      "PSX",
+      "PlayStation 1",
+      "Playstation 1"
+    ],
+    "Wii": [
+      "Nintendo Wii"
+    ],
+    "PlayStation 5": [
+      "PS5"
+    ],
+    "PlayStation 3": [
+      "PS3"
+    ],
+    "Xbox 360": [
+      "360"
+    ],
+    "Game Boy Advance": [
+      "GBA",
+      "Gameboy Advance"
+    ],
+    "PlayStation Portable": [
+      "PSP"
+    ],
+    "Nintendo 3DS": [
+      "3DS"
+    ],
+    "NES": [
+      "Nintendo Entertainment System",
+      "Nintendo 8-bit",
+      "8-bitars Nintendo"
+    ],
+    "Xbox One": [
+      "Xbone"
+    ]
   },
   "countries-by-nobel-laureates": {
-    "USA": ["United States", "United States of America", "Förenta staterna", "America", "Amerika", "US"],
-    "Storbritannien": ["United Kingdom", "UK", "Great Britain", "Britain", "England"],
-    "Tyskland": ["Germany"],
-    "Frankrike": ["France"],
-    "Sverige": ["Sweden"],
+    "USA": [
+      "United States",
+      "United States of America",
+      "Förenta staterna",
+      "America",
+      "Amerika",
+      "US"
+    ],
+    "Storbritannien": [
+      "United Kingdom",
+      "UK",
+      "Great Britain",
+      "Britain",
+      "England"
+    ],
+    "Tyskland": [
+      "Germany"
+    ],
+    "Frankrike": [
+      "France"
+    ],
+    "Sverige": [
+      "Sweden"
+    ],
     "Japan": [],
-    "Ryssland": ["Russia", "Sovjetunionen", "Soviet Union", "USSR"],
-    "Kanada": ["Canada"],
-    "Schweiz": ["Switzerland"],
-    "Österrike": ["Austria"],
-    "Nederländerna": ["Netherlands", "The Netherlands", "Holland"],
-    "Italien": ["Italy"],
-    "Polen": ["Poland"],
-    "Ungern": ["Hungary"],
-    "Australien": ["Australia"]
+    "Ryssland": [
+      "Russia",
+      "Sovjetunionen",
+      "Soviet Union",
+      "USSR"
+    ],
+    "Kanada": [
+      "Canada"
+    ],
+    "Schweiz": [
+      "Switzerland"
+    ],
+    "Österrike": [
+      "Austria"
+    ],
+    "Nederländerna": [
+      "Netherlands",
+      "The Netherlands",
+      "Holland"
+    ],
+    "Italien": [
+      "Italy"
+    ],
+    "Polen": [
+      "Poland"
+    ],
+    "Ungern": [
+      "Hungary"
+    ],
+    "Australien": [
+      "Australia"
+    ]
+  },
+  "boys-names-born-2001-sweden": {
+    "Filip": [
+      "Philip",
+      "Phillip"
+    ],
+    "Oscar": [
+      "Oskar"
+    ],
+    "Erik": [
+      "Eric"
+    ],
+    "Anton": [],
+    "William": [],
+    "Viktor": [
+      "Victor"
+    ],
+    "Emil": [],
+    "Alexander": [
+      "Alex"
+    ],
+    "Lucas": [
+      "Lukas"
+    ],
+    "Simon": []
+  },
+  "car-brands-swedish-fleet": {
+    "Volvo": [],
+    "Volkswagen": [
+      "VW"
+    ],
+    "Toyota": [],
+    "Mercedes-Benz": [
+      "Mercedes",
+      "Benz"
+    ],
+    "Ford": [],
+    "BMW": [],
+    "Kia": [],
+    "Audi": [],
+    "Renault": [],
+    "Skoda": [
+      "Škoda"
+    ],
+    "Peugeot": [],
+    "Saab": [],
+    "Nissan": [],
+    "Opel": [],
+    "Hyundai": []
+  },
+  "countries-by-mcdonalds-restaurants": {
+    "USA": [
+      "Förenta staterna",
+      "United States",
+      "Amerika"
+    ],
+    "Kina": [
+      "China"
+    ],
+    "Japan": [],
+    "Frankrike": [
+      "France"
+    ],
+    "Kanada": [
+      "Canada"
+    ],
+    "Storbritannien": [
+      "UK",
+      "United Kingdom",
+      "England",
+      "Brittannien"
+    ],
+    "Tyskland": [
+      "Germany",
+      "Deutschland"
+    ],
+    "Brasilien": [
+      "Brazil"
+    ],
+    "Australien": [
+      "Australia"
+    ],
+    "Filippinerna": [
+      "Philippines"
+    ],
+    "Italien": [
+      "Italy"
+    ],
+    "Indien": [
+      "India"
+    ],
+    "Spanien": [
+      "Spain"
+    ],
+    "Polen": [
+      "Poland"
+    ],
+    "Saudiarabien": [
+      "Saudi Arabia",
+      "Saudi"
+    ]
+  },
+  "girls-names-born-2001-sweden": {
+    "Julia": [],
+    "Emma": [],
+    "Hanna": [
+      "Hannah"
+    ],
+    "Elin": [],
+    "Wilma": [
+      "Vilma"
+    ],
+    "Ida": [],
+    "Amanda": [],
+    "Linnéa": [
+      "Linnea"
+    ],
+    "Matilda": [],
+    "Maja": [
+      "Maia"
+    ],
+    "Klara": [
+      "Clara"
+    ],
+    "Moa": [],
+    "Sara": [
+      "Sarah"
+    ],
+    "Felicia": [],
+    "Ebba": []
+  },
+  "highest-paid-athletes-forbes": {
+    "Cristiano Ronaldo": [
+      "Ronaldo",
+      "CR7"
+    ],
+    "Canelo Álvarez": [
+      "Canelo",
+      "Saúl Álvarez"
+    ],
+    "Lionel Messi": [
+      "Messi"
+    ],
+    "LeBron James": [
+      "LeBron"
+    ],
+    "Shohei Ohtani": [
+      "Ohtani"
+    ],
+    "Stephen Curry": [
+      "Steph Curry"
+    ],
+    "Jon Rahm": [],
+    "Karim Benzema": [
+      "Benzema"
+    ],
+    "Kevin Durant": [
+      "KD"
+    ],
+    "Lewis Hamilton": [
+      "Hamilton"
+    ]
+  },
+  "largest-companies-by-market-cap": {
+    "Nvidia": [],
+    "Apple": [],
+    "Alphabet": [
+      "Google"
+    ],
+    "Microsoft": [],
+    "Amazon": [],
+    "TSMC": [
+      "Taiwan Semiconductor Manufacturing Company",
+      "Taiwan Semiconductor"
+    ],
+    "Broadcom": [],
+    "Saudi Aramco": [
+      "Aramco"
+    ],
+    "Meta": [
+      "Facebook",
+      "Meta Platforms"
+    ],
+    "Tesla": [],
+    "Samsung": [
+      "Samsung Electronics"
+    ],
+    "Micron": [
+      "Micron Technology"
+    ],
+    "Berkshire Hathaway": [
+      "Berkshire"
+    ],
+    "Eli Lilly": [
+      "Lilly"
+    ],
+    "JPMorgan Chase": [
+      "JPMorgan",
+      "J.P. Morgan",
+      "Chase"
+    ]
+  },
+  "largest-islands-sweden": {
+    "Gotland": [],
+    "Öland": [],
+    "Södertörn": [],
+    "Orust": [],
+    "Hisingen": [],
+    "Värmdö": [
+      "Värmdölandet"
+    ],
+    "Tjörn": [],
+    "Väddö och Björkö": [
+      "Väddö",
+      "Björkö"
+    ],
+    "Fårö": [],
+    "Gräsö": [],
+    "Selaön": [],
+    "Färingsö": [
+      "Eldgarnsö"
+    ],
+    "Pitholmen": [
+      "Haraholmen",
+      "Renön",
+      "Nötön",
+      "Bondön"
+    ],
+    "Tosterön": [
+      "Aspön",
+      "Oknön"
+    ],
+    "Ekerön": [
+      "Munsön"
+    ]
+  },
+  "most-common-occupations-sweden": {
+    "Undersköterska": [
+      "Undersköterska hemtjänst",
+      "Undersköterska äldreboende",
+      "Undersköterska hemsjukvård"
+    ],
+    "Grundskollärare": [
+      "Lärare",
+      "Högstadielärare",
+      "Mellanstadielärare"
+    ],
+    "Butikssäljare, fackhandel": [
+      "Butikssäljare",
+      "Säljare i butik",
+      "Butiksbiträde"
+    ],
+    "Systemutvecklare": [
+      "Mjukvaruutvecklare",
+      "Programmerare",
+      "Utvecklare",
+      "Software developer"
+    ],
+    "Lagerarbetare": [
+      "Lager- och terminalpersonal",
+      "Lagerpersonal",
+      "Terminalarbetare"
+    ],
+    "Butikssäljare, dagligvaror": [
+      "Kassapersonal",
+      "Butikssäljare mat",
+      "Butiksbiträde dagligvaror"
+    ],
+    "Företagssäljare": [
+      "Säljare",
+      "B2B-säljare",
+      "Account manager"
+    ],
+    "Städare": [
+      "Lokalvårdare"
+    ],
+    "Vårdbiträde": [],
+    "Barnskötare": [
+      "Barnskötare förskola"
+    ],
+    "Köksbiträde": [
+      "Restaurangbiträde",
+      "Diskare",
+      "Köks- och restaurangbiträde"
+    ],
+    "Boendestödjare": [
+      "Vårdare boende",
+      "Vårdare"
+    ],
+    "Utredare": [
+      "Planerare",
+      "Handläggare"
+    ],
+    "Kontorsassistent": [
+      "Sekreterare",
+      "Kontorssekreterare"
+    ],
+    "Personlig assistent": [
+      "PA",
+      "Assistent"
+    ]
+  },
+  "most-used-emojis-unicode": {
+    "Gråtskrattande ansikte": [
+      "😂",
+      "Face with tears of joy",
+      "tears of joy",
+      "crying laughing"
+    ],
+    "Rött hjärta": [
+      "❤️",
+      "Red heart"
+    ],
+    "Ansikte som rullar av skratt": [
+      "🤣",
+      "Rolling on the floor laughing",
+      "ROFL"
+    ],
+    "Tumme upp": [
+      "👍",
+      "Thumbs up",
+      "like"
+    ],
+    "Högljutt gråtande ansikte": [
+      "😭",
+      "Loudly crying face",
+      "sobbing"
+    ],
+    "Knäppta händer": [
+      "🙏",
+      "Folded hands",
+      "praying hands",
+      "high five"
+    ],
+    "Ansikte som blåser en puss": [
+      "😘",
+      "Face blowing a kiss",
+      "kissing face"
+    ],
+    "Leende ansikte med hjärtan": [
+      "🥰",
+      "Smiling face with hearts",
+      "hearts"
+    ],
+    "Leende ansikte med hjärtögon": [
+      "😍",
+      "Smiling face with heart-eyes",
+      "heart eyes"
+    ],
+    "Leende ansikte med leende ögon": [
+      "😊",
+      "Smiling face with smiling eyes",
+      "blush smile"
+    ],
+    "Partysmäll (konfettikanon)": [
+      "🎉",
+      "Party popper",
+      "confetti"
+    ],
+    "Strålande leende ansikte": [
+      "😁",
+      "Beaming face with smiling eyes",
+      "grin"
+    ],
+    "Två hjärtan": [
+      "💕",
+      "Two hearts"
+    ],
+    "Bedjande ansikte (valpögon)": [
+      "🥺",
+      "Pleading face",
+      "puppy eyes"
+    ],
+    "Flinande ansikte med svettdroppe": [
+      "😅",
+      "Grinning face with sweat",
+      "nervous laugh",
+      "phew"
+    ]
+  },
+  "most-visited-websites-sweden": {
+    "Google": [
+      "google.com",
+      "Google Search"
+    ],
+    "YouTube": [
+      "youtube.com",
+      "You Tube"
+    ],
+    "Facebook": [
+      "facebook.com",
+      "FB"
+    ],
+    "Reddit": [
+      "reddit.com"
+    ],
+    "Aftonbladet": [
+      "aftonbladet.se"
+    ],
+    "Instagram": [
+      "instagram.com",
+      "IG"
+    ],
+    "Wikipedia": [
+      "wikipedia.org"
+    ],
+    "ChatGPT": [
+      "chatgpt.com",
+      "Chat GPT"
+    ],
+    "X": [
+      "x.com",
+      "Twitter"
+    ],
+    "Expressen": [
+      "expressen.se"
+    ],
+    "SVT": [
+      "svt.se",
+      "Sveriges Television"
+    ],
+    "Blocket": [
+      "blocket.se"
+    ],
+    "ICA": [
+      "ica.se"
+    ],
+    "SMHI": [
+      "smhi.se"
+    ],
+    "SVT Play": [
+      "svtplay.se"
+    ]
+  },
+  "largest-lakes-sweden": {
+    "Vänern": [
+      "Vanern"
+    ],
+    "Vättern": [
+      "Vattern"
+    ],
+    "Mälaren": [
+      "Malaren"
+    ],
+    "Hjälmaren": [
+      "Hjalmaren"
+    ],
+    "Storsjön": [
+      "Storsjon"
+    ],
+    "Torneträsk": [
+      "Tornetrask"
+    ],
+    "Siljan": [],
+    "Hornavan": [],
+    "Akkajaure": [
+      "Akkajaure sjön"
+    ],
+    "Uddjaure": [],
+    "Storavan": [],
+    "Bolmen": [],
+    "Storuman": []
+  },
+  "most-common-surnames-sweden": {
+    "Andersson": [
+      "Anderson"
+    ],
+    "Johansson": [
+      "Johanson"
+    ],
+    "Karlsson": [
+      "Carlsson",
+      "Karlson"
+    ],
+    "Nilsson": [
+      "Nilson"
+    ],
+    "Eriksson": [
+      "Erikson",
+      "Ericsson"
+    ],
+    "Larsson": [
+      "Larson"
+    ],
+    "Olsson": [
+      "Olson"
+    ],
+    "Persson": [
+      "Pehrsson",
+      "Person"
+    ],
+    "Svensson": [
+      "Svenson"
+    ],
+    "Gustafsson": [
+      "Gustavsson",
+      "Gustafson"
+    ],
+    "Pettersson": [
+      "Petersson",
+      "Peterson"
+    ],
+    "Jonsson": [
+      "Jonson"
+    ],
+    "Jansson": [
+      "Janson"
+    ],
+    "Hansson": [
+      "Hanson"
+    ],
+    "Carlsson": [
+      "Karlsson",
+      "Carlson"
+    ]
+  },
+  "most-popular-dog-breeds-sweden": {
+    "Labrador retriever": [
+      "Labrador",
+      "Lab"
+    ],
+    "Golden retriever": [
+      "Golden"
+    ],
+    "Schäfer": [
+      "Schafer",
+      "Tysk schäfer",
+      "German shepherd",
+      "Schäferhund"
+    ],
+    "Jämthund": [
+      "Jamthund"
+    ],
+    "Cocker spaniel": [
+      "Cockerspaniel",
+      "Cocker"
+    ],
+    "Bichon havanais": [
+      "Havanese",
+      "Havanais"
+    ],
+    "Dansk-svensk gårdshund": [
+      "Dansk svensk gårdshund",
+      "Gårdshund",
+      "Gardshund"
+    ],
+    "Miniature american shepherd": [
+      "Mini american shepherd",
+      "Miniatyr american shepherd"
+    ],
+    "Staffordshire bullterrier": [
+      "Staffe",
+      "Staffy",
+      "Staffordshire terrier"
+    ],
+    "Border collie": [
+      "Bordercollie"
+    ],
+    "Shetland sheepdog": [
+      "Sheltie"
+    ],
+    "Finsk lapphund": [
+      "Finnish lapphund"
+    ],
+    "Chihuahua, långhårig": [
+      "Chihuahua",
+      "Långhårig chihuahua",
+      "Langharig chihuahua"
+    ],
+    "Dvärgpudel": [
+      "Dvargpudel",
+      "Miniatyrpudel",
+      "Toy pudel"
+    ],
+    "Drever": []
+  },
+  "smallest-countries-by-area": {
+    "Vatikanstaten": [
+      "Vatikanen",
+      "Vatican",
+      "Vatican city"
+    ],
+    "Monaco": [],
+    "Nauru": [],
+    "Tuvalu": [],
+    "San Marino": [
+      "Sanmarino"
+    ],
+    "Liechtenstein": [
+      "Lichtenstein"
+    ],
+    "Marshallöarna": [
+      "Marshalloarna",
+      "Marshall islands",
+      "Marshallöarna republiken"
+    ],
+    "Saint Kitts och Nevis": [
+      "Saint Kitts and Nevis",
+      "St Kitts och Nevis",
+      "St Kitts"
+    ],
+    "Maldiverna": [
+      "Maldives"
+    ],
+    "Malta": [],
+    "Grenada": [],
+    "Saint Vincent och Grenadinerna": [
+      "Saint Vincent and the Grenadines",
+      "St Vincent och Grenadinerna",
+      "St Vincent"
+    ],
+    "Barbados": [],
+    "Antigua och Barbuda": [
+      "Antigua and Barbuda",
+      "Antigua"
+    ],
+    "Seychellerna": [
+      "Seychelles"
+    ]
+  },
+  "largest-islands-world": {
+    "Grönland": [
+      "greenland"
+    ],
+    "Nya Guinea": [
+      "new guinea",
+      "papua new guinea",
+      "papua nya guinea"
+    ],
+    "Borneo": [
+      "kalimantan"
+    ],
+    "Madagaskar": [
+      "madagascar"
+    ],
+    "Baffinön": [
+      "baffin island",
+      "baffin"
+    ],
+    "Sumatra": [],
+    "Honshu": [
+      "honshuu",
+      "honsju"
+    ],
+    "Victoria Island": [
+      "victoriaön",
+      "victoria"
+    ],
+    "Storbritannien": [
+      "great britain",
+      "britain",
+      "england",
+      "uk"
+    ],
+    "Ellesmereön": [
+      "ellesmere island",
+      "ellesmere"
+    ],
+    "Sulawesi": [
+      "celebes"
+    ],
+    "Sydön (Nya Zeeland)": [
+      "sydön",
+      "south island",
+      "new zealand south island"
+    ],
+    "Java": [],
+    "Nordön (Nya Zeeland)": [
+      "nordön",
+      "north island",
+      "new zealand north island"
+    ],
+    "Newfoundland": [
+      "newfoundland island"
+    ]
+  },
+  "highest-grossing-film-franchises": {
+    "Marvel Cinematic Universe": [
+      "mcu",
+      "marvel"
+    ],
+    "Spider-Man": [
+      "spiderman",
+      "spindelmannen"
+    ],
+    "Star Wars": [
+      "stjärnornas krig"
+    ],
+    "Harry Potter": [],
+    "James Bond": [
+      "007",
+      "bond"
+    ],
+    "Avengers": [
+      "the avengers"
+    ],
+    "X-Men": [
+      "xmen"
+    ],
+    "Fast & Furious": [
+      "fast and furious",
+      "the fast and the furious",
+      "fast furious"
+    ],
+    "DC Extended Universe": [
+      "dceu",
+      "dc",
+      "dc universe"
+    ],
+    "Batman": [],
+    "Jurassic Park": [
+      "jurassic world"
+    ],
+    "Avatar": [],
+    "Dumma mej (Despicable Me)": [
+      "dumma mej",
+      "despicable me",
+      "minions"
+    ],
+    "Sagan om ringen (Middle-earth)": [
+      "sagan om ringen",
+      "lord of the rings",
+      "lotr",
+      "the hobbit",
+      "hobbiten",
+      "middle-earth"
+    ],
+    "Transformers": []
+  },
+  "heaviest-land-animals": {
+    "Afrikansk buskelefant": [
+      "afrikansk elefant",
+      "buskelefant",
+      "african bush elephant",
+      "elefant"
+    ],
+    "Asiatisk elefant": [
+      "indisk elefant",
+      "asian elephant"
+    ],
+    "Afrikansk skogselefant": [
+      "skogselefant",
+      "african forest elephant"
+    ],
+    "Vit noshörning": [
+      "white rhino",
+      "white rhinoceros",
+      "noshörning"
+    ],
+    "Flodhäst": [
+      "hippopotamus",
+      "hippo",
+      "nilhäst"
+    ],
+    "Indisk noshörning": [
+      "indian rhino",
+      "greater one-horned rhinoceros"
+    ],
+    "Svart noshörning": [
+      "black rhino",
+      "black rhinoceros"
+    ],
+    "Javanoshörning": [
+      "java rhino",
+      "javan rhinoceros"
+    ],
+    "Giraff": [
+      "giraffe"
+    ],
+    "Gaur": [
+      "indisk bisonoxe"
+    ],
+    "Tamboskap (nöt)": [
+      "tamboskap",
+      "nöt",
+      "ko",
+      "boskap",
+      "cattle",
+      "kor"
+    ],
+    "Amerikansk bisont": [
+      "bisonoxe",
+      "bison",
+      "amerikansk bison",
+      "buffalo"
+    ],
+    "Vattenbuffel": [
+      "water buffalo",
+      "buffel"
+    ],
+    "Vildyak": [
+      "yak",
+      "wild yak"
+    ],
+    "Jätteeland": [
+      "giant eland",
+      "eland"
+    ]
+  },
+  "most-followed-instagram-accounts": {
+    "Instagram (officiella kontot)": [
+      "instagram",
+      "@instagram"
+    ],
+    "Cristiano Ronaldo": [
+      "ronaldo",
+      "cr7"
+    ],
+    "Lionel Messi": [
+      "messi"
+    ],
+    "Selena Gomez": [
+      "selena"
+    ],
+    "Dwayne Johnson": [
+      "the rock",
+      "dwayne \"the rock\" johnson"
+    ],
+    "Kylie Jenner": [
+      "kylie"
+    ],
+    "Ariana Grande": [
+      "ariana"
+    ],
+    "Kim Kardashian": [
+      "kim k",
+      "kim kardashian west"
+    ],
+    "Beyoncé": [
+      "beyonce",
+      "beyoncé knowles",
+      "queen bey"
+    ],
+    "Khloé Kardashian": [
+      "khloe kardashian",
+      "khloe"
+    ],
+    "Nike": [],
+    "Justin Bieber": [
+      "bieber"
+    ],
+    "Kendall Jenner": [
+      "kendall"
+    ],
+    "Taylor Swift": [
+      "taylor"
+    ],
+    "Virat Kohli": [
+      "kohli"
+    ]
+  },
+  "most-visited-websites-similarweb": {
+    "Google": [],
+    "Youtube": [],
+    "Facebook": [
+      "FB"
+    ],
+    "Instagram": [
+      "IG",
+      "Insta"
+    ],
+    "ChatGPT": [
+      "Chat GPT",
+      "GPT",
+      "OpenAI"
+    ],
+    "X (Twitter)": [
+      "X",
+      "Twitter"
+    ],
+    "Reddit": [],
+    "Bing": [
+      "Microsoft Bing"
+    ],
+    "TikTok": [
+      "Tik Tok"
+    ],
+    "WhatsApp": [
+      "Whats App"
+    ],
+    "Wikipedia": [
+      "Wiki"
+    ],
+    "Yahoo Japan": [
+      "Yahoo! Japan"
+    ],
+    "Yahoo": [
+      "Yahoo!"
+    ],
+    "Yandex": [],
+    "Amazon": []
+  },
+  "best-selling-smartphone-models-ever": {
+    "Nokia 1100": [
+      "1100"
+    ],
+    "Nokia 1110": [
+      "1110"
+    ],
+    "iPhone 6 och 6 Plus": [
+      "iPhone 6",
+      "iPhone 6 Plus",
+      "iPhone 6/6 Plus",
+      "iPhone 6 & 6 Plus"
+    ],
+    "Nokia 105-serien": [
+      "Nokia 105",
+      "105"
+    ],
+    "iPhone 6S och 6S Plus": [
+      "iPhone 6S",
+      "iPhone 6S Plus",
+      "iPhone 6s",
+      "iPhone 6s Plus"
+    ],
+    "iPhone 5S": [],
+    "Nokia 3210": [
+      "3210"
+    ],
+    "iPhone 7 och 7 Plus": [
+      "iPhone 7",
+      "iPhone 7 Plus"
+    ],
+    "iPhone 11-serien": [
+      "iPhone 11",
+      "iPhone 11 Pro",
+      "iPhone 11 Pro Max"
+    ],
+    "iPhone XR, XS och XS Max": [
+      "iPhone XR",
+      "iPhone XS",
+      "iPhone XS Max",
+      "iPhone 10R",
+      "iPhone 10S"
+    ],
+    "Nokia 6600": [
+      "6600"
+    ],
+    "Nokia 1200": [
+      "1200"
+    ],
+    "Nokia 5230": [
+      "5230"
+    ],
+    "Samsung E1100": [
+      "Samsung E1100i",
+      "E1100"
+    ],
+    "iPhone 5": []
+  },
+  "most-valuable-brands-interbrand": {
+    "Apple": [],
+    "Microsoft": [
+      "MS"
+    ],
+    "Amazon": [],
+    "Google": [
+      "Alphabet"
+    ],
+    "Samsung": [],
+    "Toyota": [],
+    "Coca-Cola": [
+      "Coca Cola",
+      "Coke"
+    ],
+    "Instagram": [
+      "IG",
+      "Insta"
+    ],
+    "McDonald's": [
+      "McDonalds",
+      "Mcdonalds",
+      "Mac Donalds",
+      "McD"
+    ],
+    "Mercedes-Benz": [
+      "Mercedes",
+      "Benz"
+    ],
+    "Cisco": [
+      "Cisco Systems"
+    ],
+    "Louis Vuitton": [
+      "LV"
+    ],
+    "YouTube": [],
+    "BMW": [],
+    "Nvidia": [
+      "Nvidia Corporation"
+    ]
+  },
+  "richest-people-world-forbes": {
+    "Elon Musk": [
+      "Musk"
+    ],
+    "Larry Page": [
+      "Page"
+    ],
+    "Sergey Brin": [
+      "Brin"
+    ],
+    "Jeff Bezos": [
+      "Bezos"
+    ],
+    "Mark Zuckerberg": [
+      "Zuckerberg",
+      "Zuck"
+    ],
+    "Larry Ellison": [
+      "Ellison"
+    ],
+    "Bernard Arnault": [
+      "Arnault"
+    ],
+    "Jensen Huang": [
+      "Huang"
+    ],
+    "Warren Buffett": [
+      "Buffett",
+      "Warren Buffet"
+    ],
+    "Amancio Ortega": [
+      "Ortega"
+    ],
+    "Rob Walton": [
+      "Robert Walton",
+      "Walton"
+    ],
+    "Jim Walton": [
+      "James Walton",
+      "Walton"
+    ],
+    "Michael Dell": [
+      "Dell"
+    ],
+    "Alice Walton": [
+      "Walton"
+    ],
+    "Steve Ballmer": [
+      "Ballmer"
+    ]
   }
 }

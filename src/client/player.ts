@@ -232,7 +232,7 @@ function tilesScreen(key: string): Screen {
     h(
       'div',
       { style: 'display:flex;flex-direction:column;gap:6px' },
-      h('div', { class: 'eyebrow' }, 'Sophie 25 år'),
+      h('div', { class: 'eyebrow' }, 'Sofie 25 år'),
       h('div', { class: 'display', style: 'font-size:64px;line-height:0.95' }, 'Topp ', h('br'), 'tio'),
       h('div', { style: 'font-size:16px;color:var(--text-2);margin-top:8px' }, 'Välj ert lag. En telefon per lag.'),
     ),
@@ -604,7 +604,7 @@ app.replaceChildren(
   h(
     'div',
     { style: 'display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;flex-grow:1' },
-    h('div', { class: 'eyebrow' }, 'Sophie 25 år'),
+    h('div', { class: 'eyebrow' }, 'Sofie 25 år'),
     h('div', { class: 'display', style: 'font-size:64px;line-height:0.95' }, 'Topp tio'),
     h('div', { class: 'pill offline', 'data-pill': 'Ansluten' }, h('span', { class: 'dot' }), h('span', { class: 'label' }, 'Ansluter…')),
   ),
