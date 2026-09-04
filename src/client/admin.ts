@@ -258,7 +258,7 @@ function lobbyScreen(key: string): Screen {
 // ---- Question open / locked / grading ----
 function questionScreen(key: string): Screen {
   const label = h('div', { class: 'eyebrow' });
-  const clock = h('div', { class: 'display clock' }, '2:30');
+  const clock = h('div', { class: 'display clock' }, '1:30');
   const pause = h('button', { class: 'btn btn-ghost btn-sm', type: 'button' }, 'Pausa');
   const extend = h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => cmd({ type: 'extend' }) }, '+30 s');
   const title = h('div', { style: 'font-size:15px;font-weight:600;line-height:1.3' });
