@@ -45,4 +45,21 @@ describe('standings', () => {
   it('names every team on a shared first place', () => {
     expect(winners({ '0:2': g(9), '0:5': g(9) })).toEqual([2, 5]);
   });
+
+  // WO-084 §2.2: the board is over the teams in play, whatever the count is.
+  it('is computed over `teamCount` teams: positions, ties and winners all follow it', () => {
+    const grades: Record<string, Grade> = { '0:1': g(4), '0:2': g(9), '0:5': g(10) };
+    const rows = standings(grades, 3);
+    expect(rows.map((r) => [r.position, r.team, r.points])).toEqual([
+      [1, 2, 9],
+      [2, 1, 4],
+      [3, 3, 0],
+    ]);
+    // Lag 5's ten points are outside a three-team game and never reach the board.
+    expect(totals(grades, 3)[5]).toBe(0);
+    expect(winners(grades, 3)).toEqual([2]);
+    // Twelve teams: everyone is listed, the absent ones on zero.
+    expect(standings(grades, 12)).toHaveLength(12);
+    expect(winners(grades, 12)).toEqual([5]);
+  });
 });

@@ -286,6 +286,12 @@ a {
   opacity: 0.35;
 }
 
+/* Nine teams and up: two columns of twelve tiles still have to fit a thumb and a 390 px screen. */
+.tiles.many .tile {
+  min-height: 72px;
+  font-size: 30px;
+}
+
 /* ---- Question ---- */
 .ring {
   position: relative;
@@ -484,6 +490,27 @@ a {
   min-height: 44px;
   text-align: left;
   width: 100%;
+}
+
+.team-count-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.team-count-value {
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn.step {
+  min-width: 64px;
+  min-height: 48px;
+  font-size: 26px;
+  line-height: 1;
+  padding: 0;
 }
 
 .team-grid .row.offline {

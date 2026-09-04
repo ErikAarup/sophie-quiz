@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CONFIRM_WORD, answerKey, type GameState } from '../../src/shared/types.ts';
-import { gradesInFlight, migrateState, remainingMs } from '../../src/shared/game.ts';
-import { adminView } from '../../src/shared/view.ts';
-import { FIXTURE_SLUGS, T0, claimAll, eu, fresh, quiz, run, step } from './helpers.ts';
+import { gradesInFlight, migrateState, remainingMs, teamCountLock } from '../../src/shared/game.ts';
+import { adminView, playerView } from '../../src/shared/view.ts';
+import { FIXTURE_SLUGS, T0, allOnline, claimAll, eu, fresh, quiz, run, step } from './helpers.ts';
 
 const DURATION = quiz.durationMs; // the fixture's 2:30
 const rowIndexOf = (name: string) => eu.rows.findIndex((r) => r.name === name);
@@ -557,7 +557,7 @@ describe('R1 review fixes', () => {
 });
 
 describe('R3 review fix: grade requests have an identity (grade-request-has-no-identity)', () => {
-  const ONLINE = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true };
+  const ONLINE = allOnline();
 
   /** Question 1 graded (Lag 1 = Tyskland, 1 point; request 0 settled) and the standings shown. */
   function standingsWithLag1Graded(): GameState {
@@ -732,5 +732,109 @@ describe('resets', () => {
     expect(out.state.questionIndex).toBe(0);
     expect(Object.values(out.state.slots).every((s) => s === null)).toBe(true);
     expect(out.alarm).toBeNull();
+  });
+});
+
+// WO-084 §2.1–2.3: the hosts decide the number of teams at the venue, on Erik's phone, before the
+// first question. Everything downstream of the count follows it, and "Nollställ spelet" keeps it.
+describe('antal lag (WO-084 §2.1–2.3)', () => {
+  it('a fresh game has eight teams and the stepper is unlocked', () => {
+    const s = fresh();
+    expect(s.teamCount).toBe(8);
+    expect(teamCountLock(s)).toBeNull();
+  });
+
+  it('setTeamCount changes the count on a pristine first lobby', () => {
+    const out = step(fresh(), { type: 'setTeamCount', count: 6 }, T0);
+    expect(out.error).toBeUndefined();
+    expect(out.changed).toBe(true);
+    expect(out.state.teamCount).toBe(6);
+  });
+
+  it('refuses a count outside 2–12, in Swedish', () => {
+    for (const count of [1, 13, 0, -3, 6.5, Number.NaN]) {
+      const out = step(fresh(), { type: 'setTeamCount', count }, T0);
+      expect(out.error).toEqual({ code: 'badCount', message: 'Antal lag måste vara 2–12.' });
+    }
+    expect(step(fresh(), { type: 'setTeamCount', count: 2 }, T0).state.teamCount).toBe(2);
+    expect(step(fresh(), { type: 'setTeamCount', count: 12 }, T0).state.teamCount).toBe(12);
+  });
+
+  it('refuses the change while a phone holds a slot ("Släpp lagen först")', () => {
+    const held = run(fresh(), [{ type: 'claim', team: 3, deviceId: 'dev-3' }], T0);
+    expect(teamCountLock(held)).toBe('held');
+    const out = step(held, { type: 'setTeamCount', count: 6 }, T0);
+    expect(out.error).toEqual({ code: 'held', message: 'Släpp lagen först.' });
+    expect(out.state.teamCount).toBe(8);
+    // Released again: the stepper comes back.
+    const free = run(held, [{ type: 'release', team: 3 }], T0);
+    expect(teamCountLock(free)).toBeNull();
+    expect(step(free, { type: 'setTeamCount', count: 6 }, T0).state.teamCount).toBe(6);
+  });
+
+  it('refuses the change once question 1 has started ("Går inte att ändra när spelet startat")', () => {
+    const open = run(fresh(), [{ type: 'start' }], T0);
+    expect(teamCountLock(open)).toBe('started');
+    expect(step(open, { type: 'setTeamCount', count: 6 }, T0).error).toEqual({
+      code: 'started',
+      message: 'Går inte att ändra när spelet startat.',
+    });
+    // …and on any later lobby, even though nothing is held there either.
+    const later = run(open, [
+      { type: 'lock' },
+      { type: 'grade' },
+    ], T0);
+    expect(teamCountLock(later)).toBe('started');
+  });
+
+  it('a claim above the count is refused; the tiles that exist still work', () => {
+    const six = run(fresh(), [{ type: 'setTeamCount', count: 6 }], T0);
+    const out = step(six, { type: 'claim', team: 7, deviceId: 'dev-7' }, T0);
+    expect(out.error).toEqual({ code: 'noTeam', message: 'Lag 7 är inte med i kvällens spel.' });
+    expect(out.state.slots[7]).toBeNull();
+    expect(run(six, [{ type: 'claim', team: 6, deviceId: 'dev-6' }], T0).slots[6]?.deviceId).toBe('dev-6');
+  });
+
+  it('"Nollställ spelet" keeps the count (AC3)', () => {
+    const six = claimAll(run(fresh(), [{ type: 'setTeamCount', count: 6 }], T0));
+    expect(Object.values(six.slots).filter((x) => x !== null)).toHaveLength(6);
+    const out = step(six, { type: 'resetGame', confirm: CONFIRM_WORD }, T0 + 9);
+    expect(out.kicked).toHaveLength(6);
+    expect(out.state.teamCount).toBe(6);
+    expect(Object.values(out.state.slots).every((x) => x === null)).toBe(true);
+  });
+
+  it('migrateState gives a state persisted before WO-084 the default eight, and clamps a silly one', () => {
+    const legacy = { ...fresh(), teamCount: undefined } as unknown as Record<string, unknown>;
+    delete legacy['teamCount'];
+    expect(migrateState(legacy as never, T0).teamCount).toBe(8);
+    expect(migrateState({ ...fresh(), teamCount: 5 }, T0).teamCount).toBe(5);
+    expect(migrateState({ ...fresh(), teamCount: 99 }, T0).teamCount).toBe(12);
+    expect(migrateState({ ...fresh(), teamCount: 0 }, T0).teamCount).toBe(2);
+  });
+
+  it('grading, standings and the views run over exactly the teams in play', () => {
+    let s = run(fresh(), [{ type: 'setTeamCount', count: 3 }], T0);
+    s = claimAll(s);
+    s = run(s, [{ type: 'start' }], T0);
+    s = run(
+      s,
+      [
+        { type: 'answer', team: 1, text: eu.rows[0]!.name, source: 'team' },
+        { type: 'answer', team: 3, text: eu.rows[9]!.name, source: 'team' },
+        { type: 'lock' },
+      ],
+      T0,
+    );
+    const graded = step(s, { type: 'grade' }, T0);
+    // Only the teams in play are ever handed to the grader.
+    expect(graded.grade?.answers.map((a) => a.team)).toEqual([1, 3]);
+    const v = adminView(graded.state, quiz, T0, allOnline());
+    expect(v.teamCount).toBe(3);
+    expect(v.teams.map((t) => t.team)).toEqual([1, 2, 3]);
+    expect(v.standings.map((r) => r.team).sort()).toEqual([1, 2, 3]);
+    const p = playerView(graded.state, quiz, T0, 1, 'dev-1');
+    expect(p.teamCount).toBe(3);
+    expect(p.taken).toEqual([2, 3]); // dev-1 holds Lag 1, so it is not "taken" for that phone
   });
 });

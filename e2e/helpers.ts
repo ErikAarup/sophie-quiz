@@ -1,6 +1,6 @@
 // Page and socket helpers for the e2e suite.
 import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
-import { CONFIRM_WORD, type AdminCommand, type Team } from '../src/shared/types.ts';
+import { CONFIRM_WORD, TEAM_COUNT, type AdminCommand, type Team } from '../src/shared/types.ts';
 import { ADMIN_TOKEN, CONTROL_URL, WS_URL } from './env.ts';
 import type { MockMode } from './servers.ts';
 
@@ -33,9 +33,10 @@ export async function openAdmin(browser: Browser, opts: { videoDir?: string } = 
 export async function openPlayer(browser: Browser, team?: Team, opts: { clockSkewMs?: number; videoDir?: string } = {}): Promise<Phone> {
   const phone = await newPhone(browser, opts);
   await phone.page.goto('/');
-  await expect(phone.page.getByRole('button', { name: 'Lag 1' })).toBeVisible();
+  // Wait for the tiles themselves, not for a named one: "Lag 1" as a name matches Lag 10–12 too.
+  await expect(tiles(phone.page).first()).toBeVisible();
   if (team !== undefined) {
-    await phone.page.getByRole('button', { name: `Lag ${team}` }).click();
+    await phone.page.locator(`.tiles .tile[data-team="${team}"]`).click();
     await expectTeam(phone.page, team);
   }
   return phone;
@@ -45,6 +46,18 @@ export async function openPlayer(browser: Browser, team?: Team, opts: { clockSke
 export async function expectTeam(page: Page, team: Team): Promise<void> {
   await expect(page.locator('.tiles')).toHaveCount(0);
   await expect(page.locator('[data-pill] .label, .lobby-name').filter({ hasText: new RegExp(`^Lag ${team}$`) }).first()).toBeVisible();
+}
+
+/** How many team tiles the phone offers right now. */
+export function tiles(page: Page) {
+  return page.locator('.tiles .tile');
+}
+
+/** The tiles show exactly `count` teams, Lag 1..count and nothing above. */
+export async function expectTiles(page: Page, count: number): Promise<void> {
+  await expect(tiles(page)).toHaveCount(count);
+  await expect(page.locator(`.tiles .tile[data-team="${count}"]`)).toBeVisible();
+  await expect(page.locator(`.tiles .tile[data-team="${count + 1}"]`)).toHaveCount(0);
 }
 
 export function teamPill(page: Page) {
@@ -88,6 +101,23 @@ export async function adminResetGame(admin: Page): Promise<void> {
   await sheet.locator('[data-confirm-input]').fill(CONFIRM_WORD);
   await sheet.getByRole('button', { name: 'Ja, nollställ hela spelet' }).click();
   await expect(admin.getByRole('button', { name: 'Starta fråga 1' })).toBeVisible();
+}
+
+/**
+ * Set "Antal lag" from the admin lobby by tapping the stepper (WO-084 AC1) — one tap per team,
+ * the way Erik does it, not a socket command.
+ */
+export async function adminSetTeamCount(admin: Page, count: number): Promise<void> {
+  const value = admin.locator('[data-team-count]');
+  await expect(value).toBeVisible();
+  for (let guard = 0; guard < 12; guard++) {
+    const now = Number(/\d+/.exec((await value.textContent()) ?? '')?.[0]);
+    if (now === count) break;
+    await admin.locator(`.team-count [data-step="${now > count ? 'down' : 'up'}"]`).click();
+    await expect(value).toHaveText(`Antal lag: ${now > count ? now - 1 : now + 1}`);
+  }
+  await expect(value).toHaveText(`Antal lag: ${count}`);
+  await expect(admin.locator('.team-grid .row')).toHaveCount(count);
 }
 
 /** Open the team sheet on admin (works on the grid and on the answers list). */
@@ -149,8 +179,14 @@ export function adminSocket(cmd: AdminCommand, timeoutMs = 10_000): Promise<unkn
   });
 }
 
-export async function resetGame(): Promise<void> {
+/**
+ * Back to a clean game between specs. A game reset deliberately keeps the team count (WO-084
+ * AC3), so the harness puts it back to the default itself: no spec inherits the table the one
+ * before it played on. Pass a count to start a spec at another number.
+ */
+export async function resetGame(teamCount = TEAM_COUNT): Promise<void> {
   await adminSocket({ type: 'resetGame', confirm: CONFIRM_WORD });
+  await adminSocket({ type: 'setTeamCount', count: teamCount });
 }
 
 export async function setMock(mode: MockMode, reset = true): Promise<void> {

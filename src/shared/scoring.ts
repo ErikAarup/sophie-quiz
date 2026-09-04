@@ -1,4 +1,4 @@
-import { TEAMS, type Grade, type StandingRow, type Team } from './types.ts';
+import { ALL_TEAMS, TEAM_COUNT, teamsUpTo, type Grade, type StandingRow, type Team } from './types.ts';
 
 /** Points = rank for ranks 1–10; ranks 11–15 and no match give 0 (WORK_ORDER §A). */
 export function pointsForRank(rank: number | null): number {
@@ -7,12 +7,17 @@ export function pointsForRank(rank: number | null): number {
   return rank;
 }
 
-/** Cumulative points per team over every stored grade. */
-export function totals(grades: Record<string, Grade>): Record<Team, number> {
-  const out = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 } as Record<Team, number>;
+/**
+ * Cumulative points per team over every stored grade, for the `teamCount` teams in play. Grades
+ * for a team outside the count (a state carried over from a larger game) are ignored, so the
+ * board can never show points for a team that is not playing.
+ */
+export function totals(grades: Record<string, Grade>, teamCount: number = TEAM_COUNT): Record<Team, number> {
+  const out = Object.fromEntries(ALL_TEAMS.map((t) => [t, 0])) as Record<Team, number>;
+  const playing = teamsUpTo(teamCount);
   for (const [key, grade] of Object.entries(grades)) {
     const team = Number(key.split(':')[1]) as Team;
-    if (team >= 1 && team <= 8) out[team] += grade.points;
+    if (playing.includes(team)) out[team] += grade.points;
   }
   return out;
 }
@@ -21,9 +26,9 @@ export function totals(grades: Record<string, Grade>): Record<Team, number> {
  * Standings sorted by points, then team number for a stable display.
  * Ties share a position ("1224" competition ranking): position = 1 + number of teams with strictly more points.
  */
-export function standings(grades: Record<string, Grade>): StandingRow[] {
-  const t = totals(grades);
-  const sorted = [...TEAMS].sort((a, b) => t[b] - t[a] || a - b);
+export function standings(grades: Record<string, Grade>, teamCount: number = TEAM_COUNT): StandingRow[] {
+  const t = totals(grades, teamCount);
+  const sorted = [...teamsUpTo(teamCount)].sort((a, b) => t[b] - t[a] || a - b);
   return sorted.map((team) => ({
     team,
     points: t[team],
@@ -32,7 +37,7 @@ export function standings(grades: Record<string, Grade>): StandingRow[] {
 }
 
 /** Teams sharing the top total. Usually one; a tie names them all. */
-export function winners(grades: Record<string, Grade>): Team[] {
-  const rows = standings(grades);
+export function winners(grades: Record<string, Grade>, teamCount: number = TEAM_COUNT): Team[] {
+  const rows = standings(grades, teamCount);
   return rows.filter((r) => r.position === 1).map((r) => r.team);
 }

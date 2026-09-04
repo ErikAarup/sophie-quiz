@@ -2,11 +2,12 @@
 // QUESTION_SECONDS is 2 here (vitest.config.ts), so "lock at zero" is observable in a test.
 import { env, evictDurableObject, runInDurableObject } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { GameState } from '../../src/shared/types.ts';
+import type { AdminCommand, GameState, ServerMessage, Team } from '../../src/shared/types.ts';
 import { GAME_NAME } from '../../src/worker/config.ts';
 import { buildQuiz } from '../../src/worker/bank.ts';
 import { TEST_QUESTIONS } from '../fixtures/questions.ts';
 import { Client, TOKEN, admin, player, resetGame, sleep } from './client.ts';
+import { CONFIRM_WORD } from '../../src/shared/types.ts';
 import { MODEL_CONTROL_URL, type ModelMode } from './model-mock.ts';
 
 // The DO builds its quiz in its constructor from data/quiz.json + data/bank.json; this suite builds
@@ -42,7 +43,7 @@ afterEach(() => {
   }
 });
 
-async function joined(deviceId: string, team: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): Promise<Client> {
+async function joined(deviceId: string, team: Team): Promise<Client> {
   const p = await player(deviceId);
   open.push(p);
   await p.playerState((s) => s.team === null);
@@ -434,5 +435,138 @@ describe('R3 review fix: grade requests have an identity (grade-request-has-no-i
     const graded = await a.adminState((x) => x.phase === 'reveal', 8000);
     expect(graded.teams[1]?.grade).toMatchObject({ rank: 10, points: 10 });
     expect(graded.gradeStatus).toBe('done');
+  });
+});
+
+// WO-084. Three things the exploratory testers and the pre-mortem asked for, proved against the
+// real Durable Object: the double-grade race, the team count over the wire, and the migration.
+describe('WO-084: serialised admin commands and the team count', () => {
+  const STATE_KEY = 'state';
+  const stub = () => env.GAME.get(env.GAME.idFromName(GAME_NAME));
+
+  /** Two commands down one socket with nothing awaited in between; both replies collected. */
+  async function backToBack(c: Client, first: AdminCommand, second: AdminCommand): Promise<ServerMessage[]> {
+    c.send({ ...first, token: TOKEN });
+    c.send({ ...second, token: TOKEN });
+    const replies: ServerMessage[] = [];
+    while (replies.length < 2) replies.push(await c.until((m) => m.type === 'ok' || m.type === 'error', 15_000));
+    return replies;
+  }
+
+  it('AC4: two "grade" commands back-to-back, every answer an exact hit, give one ok and one "Rättning pågår"', async () => {
+    // The explorer's repro (explore-b/e2e/explore/double-tap.spec.ts): an exact pre-pass hit needs
+    // no model call, so the whole grade path was synchronous once past the awaited token check —
+    // and both taps were accepted. Every answer here is an exact row name, so nothing waits on I/O.
+    const p1 = await joined('device-tttttttt', 1);
+    const p2 = await joined('device-uuuuuuuu', 2);
+    await a.admin({ type: 'start' });
+    await p1.playerState((x) => x.phase === 'open');
+    p1.send({ type: 'answer', text: at(1).name });
+    await p1.until((m) => m.type === 'ok');
+    p2.send({ type: 'answer', text: at(10).name });
+    await p2.until((m) => m.type === 'ok');
+    await a.admin({ type: 'lock' });
+
+    const replies = await backToBack(a, { type: 'grade' }, { type: 'grade' });
+    const oks = replies.filter((r) => r.type === 'ok');
+    const errors = replies.filter((r) => r.type === 'error');
+    // Before the fix this was [ok, ok]. Now exactly one gets through, and the loser is told why:
+    // "Rättning pågår." when it reduces while the request is still out, "Alla svar är redan
+    // rättade." when the exact-hit pass had already settled (with no model call there is nothing
+    // to wait for, so which of the two lands is a matter of microseconds). Both are correct
+    // refusals; two accepted grades is the bug, and it cannot happen any more.
+    expect(oks).toHaveLength(1);
+    expect(errors).toHaveLength(1);
+    const err = errors[0] as { code: string; message: string };
+    expect(["busy", "done"]).toContain(err.code);
+    expect(["Rättning pågår.", "Alla svar är redan rättade."]).toContain(err.message);
+
+    // One grade, and the points are the ones the single pass computed.
+    const done = await a.adminState((x) => x.phase === 'reveal' && x.gradeStatus === 'done', 10_000);
+    expect(done.teams[0]?.grade).toMatchObject({ rank: 1, points: 1, needsReview: false });
+    expect(done.teams[1]?.grade).toMatchObject({ rank: 10, points: 10, needsReview: false });
+  });
+
+  it('AC4: the same serialisation refuses a second "start" and a second "lock" (nothing regressed)', async () => {
+    const starts = await backToBack(a, { type: 'start' }, { type: 'start' });
+    expect(starts.map((r) => r.type).sort()).toEqual(['error', 'ok']);
+    expect(starts.find((r) => r.type === 'error')).toMatchObject({ code: 'phase' });
+    const locks = await backToBack(a, { type: 'lock' }, { type: 'lock' });
+    expect(locks.map((r) => r.type).sort()).toEqual(['error', 'ok']);
+  });
+
+  it('AC1/AC2: setTeamCount reaches every phone, a claim above the count is refused, a second one after a claim is refused', async () => {
+    const p1 = await player('device-vvvvvvvv');
+    open.push(p1);
+    await p1.playerState((x) => x.teamCount === 8);
+
+    expect((await a.admin({ type: 'setTeamCount', count: 6 })).type).toBe('ok');
+    const six = await p1.playerState((x) => x.teamCount === 6);
+    expect(six.teamCount).toBe(6);
+    const adminSix = await a.adminState((x) => x.teamCount === 6);
+    expect(adminSix.teams).toHaveLength(6);
+    expect(adminSix.standings).toHaveLength(6);
+    expect(adminSix.teamCountLock).toBeNull();
+
+    // Lag 7 does not exist tonight.
+    p1.send({ type: 'claim', team: 7, deviceId: 'device-vvvvvvvv' });
+    const refused = await p1.error();
+    expect(refused).toEqual({ type: 'error', code: 'noTeam', message: 'Lag 7 är inte med i kvällens spel.' });
+
+    // A slot is taken: the count is locked, in the words admin shows.
+    p1.send({ type: 'claim', team: 5, deviceId: 'device-vvvvvvvv' });
+    await p1.playerState((x) => x.team === 5);
+    const held = await a.adminState((x) => x.teamCountLock === 'held');
+    expect(held.teamCountLock).toBe('held');
+    const second = await a.admin({ type: 'setTeamCount', count: 4 });
+    expect(second).toEqual({ type: 'error', code: 'held', message: 'Släpp lagen först.' });
+    expect((await a.adminState()).teamCount).toBe(6);
+
+    // …and once the question is running, the other reason.
+    expect((await a.admin({ type: 'release', team: 5 })).type).toBe('ok');
+    await a.adminState((x) => x.teamCountLock === null);
+    expect((await a.admin({ type: 'start' })).type).toBe('ok');
+    const started = await a.adminState((x) => x.phase === 'open');
+    expect(started.teamCountLock).toBe('started');
+    expect(await a.admin({ type: 'setTeamCount', count: 4 })).toEqual({
+      type: 'error',
+      code: 'started',
+      message: 'Går inte att ändra när spelet startat.',
+    });
+  });
+
+  it('AC3: a state persisted without a team count comes back as an eight-team game', async () => {
+    // Six teams tonight, then the field is taken out of storage: exactly what the deployed game
+    // looks like to this build — a state written before WO-084 existed.
+    expect((await a.admin({ type: 'setTeamCount', count: 6 })).type).toBe('ok');
+    await a.adminState((x) => x.teamCount === 6);
+    await runInDurableObject(stub(), async (_instance, state) => {
+      const stored = (await state.storage.get<GameState>(STATE_KEY))!;
+      const legacy = { ...stored } as Record<string, unknown>;
+      delete legacy['teamCount'];
+      await state.storage.put(STATE_KEY, legacy);
+    });
+    await evictDurableObject(stub(), { webSockets: 'close' });
+    await sleep(200);
+
+    a = await admin();
+    open.push(a);
+    const back = await a.adminState();
+    expect(back.teamCount).toBe(8);
+    expect(back.teams.map((t) => t.team)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(back.standings).toHaveLength(8);
+    const p = await player('device-wwwwwwww');
+    open.push(p);
+    expect((await p.playerState()).teamCount).toBe(8);
+  });
+
+  it('AC3: "Nollställ spelet" keeps the count and the phones still see it', async () => {
+    expect((await a.admin({ type: 'setTeamCount', count: 6 })).type).toBe('ok');
+    const p1 = await joined('device-xxxxxxxx', 3);
+    expect((await a.admin({ type: 'resetGame', confirm: CONFIRM_WORD })).type).toBe('ok');
+    const after = await a.adminState((x) => x.teams.every((t) => !t.claimed));
+    expect(after.teamCount).toBe(6);
+    expect(after.teams).toHaveLength(6);
+    expect((await p1.playerState((x) => x.team === null)).teamCount).toBe(6);
   });
 });
