@@ -15,3 +15,6 @@ dist/
 test-results/
 playwright-report/
 proof/pairs/*.html
+
+# värdens festpaket — innehåller adminlänken, ska aldrig i git
+festpaket-2026-09-05.pdf
