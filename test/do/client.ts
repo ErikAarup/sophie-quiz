@@ -1,6 +1,6 @@
 // Tiny WebSocket test client for the DO tests (runs inside workerd via the workers pool).
 import { SELF, env } from 'cloudflare:test';
-import { CONFIRM_WORD, type AdminCommand, type AdminStateView, type PlayerStateView, type ServerMessage, type Team } from '../../src/shared/types.ts';
+import { CONFIRM_WORD, TEAM_COUNT, type AdminCommand, type AdminStateView, type PlayerStateView, type ServerMessage, type Team } from '../../src/shared/types.ts';
 
 /** Whatever the worker sees (vitest.config.ts binds it; a local .dev.vars may win — either way this matches). */
 export const TOKEN = env.ADMIN_TOKEN ?? 'test-admin-token';
@@ -112,10 +112,15 @@ export async function admin(): Promise<Client> {
   return c;
 }
 
-export async function resetGame(a: Client): Promise<void> {
+export async function resetGame(a: Client, teamCount = TEAM_COUNT): Promise<void> {
   const r = await a.admin({ type: 'resetGame', confirm: CONFIRM_WORD });
   if (r.type !== 'ok') throw new Error(`reset failed: ${JSON.stringify(r)}`);
   await a.adminState((s) => s.phase === 'lobby' && s.questionIndex === 0 && s.teams.every((t) => !t.claimed));
+  // A game reset deliberately keeps the team count (WO-084 AC3), so the harness sets it back
+  // itself: every test starts from the same table, whatever the one before it played with.
+  const c = await a.admin({ type: 'setTeamCount', count: teamCount });
+  if (c.type !== 'ok') throw new Error(`setTeamCount failed: ${JSON.stringify(c)}`);
+  await a.adminState((s) => s.teamCount === teamCount);
 }
 
 export function sleep(ms: number): Promise<void> {

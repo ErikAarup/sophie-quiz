@@ -14,3 +14,10 @@ Heartbeat (mtime = liveness).
   a Swedish reason otherwise · 2 everything follows the count · 3 reset keeps it, migrate gives
   8 · 4 admin commands serialised, exact-hit double grade → one ok + one busy · 5 wrong `?t=`
   cannot poison the cache · 6 SPELLEDNING §3 + troubleshooting lines.
+- 2026-09-04 20:11 — phase 1 committed (17bec85): count in the state, serialised DO, admin
+  stepper, safe token cache. `npm run typecheck` clean, `npm test` 103/103 before the new tests.
+- 2026-09-04 20:11 — phase 2: unit tests (9 new) + DO tests (5 new) green. AC4's DO test shows
+  one ok + one refusal where it used to be two oks; the refusal is `busy` or `done` depending on
+  microseconds (no model call to wait for) — noted in the ledger, both are correct refusals.
+- Next: e2e (AC5 token cache, AC4 through a real socket, the six-team user-seat run + shots),
+  SPELLEDNING §3 lines, then the PR.
