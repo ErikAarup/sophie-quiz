@@ -8,7 +8,7 @@
 // written. Unset in every normal run, including the one `npm run deploy` makes.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { buildQuiz, bundledData, type QuizData, type QuizFile } from '../../src/worker/bank.ts';
+import { buildQuiz, bundledData, type BankList, type QuizData, type QuizFile } from '../../src/worker/bank.ts';
 
 const override = process.env['SOPHIE_QUIZ_JSON'];
 const quizSource = override ?? 'data/quiz.json';
@@ -56,5 +56,47 @@ describe('the ten lists are ready for the party (npm run deploy runs this first)
   it('is ten questions of 2:30, the shape the runbook and the screens are written for', () => {
     expect(data.quiz.questions).toHaveLength(10);
     expect(data.quiz.durationSeconds).toBe(150);
+  });
+});
+
+describe('what the gate refuses, on data made up for the purpose', () => {
+  const list = (over: Partial<BankList>): BankList => ({
+    no: 1,
+    slug_en: 'made-up',
+    category: 'test',
+    title_sv: 'Påhittad lista',
+    definition_sv: '',
+    host_question_sv: '',
+    source_name: '',
+    source_url: '',
+    as_of: '',
+    verdict: 'verified',
+    items: Array.from({ length: 15 }, (_, i) => ({ rank: i + 1, name_sv: `Rad ${i + 1}`, value: '1', unit: '' })),
+    ...over,
+  });
+  const withLists = (lists: BankList[], slugs = ['made-up']): QuizData => ({
+    bank: { generated_on: '', count: lists.length, lists },
+    quiz: { questions: slugs, durationSeconds: 150 },
+    aliases: {},
+  });
+
+  it('a slug the bank does not have', () => {
+    expect(() => buildQuiz({ data: withLists([list({})], ['inte-i-banken']) })).toThrow(/no list with slug "inte-i-banken"/);
+  });
+
+  it('a list that is not verified or corrected', () => {
+    expect(() => buildQuiz({ data: withLists([list({ verdict: 'rejected' })]) })).toThrow(/verdict "rejected"/);
+    expect(() => buildQuiz({ data: withLists([list({ verdict: 'corrected' })]) })).not.toThrow();
+  });
+
+  it('a list with fewer than ten rows', () => {
+    const short = list({ items: Array.from({ length: 9 }, (_, i) => ({ rank: i + 1, name_sv: `Rad ${i + 1}`, value: '1', unit: '' })) });
+    expect(() => buildQuiz({ data: withLists([short]) })).toThrow(/has only 9 rows/);
+  });
+
+  it('a shared tenth place, which builds fine and is exactly what the top-ten check catches', () => {
+    const tie = list({ items: [...list({}).items.slice(0, 10), { rank: 10, name_sv: 'Delad tia', value: '1', unit: '' }, ...list({}).items.slice(10)] });
+    const quiz = buildQuiz({ data: withLists([tie]) });
+    expect(quiz.questions[0]?.topCount).toBe(11); // eleven rows in the "top ten": the reveal would never end
   });
 });
