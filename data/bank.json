@@ -1,11 +1,11 @@
 {
-  "generated_on": "2026-09-02",
-  "count": 100,
+  "generated_on": "2026-09-04",
+  "count": 109,
   "verdict_counts": {
-    "verified": 77,
+    "verified": 71,
     "corrected": 38,
-    "rejected": 64,
-    "unverifiable": 1
+    "rejected": 66,
+    "unverifiable": 0
   },
   "lists": [
     {
@@ -8272,114 +8272,116 @@
     },
     {
       "no": 77,
-      "verdict": "verified",
-      "reason_sv": "Wikipedias tabell 'List of public corporations by market capitalization' (ögonblicksbild 30 juni 2026) bekräftar rang 1-10 exakt, både bolag och ordning. Rang 11-15 är samma fem bolag som i utkastet (SK Hynix, Eli Lilly, Walmart, Berkshire Hathaway, Micron Technology); ordningen mellan dem är korrigerad efter faktiskt börsvärde eftersom WebFetch-sammanfattningen råkade sortera dem fel. Ingen bindning vid gräns 10/11.",
-      "batch": 16,
+      "verdict": "corrected",
+      "reason_sv": "Faktagranskaren hämtade companiesmarketcap.com den 4 september 2026 och plats 1–20 stämde mot utkastet, men den uteslöt SpaceX som \"privatägt\". Fel: Erik påpekade att SpaceX är börsnoterat, och sajtens egen SpaceX-sida bekräftar det (ticker SPCX, aktiekurs 148,69 USD, börsvärde 1 959 miljarder, plats 7). SpaceX är återinsatt på plats 7 och plats 7–14 har flyttats ett steg ned; JPMorgan Chase (948 miljarder) föll ut från plats 15. Rättat i sittningen 4 september kl 18:20.",
+      "batch": 13,
       "slug_en": "largest-companies-by-market-cap",
       "category": "foretag-ekonomi",
-      "title_sv": "Världens mest värdefulla börsbolag efter börsvärde",
-      "definition_sv": "Rangordning av världens börsnoterade företag efter börsvärde (aktiekurs x antal utestående aktier, USD), ögonblicksbild 30 juni 2026 enligt Wikipedia.",
-      "host_question_sv": "Vilka är världens mest värdefulla börsbolag efter börsvärde, enligt Wikipedia i juni 2026?",
-      "source_name": "Wikipedia - List of public corporations by market capitalization",
-      "source_url": "https://en.wikipedia.org/wiki/List_of_public_corporations_by_market_capitalization",
-      "as_of": "2026-06-30",
+      "title_sv": "Världens mest värdefulla börsbolag",
+      "definition_sv": "Börsnoterade bolag (publika bolag med aktiekurs på en börs, inte fonder) rangordnade efter börsvärde i miljarder USD, enligt companiesmarketcap.com den 4 september 2026.",
+      "host_question_sv": "Världens mest värdefulla börsnoterade bolag efter börsvärde i miljarder USD, enligt companiesmarketcap.com den 4 september 2026.",
+      "source_name": "companiesmarketcap.com — Largest companies by market cap",
+      "source_description_sv": "companiesmarketcap.com är en oberoende webbplats som samlar börsvärden för börsnoterade bolag globalt, beräknat som aktiekurs gånger antal utestående aktier. Siffrorna hämtas från marknadsdata och uppdateras löpande under handelsdagen, så listan kan se annorlunda ut redan nästa dag.",
+      "source_url": "https://companiesmarketcap.com/",
+      "as_of": "2026-09-04",
       "items": [
         {
           "rank": 1,
           "name_sv": "Nvidia",
-          "value": "4 846 000",
-          "unit": "miljoner USD"
+          "value": "5 599",
+          "unit": "miljarder USD"
         },
         {
           "rank": 2,
-          "name_sv": "Alphabet (Google)",
-          "value": "4 311 000",
-          "unit": "miljoner USD"
+          "name_sv": "Apple",
+          "value": "4 673",
+          "unit": "miljarder USD"
         },
         {
           "rank": 3,
-          "name_sv": "Apple",
-          "value": "4 249 000",
-          "unit": "miljoner USD"
+          "name_sv": "Alphabet",
+          "value": "4 089",
+          "unit": "miljarder USD"
         },
         {
           "rank": 4,
           "name_sv": "Microsoft",
-          "value": "2 770 000",
-          "unit": "miljoner USD"
+          "value": "3 714",
+          "unit": "miljarder USD"
         },
         {
           "rank": 5,
           "name_sv": "Amazon",
-          "value": "2 563 000",
-          "unit": "miljoner USD"
+          "value": "2 761",
+          "unit": "miljarder USD"
         },
         {
           "rank": 6,
           "name_sv": "TSMC",
-          "value": "2 475 000",
-          "unit": "miljoner USD"
+          "value": "2 204",
+          "unit": "miljarder USD"
         },
         {
           "rank": 7,
-          "name_sv": "Broadcom",
-          "value": "1 797 000",
-          "unit": "miljoner USD"
+          "name_sv": "SpaceX",
+          "value": "1 959",
+          "unit": "miljarder USD"
         },
         {
           "rank": 8,
-          "name_sv": "Tesla",
-          "value": "1 579 000",
-          "unit": "miljoner USD"
+          "name_sv": "Broadcom",
+          "value": "1 701",
+          "unit": "miljarder USD"
         },
         {
           "rank": 9,
-          "name_sv": "Meta",
-          "value": "1 429 000",
-          "unit": "miljoner USD"
+          "name_sv": "Saudi Aramco",
+          "value": "1 672",
+          "unit": "miljarder USD"
         },
         {
           "rank": 10,
-          "name_sv": "Samsung",
-          "value": "1 416 000",
-          "unit": "miljoner USD"
+          "name_sv": "Meta",
+          "value": "1 558",
+          "unit": "miljarder USD"
         },
         {
           "rank": 11,
-          "name_sv": "SK Hynix",
-          "value": "1 280 000",
-          "unit": "miljoner USD"
+          "name_sv": "Tesla",
+          "value": "1 394",
+          "unit": "miljarder USD"
         },
         {
           "rank": 12,
-          "name_sv": "Eli Lilly",
-          "value": "1 167 000",
-          "unit": "miljoner USD"
+          "name_sv": "Samsung",
+          "value": "1 245",
+          "unit": "miljarder USD"
         },
         {
           "rank": 13,
-          "name_sv": "Walmart",
-          "value": "1 075 000",
-          "unit": "miljoner USD"
+          "name_sv": "Micron",
+          "value": "1 129",
+          "unit": "miljarder USD"
         },
         {
           "rank": 14,
           "name_sv": "Berkshire Hathaway",
-          "value": "1 074 000",
-          "unit": "miljoner USD"
+          "value": "1 084",
+          "unit": "miljarder USD"
         },
         {
           "rank": 15,
-          "name_sv": "Micron Technology",
-          "value": "1 020 000",
-          "unit": "miljoner USD"
+          "name_sv": "Eli Lilly",
+          "value": "1 020",
+          "unit": "miljarder USD"
         }
       ],
       "volatility": "volatile",
       "well_known_10th": false,
-      "confidence": "high",
+      "confidence": "medium",
       "verification": "web-verified",
-      "notes": "Börsvärde ändras dagligen/varje minut - listan är en ögonblicksbild från 30 juni 2026 enligt Wikipedia och kan redan vara inaktuell på festkvällen 5 september 2026. Rang 1-10 bekräftade exakt mot källan via WebFetch. Ordningen för rang 11-15 är satt efter faktiskt börsvärde (en WebFetch-sammanfattning råkade kasta om ordningen för dessa fem bolag trots korrekta siffror). Inga bindningar vid gräns 10/11."
+      "notes": "SpaceX (SPCX) på plats 7 med 1 959 miljarder USD per sajtens egen sida den 4 september 2026; övriga värden från samma dags hämtning. Ingen delning vid gränsen 10/11 (Meta 1 558 mot Samsung 1 245). Börsvärden ändras under handelsdagen, så exakta siffror kan skilja något mot kvällen. Alphabet svaras ofta som Google, Meta som Facebook, Saudi Aramco som Aramco — alla finns som alias.",
+      "modified": "2026-09-04"
     },
     {
       "no": 78,
@@ -10735,6 +10737,954 @@
       "confidence": "high",
       "verification": "web-verified",
       "notes": "OBS definitionsfälla: detta är antal INVÅNARE på gator med namnet, inte antal gator med namnet (den listan toppas istället av Ringvägen 205 gator, Skogsvägen 204, Björkvägen 200 enligt sv.wikipedia \"Gatunamn\" - ett helt annat svar). Läs definitionen tydligt för laget så de vet vilken variant som gäller, annars blir \"rätt\" svar (Ringvägen) fel i denna variant."
+    },
+    {
+      "no": 101,
+      "verdict": "corrected",
+      "reason_sv": "Jag hämtade SCB:s statistiksida för tabell BE0001T05AR (namnstatistik, nyfödda, tilltalsnamn topp 10/100) och bekräftade att tabellen täcker 2001 och att den är en äldre, ej längre uppdaterad tabell med en interaktiv variabelväljare som inte lämnar ut siffrorna via en enkel hämtning eller SCB:s öppna API (tabellen saknas i api.scb.se:s sökbara utbud). Draftens topp fem (Filip 1118, Oscar 1097, Erik 1057, Anton 1006, William 992) och hela topp tio (Viktor 966, Emil 951, Alexander 951, Lucas 895, Simon 890) bekräftades oberoende via sökträffar som citerar SCB, samt av SCB:s egna pressmeddelanden om att Filip toppade namnlistan 1998, 2000 och 2001 - en konkurrerande sammanställning (namntips.se) med helt andra siffror och utan Filip i topp åtta motsades av detta och förkastades som opålitlig. Jag tog bort ett ospekulerat och overifierbart påstående i draftens anteckningar om en intern namnkod ('Oskar' som databaskod) och skärpte källbeskrivningen till att spegla att sidan kräver manuellt urval snarare än att ge en exakt uppdateringsdatum jag inte kunnat verifiera.",
+      "batch": 13,
+      "slug_en": "boys-names-born-2001-sweden",
+      "category": "sverige",
+      "title_sv": "Vanligaste tilltalsnamnen för pojkar födda 2001",
+      "definition_sv": "De tio vanligaste tilltalsnamnen bland pojkar som fick tilltalsnamn (föddes) i Sverige år 2001, mätt som antal bärare av namnet det året, enligt SCB:s namnstatistik. Tabellen redovisar bara de tio vanligaste namnen per år - namn utanför topp tio visas inte (markeras \"..\").",
+      "host_question_sv": "Vilka är de tio vanligaste tilltalsnamnen bland pojkar som föddes i Sverige år 2001, enligt SCB:s namnstatistik?",
+      "source_name": "SCB — Namnstatistik, nyfödda pojkar 2001 (topp 10)",
+      "source_description_sv": "Statistiska centralbyrån (SCB) är Sveriges statistikmyndighet. Namnstatistiken bygger på folkbokföringens uppgifter om nyfödda och visar de tio respektive hundra vanligaste tilltalsnamnen per födelse-/namngivningsår. Tabellen (BE0001T05AR) är en äldre tabell som SCB inte längre uppdaterar och nås via en interaktiv variabelväljare i Statistikdatabasen (välj \"Pojknamn topp 10\", år 2001), men den täcker 2001 fullständigt.",
+      "source_url": "https://www.statistikdatabasen.scb.se/pxweb/sv/ssd/START__BE__BE0001__BE0001D/BE0001T05AR/",
+      "as_of": "2001",
+      "items": [
+        {
+          "rank": 1,
+          "name_sv": "Filip",
+          "value": "1 118",
+          "unit": "barn"
+        },
+        {
+          "rank": 2,
+          "name_sv": "Oscar",
+          "value": "1 097",
+          "unit": "barn"
+        },
+        {
+          "rank": 3,
+          "name_sv": "Erik",
+          "value": "1 057",
+          "unit": "barn"
+        },
+        {
+          "rank": 4,
+          "name_sv": "Anton",
+          "value": "1 006",
+          "unit": "barn"
+        },
+        {
+          "rank": 5,
+          "name_sv": "William",
+          "value": "992",
+          "unit": "barn"
+        },
+        {
+          "rank": 6,
+          "name_sv": "Viktor",
+          "value": "966",
+          "unit": "barn"
+        },
+        {
+          "rank": 7,
+          "name_sv": "Emil",
+          "value": "951",
+          "unit": "barn"
+        },
+        {
+          "rank": 8,
+          "name_sv": "Alexander",
+          "value": "951",
+          "unit": "barn"
+        },
+        {
+          "rank": 9,
+          "name_sv": "Lucas",
+          "value": "895",
+          "unit": "barn"
+        },
+        {
+          "rank": 10,
+          "name_sv": "Simon",
+          "value": "890",
+          "unit": "barn"
+        }
+      ],
+      "volatility": "stable",
+      "well_known_10th": false,
+      "confidence": "medium",
+      "verification": "web-verified",
+      "notes": "Källan (SCB:s äldre namnstatistik-tabell) redovisar endast topp 10 per år - namn utanför topp tio visas som '..' och kunde inte hämtas, så listan har exakt 10 rader (minimikravet), precis som flicknamnslistan från samma källfamilj. Emil (rank 7) och Alexander (rank 8) hade samma antal bärare (951) år 2001, men SCB:s egen tabell skiljer dem åt med distinkta ranger - det är alltså inte en delad platsering som spelarna behöver hantera, och det ligger inte i närheten av gränsen mellan rank 10 och 11. SCB:s interaktiva väljare gick inte att hämta rådata från direkt (varken via sidan eller det öppna API:et), så siffrorna är korsverifierade mot en oberoende sammanställning och mot SCB:s egna pressmeddelanden om att Filip toppade 1998, 2000 och 2001 - en konkurrerande sammanställning med avvikande siffror förkastades. Konfidensen sätts till 'medium' eftersom ingen enskild primärsida med rådata kunde hämtas direkt, trots god oberoende korroborering."
+    },
+    {
+      "no": 102,
+      "verdict": "corrected",
+      "reason_sv": "Jag hämtade car.info:s sida \"Statistik: Bilar registrerade i Sverige\" samt varje enskilt märkes egen statistiksida (Kia, Audi, Renault, Peugeot, Skoda, Saab, Nissan, Opel, Hyundai) för att få hela topp 15 från samma källa och samma tidsstämpel (2026-09-03), i stället för utkastets blandning av en aktuell sexlista och en fristående 2023-lista. Placeringarna 1–6 stämde med utkastet, men placering 7–15 fick räknas om från grunden: Kia gick förbi Audi och Renault (336 790 bilar) och Skoda (251 146) gick förbi Peugeot (236 344), så ordningen på plats 7, 10 och 11 ändrades. Ingen tie vid gränsen 10/11, minst tio distinkta märken, inga stötande stavningar för mikrofonen.",
+      "batch": 13,
+      "slug_en": "car-brands-swedish-fleet",
+      "category": "sverige",
+      "title_sv": "Vanligaste bilmärkena i Sverige",
+      "definition_sv": "Bilmärken (fabrikat) efter antal bilar registrerade hos Transportstyrelsen och i trafik i Sverige, enligt car.info:s löpande sammanställning av fordonsregistret. Alla femton placeringar är hämtade från samma källa och samma ögonblicksbild (fordon registrerade till och med 2026-09-03), så listan är intern konsekvent rakt igenom — till skillnad från en tidigare version som blandade en aktuell sexlista med en föråldrad sammanställning från 2023 för resten av listan.",
+      "host_question_sv": "Vilka är de vanligaste bilmärkena bland bilar i trafik i Sverige, enligt Transportstyrelsens fordonsregister (car.info:s sammanställning, september 2026)?",
+      "source_name": "Car.info — Statistik: Bilar registrerade i Sverige",
+      "source_description_sv": "Car.info är en biluppgiftstjänst som hämtar sina siffror ur Transportstyrelsens fordonsregister och uppdaterar statistiken fem dagar i veckan; sajten anger att den omfattar fordon registrerade till och med 2026-09-03. Placering 1–6 kommer från sajtens egen topplista, placering 7–15 är hämtade en och en från varje märkes egen statistiksida på samma sajt (samma referensdatum), eftersom sajtens fulla topp-15-lista döljs bakom inloggning. Car.info är en tredjepartstjänst, inte en myndighet, men dess toppsiffror (Volvo, Volkswagen, Toyota) stämmer väl med oberoende källor (t.ex. Zmartas sammanställning av Trafikanalys-data).",
+      "source_url": "https://www.car.info/sv-se/stats",
+      "as_of": "2026-09-03",
+      "items": [
+        {
+          "rank": 1,
+          "name_sv": "Volvo",
+          "value": "1 410 418",
+          "unit": "bilar"
+        },
+        {
+          "rank": 2,
+          "name_sv": "Volkswagen",
+          "value": "1 015 392",
+          "unit": "bilar"
+        },
+        {
+          "rank": 3,
+          "name_sv": "Toyota",
+          "value": "492 419",
+          "unit": "bilar"
+        },
+        {
+          "rank": 4,
+          "name_sv": "Mercedes-Benz",
+          "value": "391 348",
+          "unit": "bilar"
+        },
+        {
+          "rank": 5,
+          "name_sv": "Ford",
+          "value": "377 884",
+          "unit": "bilar"
+        },
+        {
+          "rank": 6,
+          "name_sv": "BMW",
+          "value": "337 632",
+          "unit": "bilar"
+        },
+        {
+          "rank": 7,
+          "name_sv": "Kia",
+          "value": "336 790",
+          "unit": "bilar"
+        },
+        {
+          "rank": 8,
+          "name_sv": "Audi",
+          "value": "292 018",
+          "unit": "bilar"
+        },
+        {
+          "rank": 9,
+          "name_sv": "Renault",
+          "value": "266 933",
+          "unit": "bilar"
+        },
+        {
+          "rank": 10,
+          "name_sv": "Skoda",
+          "value": "251 146",
+          "unit": "bilar"
+        },
+        {
+          "rank": 11,
+          "name_sv": "Peugeot",
+          "value": "236 344",
+          "unit": "bilar"
+        },
+        {
+          "rank": 12,
+          "name_sv": "Saab",
+          "value": "180 677",
+          "unit": "bilar"
+        },
+        {
+          "rank": 13,
+          "name_sv": "Nissan",
+          "value": "175 222",
+          "unit": "bilar"
+        },
+        {
+          "rank": 14,
+          "name_sv": "Opel",
+          "value": "169 729",
+          "unit": "bilar"
+        },
+        {
+          "rank": 15,
+          "name_sv": "Hyundai",
+          "value": "146 161",
+          "unit": "bilar"
+        }
+      ],
+      "volatility": "stable",
+      "well_known_10th": false,
+      "confidence": "medium",
+      "verification": "web-verified",
+      "notes": "Placering 6 och 7 (BMW 337 632 respektive Kia 336 790) ligger mycket nära varandra men är inte lika — ingen tie, och gränsen 10/11 (Skoda 251 146 mot Peugeot 236 344) är tydlig. Rank 1–3 (Volvo, Volkswagen, Toyota) är mycket stabila över tid och de enda placeringarna lag rimligen bör chansa på över rank 7-8; ordningen på plats 4–5 (Mercedes-Benz/Ford) och 7–11 kan i teorin skifta något mellan enstaka månader eftersom det är löpande registerdata, men samtliga siffror i denna version kommer från samma källa och samma dag (2026-09-03), vilket är en förbättring mot föregående version som blandade en 2023-sammanställning in i mitten av listan. Trafikanalys/SCB publicerar inte fabrikatsuppdelningen offentligt i sin statistikdatabas (bekräftat via sökning); Mobility Sweden (branschorganisationen) för statistik över 'Personbilar i trafik... per fabrikat' men endast som nedladdningsbar Excel utan siffror synliga på webbsidan, så den kunde inte användas som primärkälla i denna verifiering."
+    },
+    {
+      "no": 103,
+      "verdict": "verified",
+      "reason_sv": "Jag hämtade Wikipedia-artikeln \"List of countries with McDonald's restaurants\" och extraherade hela tabellen rad för rad, sorterade sedan alla länder fallande efter antal restauranger. Alla 15 platser i utkastet stämde exakt, både namn, antal och ordning (USA 13 697 ner till Saudiarabien 458), och samtliga har datumet 31 december 2025 i källan. Inga ändringar behövdes i topplistan; jag höjde bara confidence till \"high\" eftersom hela tabellen kunde verifieras direkt mot källan.",
+      "batch": 13,
+      "slug_en": "countries-by-mcdonalds-restaurants",
+      "category": "mat-dryck",
+      "title_sv": "Länder med flest McDonald's-restauranger",
+      "definition_sv": "Länder rangordnade efter antal öppna McDonald's-restauranger, enligt Wikipedias sammanställning av McDonald's egna landsdata (för samtliga länder i topp 15 gäller siffrorna per den 31 december 2025).",
+      "host_question_sv": "Länder med flest McDonald's-restauranger, enligt Wikipedia, per den 31 december 2025.",
+      "source_name": "Wikipedia — \"List of countries with McDonald's restaurants\"",
+      "source_description_sv": "En community-redigerad Wikipedia-artikel som sammanställer antalet McDonald's-restauranger per land, med siffror hämtade från McDonald's egna årsredovisningar och pressmaterial. De flesta länder i artikeln anger data per den 31 december 2025, men enskilda rader (utanför denna topp 15) har äldre eller osäkra datum.",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_countries_with_McDonald%27s_restaurants",
+      "as_of": "31 december 2025",
+      "items": [
+        {
+          "rank": 1,
+          "name_sv": "USA",
+          "value": "13 697",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 2,
+          "name_sv": "Kina",
+          "value": "7 740",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 3,
+          "name_sv": "Japan",
+          "value": "3 025",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 4,
+          "name_sv": "Frankrike",
+          "value": "1 629",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 5,
+          "name_sv": "Kanada",
+          "value": "1 520",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 6,
+          "name_sv": "Storbritannien",
+          "value": "1 505",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 7,
+          "name_sv": "Tyskland",
+          "value": "1 382",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 8,
+          "name_sv": "Brasilien",
+          "value": "1 230",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 9,
+          "name_sv": "Australien",
+          "value": "1 076",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 10,
+          "name_sv": "Filippinerna",
+          "value": "851",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 11,
+          "name_sv": "Italien",
+          "value": "805",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 12,
+          "name_sv": "Indien",
+          "value": "757",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 13,
+          "name_sv": "Spanien",
+          "value": "659",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 14,
+          "name_sv": "Polen",
+          "value": "618",
+          "unit": "restauranger"
+        },
+        {
+          "rank": 15,
+          "name_sv": "Saudiarabien",
+          "value": "458",
+          "unit": "restauranger"
+        }
+      ],
+      "volatility": "annual",
+      "well_known_10th": false,
+      "confidence": "high",
+      "verification": "web-verified",
+      "notes": "Hela Wikipedia-tabellen hämtades och sorterades manuellt fallande efter antal restauranger; topp 15 här stämmer exakt med den sorteringen. Alla 15 länder anger data per samma datum (31 december 2025), så inga blandade årtal inom topp 15. Ingen delad placering förekommer, och ingen delning sträcker sig över gränsen mellan plats 10 och 11 (851 mot 805). Filippinerna (plats 10) är inte allmänt känd trivia men rimlig att gissa sig till som push-your-luck-svar. Källartikeln som helhet innehåller länder med äldre eller okända datum (t.ex. Liechtenstein 2018, Jersey okänt) och ett land, Ryssland (850 restauranger daterat 16 maj 2022), som inte längre driver McDonald's-restauranger (bolaget avyttrade sin ryska verksamhet 2022) — Ryssland är därför korrekt uteslutet ur listan. Dessa avvikelser ligger utanför eller uteslutna från topp 15 och påverkar inte rangordningen här."
+    },
+    {
+      "no": 104,
+      "verdict": "verified",
+      "reason_sv": "SCB:s egen tabell (BE0001T05AR i Statistikdatabasen) går inte att hämta direkt eftersom den kräver en interaktiv frågedialog (steg 1-3, ingen GET-bar datavy), men jag hämtade den sidan och bekräftade att tabellen finns och täcker precis flicknamn topp 10/100 år 1998-2022. Jag kryssade sedan siffrorna mot två oberoende sekundärkällor som uttryckligen anger Statistics Sweden/SCB som källa (babynamestats.com och en sökträff som citerar samma tabell), och båda gav exakt samma rank 1-15 och exakt samma antal som utkastet: Julia 1166, Emma 1121, Hanna 1031 osv. Inget behövde ändras - utkastet stämmer, ingen delning över gräns 10/11 (Maja 789 mot Klara 745), och namnen är lätta att säga och stava vid mikrofonen.",
+      "batch": 13,
+      "slug_en": "girls-names-born-2001-sweden",
+      "category": "sverige",
+      "title_sv": "Vanligaste tilltalsnamnen för flickor födda 2001",
+      "definition_sv": "De vanligaste tilltalsnamnen (förnamn som personen faktiskt kallas) bland flickor folkbokförda som nyfödda i Sverige år 2001, antal barn per namn. Olika stavningar av samma namn räknas ihop under den vanligaste stavningen, enligt SCB:s namnstatistik.",
+      "host_question_sv": "De tio vanligaste tilltalsnamnen för flickor födda i Sverige år 2001, enligt SCB:s namnstatistik.",
+      "source_name": "SCB — Namnstatistik, Nyfödda: de 10 och 100 vanligaste tilltalsnamnen efter namngivningsår",
+      "source_description_sv": "SCB (Statistiska centralbyrån) är Sveriges statistikmyndighet och sammanställer varje år namnstatistik utifrån folkbokföringen. Tabellen bygger på samtliga barn som folkbokfördes som nyfödda i Sverige år 2001, och olika stavningsvarianter av ett namn slås ihop och redovisas under den vanligaste stavningen.",
+      "source_url": "https://www.statistikdatabasen.scb.se/goto/sv/ssd/BE0001T05AR",
+      "as_of": "2001",
+      "items": [
+        {
+          "rank": 1,
+          "name_sv": "Julia",
+          "value": "1 166",
+          "unit": "barn"
+        },
+        {
+          "rank": 2,
+          "name_sv": "Emma",
+          "value": "1 121",
+          "unit": "barn"
+        },
+        {
+          "rank": 3,
+          "name_sv": "Hanna",
+          "value": "1 031",
+          "unit": "barn"
+        },
+        {
+          "rank": 4,
+          "name_sv": "Elin",
+          "value": "947",
+          "unit": "barn"
+        },
+        {
+          "rank": 5,
+          "name_sv": "Wilma",
+          "value": "901",
+          "unit": "barn"
+        },
+        {
+          "rank": 6,
+          "name_sv": "Ida",
+          "value": "865",
+          "unit": "barn"
+        },
+        {
+          "rank": 7,
+          "name_sv": "Amanda",
+          "value": "853",
+          "unit": "barn"
+        },
+        {
+          "rank": 8,
+          "name_sv": "Linnéa",
+          "value": "839",
+          "unit": "barn"
+        },
+        {
+          "rank": 9,
+          "name_sv": "Matilda",
+          "value": "791",
+          "unit": "barn"
+        },
+        {
+          "rank": 10,
+          "name_sv": "Maja",
+          "value": "789",
+          "unit": "barn"
+        },
+        {
+          "rank": 11,
+          "name_sv": "Klara",
+          "value": "745",
+          "unit": "barn"
+        },
+        {
+          "rank": 12,
+          "name_sv": "Moa",
+          "value": "689",
+          "unit": "barn"
+        },
+        {
+          "rank": 13,
+          "name_sv": "Sara",
+          "value": "670",
+          "unit": "barn"
+        },
+        {
+          "rank": 14,
+          "name_sv": "Felicia",
+          "value": "646",
+          "unit": "barn"
+        },
+        {
+          "rank": 15,
+          "name_sv": "Ebba",
+          "value": "636",
+          "unit": "barn"
+        }
+      ],
+      "volatility": "stable",
+      "well_known_10th": false,
+      "confidence": "high",
+      "verification": "web-verified",
+      "notes": "SCB:s egen PxWeb-tabell (BE0001T05AR) kräver en interaktiv flervalsdialog och kan inte hämtas som en enkel GET-sida, men sidan bekräftades finnas och täcka rätt år/kategori. Siffrorna verifierades i stället mot babynamestats.com (som uttryckligen citerar Statistics Sweden) och en oberoende webbträff som citerar samma SCB-tabell; båda gav exakt rank 1-15 och exakt samma antal som här. En tredje källa (namntips.se-speglingen på namnhatt.se) gav helt avvikande siffror utan Julia i topp 10, vilket motsäger flera samstämmiga källor om att Julia var etta 1999-2001 - den källan bedöms opålitlig och ignorerades. Inga delade platser; ingen delning över gränsen rank 10/11 (Maja 789 mot Klara 745). Rank 10 (Maja) är ett vanligt och lättigenkänt namn, rimligt gissningsbart för partygäster."
+    },
+    {
+      "no": 105,
+      "verdict": "verified",
+      "reason_sv": "Forbes egen sida gav 403 vid direkthämtning, så listan kontrollerades mot Bleacher Report, Wikipedia och The Hook, som alla citerar samma Forbes-siffror från 22 maj 2026. Rankplats 1-10 stämde exakt både till ordning och belopp mot utkastet, så inga ändringar behövdes. Rankplats 11-15 gick trots upprepade sökningar inte att bekräfta i ordning, men det påverkar inte spelbarheten eftersom topp tio är fullständigt verifierad utan delningar.",
+      "batch": 13,
+      "slug_en": "highest-paid-athletes-forbes",
+      "category": "sport",
+      "title_sv": "Världens högst betalda idrottare",
+      "definition_sv": "Idrottare rangordnade efter totala inkomster (lön/prispengar plus sponsring) under perioden maj 2025–maj 2026, enligt Forbes lista publicerad 22 maj 2026.",
+      "host_question_sv": "Världens tio högst betalda idrottare, enligt Forbes lista från maj 2026.",
+      "source_name": "Forbes — The World's Highest-Paid Athletes 2026 (Brett Knight, 22 maj 2026)",
+      "source_description_sv": "Forbes är en amerikansk affärstidning som varje år sedan 1990 sammanställer en lista över världens högst betalda idrottare, baserad på egna uppskattningar av lön, prispengar och sponsoravtal under de senaste tolv månaderna. Listan för 2026 publicerades 22 maj 2026 och räknas som branschens mest citerade källa på området.",
+      "source_url": "https://www.forbes.com/sites/brettknight/2026/05/22/the-worlds-10-highest-paid-athletes-2026/",
+      "as_of": "2026",
+      "items": [
+        {
+          "rank": 1,
+          "name_sv": "Cristiano Ronaldo",
+          "value": "300",
+          "unit": "miljoner USD"
+        },
+        {
+          "rank": 2,
+          "name_sv": "Canelo Álvarez",
+          "value": "170",
+          "unit": "miljoner USD"
+        },
+        {
+          "rank": 3,
+          "name_sv": "Lionel Messi",
+          "value": "140",
+          "unit": "miljoner USD"
+        },
+        {
+          "rank": 4,
+          "name_sv": "LeBron James",
+          "value": "137,8",
+          "unit": "miljoner USD"
+        },
+        {
+          "rank": 5,
+          "name_sv": "Shohei Ohtani",
+          "value": "127,6",
+          "unit": "miljoner USD"
+        },
+        {
+          "rank": 6,
+          "name_sv": "Stephen Curry",
+          "value": "124,7",
+          "unit": "miljoner USD"
+        },
+        {
+          "rank": 7,
+          "name_sv": "Jon Rahm",
+          "value": "107",
+          "unit": "miljoner USD"
+        },
+        {
+          "rank": 8,
+          "name_sv": "Karim Benzema",
+          "value": "104",
+          "unit": "miljoner USD"
+        },
+        {
+          "rank": 9,
+          "name_sv": "Kevin Durant",
+          "value": "103,8",
+          "unit": "miljoner USD"
+        },
+        {
+          "rank": 10,
+          "name_sv": "Lewis Hamilton",
+          "value": "100",
+          "unit": "miljoner USD"
+        }
+      ],
+      "volatility": "annual",
+      "well_known_10th": false,
+      "confidence": "high",
+      "verification": "web-verified",
+      "notes": "Rankplats 1-10 verifierad mot flera oberoende källor (Bleacher Report, Wikipedia, The Hook News) som alla citerar samma Forbes-lista från 22 maj 2026 — namn, ordning och belopp matchar exakt. Forbes.com svarade 403 vid direkthämtning. Rankplats 11-15 kunde inte bekräftas i ordning trots upprepade sökningar (kända referenspunkter längre ner: Erling Haaland #19, Carlos Alcaraz #32, Jannik Sinner #50) — värdlaget bör vara berett på att ge poäng manuellt om ett lag chansar på 11-15 och inte hittar stöd, men detta påverkar inte kärnmekaniken eftersom topp tio är fullständigt och entydigt verifierad."
+    },
+    {
+      "no": 106,
+      "verdict": "verified",
+      "reason_sv": "Hämtade https://www.vilkenstorlek.se/geografi/sveriges-storsta-oar/ och korsverifierade mot Wikipedias \"Lista över öar i Sverige\" (sv.wikipedia.org), båda baserade på SCB:s ö-statistik från 2013/2014. Alla 15 platser, namn och areor i utkastet stämde exakt överens mellan källorna, inklusive att Södertörn ligger på tredje plats (1 207 km²) sedan SCB 2014 började räkna land avgränsat av grävda kanaler med slussar som öar. Inga fel hittades så listan behölls oförändrad; confidence höjdes till hög eftersom två oberoende sammanställningar gav identiska siffror.",
+      "batch": 13,
+      "slug_en": "largest-islands-sweden",
+      "category": "sverige",
+      "title_sv": "Sveriges största öar",
+      "definition_sv": "Sveriges största öar efter landyta i km², enligt SCB:s ö-statistik (baserad på Lantmäteriets fastighetskarta). SCB räknar även landområden som är avgränsade av grävda kanaler med slussar, som Södertörn, som öar - inte bara öar omgivna enbart av naturligt vatten.",
+      "host_question_sv": "Sveriges största öar efter landyta i kvadratkilometer, enligt SCB:s ö-statistik - där bland annat Södertörn räknas som en egen ö.",
+      "source_name": "Statistiska centralbyrån (SCB) - Sveriges öar efter areal",
+      "source_description_sv": "SCB för löpande statistik över Sveriges öar utifrån Lantmäteriets fastighetskarta. Siffrorna i denna lista är hämtade från vilkenstorlek.se och korsverifierade mot Wikipedias artikel \"Lista över öar i Sverige\" - båda återger samma SCB-underlag (hektar omräknat till km²) och gav identiska värden för samtliga 15 platser.",
+      "source_url": "https://www.vilkenstorlek.se/geografi/sveriges-storsta-oar/",
+      "as_of": "2026-09-04",
+      "items": [
+        {
+          "rank": 1,
+          "name_sv": "Gotland",
+          "value": "2 968",
+          "unit": "km²"
+        },
+        {
+          "rank": 2,
+          "name_sv": "Öland",
+          "value": "1 343",
+          "unit": "km²"
+        },
+        {
+          "rank": 3,
+          "name_sv": "Södertörn",
+          "value": "1 207",
+          "unit": "km²"
+        },
+        {
+          "rank": 4,
+          "name_sv": "Orust",
+          "value": "344",
+          "unit": "km²"
+        },
+        {
+          "rank": 5,
+          "name_sv": "Hisingen",
+          "value": "197",
+          "unit": "km²"
+        },
+        {
+          "rank": 6,
+          "name_sv": "Värmdö",
+          "value": "179",
+          "unit": "km²"
+        },
+        {
+          "rank": 7,
+          "name_sv": "Tjörn",
+          "value": "147",
+          "unit": "km²"
+        },
+        {
+          "rank": 8,
+          "name_sv": "Väddö och Björkö",
+          "value": "128",
+          "unit": "km²"
+        },
+        {
+          "rank": 9,
+          "name_sv": "Fårö",
+          "value": "109",
+          "unit": "km²"
+        },
+        {
+          "rank": 10,
+          "name_sv": "Gräsö",
+          "value": "94,9",
+          "unit": "km²"
+        },
+        {
+          "rank": 11,
+          "name_sv": "Selaön",
+          "value": "94,7",
+          "unit": "km²"
+        },
+        {
+          "rank": 12,
+          "name_sv": "Färingsö",
+          "value": "82,6",
+          "unit": "km²"
+        },
+        {
+          "rank": 13,
+          "name_sv": "Pitholmen",
+          "value": "80,8",
+          "unit": "km²"
+        },
+        {
+          "rank": 14,
+          "name_sv": "Tosterön",
+          "value": "76,6",
+          "unit": "km²"
+        },
+        {
+          "rank": 15,
+          "name_sv": "Ekerön",
+          "value": "68,2",
+          "unit": "km²"
+        }
+      ],
+      "volatility": "stable",
+      "well_known_10th": false,
+      "confidence": "high",
+      "verification": "web-verified",
+      "notes": "SCB räknade från 2014 Södertörn som egen ö (tidigare halvö) sedan Södertälje kanal och Hammarby sluss avgränsar den från fastlandet med grävt vatten - därför ligger Södertörn på tredje plats före Orust och Hisingen, som låg på tredje/fjärde plats i äldre listor. Rank 8 (Väddö och Björkö) samt rank 12-15 är SCB-klustrade grupper av sammanvuxna öar/holmar (t.ex. Pitholmen-klustret vid Piteå), här återgivna under sin mest kända delö med övriga som alias. Två oberoende källor (vilkenstorlek.se och Wikipedias ö-lista) gav identiska värden för alla 15 platser, vilket stärker tillförlitligheten. Inga rangordningar staplar över gräns 10/11 (94,9 mot 94,7 km²), och listan har fler än tio distinkta poster."
+    },
+    {
+      "no": 107,
+      "verdict": "verified",
+      "reason_sv": "Jag hämtade SCB:s sida \"De 30 vanligaste yrkena\" (yrkesregistret med yrkesstatistik, 2024) direkt via källänken och den svarade. Alla 15 poster i utkastet — namn, SSYK-yrke och antal sysselsatta för rang 1–15 — stämde exakt mot SCB:s siffror, i rätt ordning, utan luckor eller dubbletter runt gräns 10/11. Jag höjde bara konfidensen från medel till hög eftersom en oberoende hämtning bekräftade alla tal; inget sakinnehåll ändrades.",
+      "batch": 13,
+      "slug_en": "most-common-occupations-sweden",
+      "category": "sverige",
+      "title_sv": "Sveriges vanligaste yrken",
+      "definition_sv": "De 30 vanligaste yrkena bland anställda 16–69 år i Sverige 2024, mätt som antal sysselsatta per yrke (SSYK 2012, 4-siffernivå), enligt SCB:s yrkesregister med yrkesstatistik.",
+      "host_question_sv": "Sveriges vanligaste yrken efter antal anställda, 16–69 år, enligt SCB:s yrkesregister för 2024.",
+      "source_name": "SCB — Yrkesregistret med yrkesstatistik, \"De 30 vanligaste yrkena\" 2024",
+      "source_description_sv": "SCB (Statistiska centralbyrån) är Sveriges statistikmyndighet. Yrkesregistret bygger på administrativa register över samtliga anställda 16–69 år och klassificerar varje person efter yrke enligt SSYK 2012. Statistiken uppdateras årligen; senaste redovisade år är 2024.",
+      "source_url": "https://www.scb.se/hitta-statistik/statistik-efter-amne/arbetsmarknad/utbud-av-arbetskraft/yrkesregistret-med-yrkesstatistik/pong/tabell-och-diagram/30-vanligaste-yrkena/",
+      "as_of": "2024",
+      "items": [
+        {
+          "rank": 1,
+          "name_sv": "Undersköterska",
+          "value": "128 090",
+          "unit": "anställda"
+        },
+        {
+          "rank": 2,
+          "name_sv": "Grundskollärare",
+          "value": "119 050",
+          "unit": "anställda"
+        },
+        {
+          "rank": 3,
+          "name_sv": "Butikssäljare, fackhandel",
+          "value": "116 150",
+          "unit": "anställda"
+        },
+        {
+          "rank": 4,
+          "name_sv": "Systemutvecklare",
+          "value": "110 700",
+          "unit": "anställda"
+        },
+        {
+          "rank": 5,
+          "name_sv": "Lagerarbetare",
+          "value": "104 570",
+          "unit": "anställda"
+        },
+        {
+          "rank": 6,
+          "name_sv": "Butikssäljare, dagligvaror",
+          "value": "103 600",
+          "unit": "anställda"
+        },
+        {
+          "rank": 7,
+          "name_sv": "Företagssäljare",
+          "value": "93 820",
+          "unit": "anställda"
+        },
+        {
+          "rank": 8,
+          "name_sv": "Städare",
+          "value": "93 170",
+          "unit": "anställda"
+        },
+        {
+          "rank": 9,
+          "name_sv": "Vårdbiträde",
+          "value": "92 370",
+          "unit": "anställda"
+        },
+        {
+          "rank": 10,
+          "name_sv": "Barnskötare",
+          "value": "89 890",
+          "unit": "anställda"
+        },
+        {
+          "rank": 11,
+          "name_sv": "Köksbiträde",
+          "value": "89 660",
+          "unit": "anställda"
+        },
+        {
+          "rank": 12,
+          "name_sv": "Boendestödjare",
+          "value": "84 720",
+          "unit": "anställda"
+        },
+        {
+          "rank": 13,
+          "name_sv": "Utredare",
+          "value": "74 650",
+          "unit": "anställda"
+        },
+        {
+          "rank": 14,
+          "name_sv": "Kontorsassistent",
+          "value": "72 573",
+          "unit": "anställda"
+        },
+        {
+          "rank": 15,
+          "name_sv": "Personlig assistent",
+          "value": "71 080",
+          "unit": "anställda"
+        }
+      ],
+      "volatility": "stable",
+      "well_known_10th": false,
+      "confidence": "high",
+      "verification": "web-verified",
+      "notes": "Oberoende hämtning (WebFetch) av SCB:s sida \"De 30 vanligaste yrkena\" 2024 bekräftade samtliga 15 poster (namn, SSYK och antal sysselsatta) exakt mot utkastet, i rätt ordning, ingen tie runt rang 10/11. Definitionsfälla kvarstår: rang 3 (\"Butikssäljare, fackhandel\") och rang 6 (\"Butikssäljare, dagligvaror\") är två skilda SSYK-yrken i SCB:s lista. Ett lag som bara skriver \"Butikssäljare\" utan precisering bör i första hand tolkas som rang 3 (störst kategori, kopplad till dess alias) — värden döms enligt värdlagets bästa förmåga om ett lag preciserar dagligvaror/mat."
+    },
+    {
+      "no": 108,
+      "verdict": "corrected",
+      "reason_sv": "Källsidan home.unicode.org/emoji/emoji-frequency bekräftades vara nåbar och existerande (rubrik \"Emoji Frequency – Unicode\"), men verktyget kunde inte hämta hela tabellen på grund av sidans längd. Rangordning 1–15 verifierades därför exakt, plats för plats, mot Unicodes egen bloggartikel (blog.unicode.org, december 2021) och två oberoende sekundärkällor (Pocketnow, Deseret News) som citerar samma Unicode-frekvensdata - alla tre stämde helt överens med utkastets ordning, namn och emojis utan avvikelser. Enda ändringen är volatility, från \"annual\" till \"stable\": en sökning bekräftar att Unicode inte har publicerat någon ny frekvensmätning sedan 2021, så 2021 förblir den senaste officiella siffran även 2025/2026.",
+      "batch": 13,
+      "slug_en": "most-used-emojis-unicode",
+      "category": "teknik-internet",
+      "title_sv": "Världens mest använda emojis",
+      "definition_sv": "Emojis rangordnade efter global användningsfrekvens enligt Unicode-konsortiets emoji-frekvensstatistik, senast offentliggjord mätning från 2021 (jämförelse mot 2019 års data). Unicode har inte publicerat någon nyare officiell mätning sedan dess.",
+      "host_question_sv": "Världens mest använda emojis efter användningsfrekvens, enligt Unicode-konsortiet, mätning från 2021.",
+      "source_name": "Unicode Consortium — Emoji Frequency (home.unicode.org/emoji/emoji-frequency)",
+      "source_description_sv": "Unicode-konsortiet är organisationen som standardiserar emojis och Unicode-teckenuppsättningen. De publicerar en frekvenslista baserad på faktisk användningsdata som samlas in via Unicodes CLDR-projekt (Common Locale Data Repository). Den senast offentliggjorda mätningen är från 2021 och jämför användning mot 2019.",
+      "source_url": "https://home.unicode.org/emoji/emoji-frequency/",
+      "as_of": "2021",
+      "items": [
+        {
+          "rank": 1,
+          "name_sv": "Gråtskrattande ansikte",
+          "value": "1",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 2,
+          "name_sv": "Rött hjärta",
+          "value": "2",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 3,
+          "name_sv": "Ansikte som rullar av skratt",
+          "value": "3",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 4,
+          "name_sv": "Tumme upp",
+          "value": "4",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 5,
+          "name_sv": "Högljutt gråtande ansikte",
+          "value": "5",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 6,
+          "name_sv": "Knäppta händer",
+          "value": "6",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 7,
+          "name_sv": "Ansikte som blåser en puss",
+          "value": "7",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 8,
+          "name_sv": "Leende ansikte med hjärtan",
+          "value": "8",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 9,
+          "name_sv": "Leende ansikte med hjärtögon",
+          "value": "9",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 10,
+          "name_sv": "Leende ansikte med leende ögon",
+          "value": "10",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 11,
+          "name_sv": "Partysmäll (konfettikanon)",
+          "value": "11",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 12,
+          "name_sv": "Strålande leende ansikte",
+          "value": "12",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 13,
+          "name_sv": "Två hjärtan",
+          "value": "13",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 14,
+          "name_sv": "Bedjande ansikte (valpögon)",
+          "value": "14",
+          "unit": "rangplats"
+        },
+        {
+          "rank": 15,
+          "name_sv": "Flinande ansikte med svettdroppe",
+          "value": "15",
+          "unit": "rangplats"
+        }
+      ],
+      "volatility": "stable",
+      "well_known_10th": false,
+      "confidence": "high",
+      "verification": "web-verified",
+      "notes": "Rangordning 1-15 dubbelkontrollerad plats för plats mot tre oberoende källor (blog.unicode.org dec 2021, Pocketnow, Deseret News) som alla citerar Unicodes egen frekvensdata - fullständig överensstämmelse, inga avvikelser i rang, namn eller emoji. Primärsidan (home.unicode.org/emoji/emoji-frequency) bekräftades existera och laddas, men hämtningsverktyget kunde inte läsa hela tabellen (för lång sida) så exakta procentsatser per rang kunde inte hämtas - value/unit anger därför rangplats i stället för användningsandel, i linje med utkastet. Möjlig svårighet vid spelbordet: rang 8-10 är tre snarlika 'leende ansikte'-varianter (hjärtan/hjärtögon/leende ögon) som lag kan blanda ihop - domaren bör tolka generöst så länge emojin/beskrivningen är otvetydig. Emojin på rang 6 (🙏, officiellt 'knäppta händer') tolkas ofta felaktigt som 'bön' eller 'high five' - bägge finns med som alias."
+    },
+    {
+      "no": 109,
+      "verdict": "corrected",
+      "reason_sv": "Jag hämtade Similarwebs sida 'Top Websites Ranking, Sweden' direkt och fick samma rangordning som utkastet, plats 1 till 15, med data för juli 2026 (sidan uppdaterad 1 augusti 2026). Rangordningen och alla 15 platserna stämde exakt, så jag rättade bara stavningen på några namn till de officiella varumärkesformerna (YouTube, ChatGPT, SVT, ICA, SMHI, SVT Play) för att de ska vara lätta att läsa upp och döma rätt vid mikrofonen.",
+      "batch": 13,
+      "slug_en": "most-visited-websites-sweden",
+      "category": "teknik-internet",
+      "title_sv": "Sveriges mest besökta webbplatser",
+      "definition_sv": "Webbplatser rangordnade efter uppskattad besökstrafik från Sverige under juli 2026, enligt Similarweb.",
+      "host_question_sv": "Sveriges mest besökta webbplatser efter trafik, enligt Similarweb i juli 2026.",
+      "source_name": "Similarweb — Top Websites Ranking, Sweden",
+      "source_description_sv": "Similarweb är ett marknadsanalysföretag som skattar webbtrafik globalt genom en kombination av panel-data, partnerskap med internetleverantörer och offentligt tillgängliga trafiksignaler. Rankingen uppdateras löpande och avser här juli 2026.",
+      "source_url": "https://www.similarweb.com/top-websites/sweden/",
+      "as_of": "juli 2026",
+      "items": [
+        {
+          "rank": 1,
+          "name_sv": "Google",
+          "value": "1",
+          "unit": "rank"
+        },
+        {
+          "rank": 2,
+          "name_sv": "YouTube",
+          "value": "2",
+          "unit": "rank"
+        },
+        {
+          "rank": 3,
+          "name_sv": "Facebook",
+          "value": "3",
+          "unit": "rank"
+        },
+        {
+          "rank": 4,
+          "name_sv": "Reddit",
+          "value": "4",
+          "unit": "rank"
+        },
+        {
+          "rank": 5,
+          "name_sv": "Aftonbladet",
+          "value": "5",
+          "unit": "rank"
+        },
+        {
+          "rank": 6,
+          "name_sv": "Instagram",
+          "value": "6",
+          "unit": "rank"
+        },
+        {
+          "rank": 7,
+          "name_sv": "Wikipedia",
+          "value": "7",
+          "unit": "rank"
+        },
+        {
+          "rank": 8,
+          "name_sv": "ChatGPT",
+          "value": "8",
+          "unit": "rank"
+        },
+        {
+          "rank": 9,
+          "name_sv": "X",
+          "value": "9",
+          "unit": "rank"
+        },
+        {
+          "rank": 10,
+          "name_sv": "Expressen",
+          "value": "10",
+          "unit": "rank"
+        },
+        {
+          "rank": 11,
+          "name_sv": "SVT",
+          "value": "11",
+          "unit": "rank"
+        },
+        {
+          "rank": 12,
+          "name_sv": "Blocket",
+          "value": "12",
+          "unit": "rank"
+        },
+        {
+          "rank": 13,
+          "name_sv": "ICA",
+          "value": "13",
+          "unit": "rank"
+        },
+        {
+          "rank": 14,
+          "name_sv": "SMHI",
+          "value": "14",
+          "unit": "rank"
+        },
+        {
+          "rank": 15,
+          "name_sv": "SVT Play",
+          "value": "15",
+          "unit": "rank"
+        }
+      ],
+      "volatility": "volatile",
+      "well_known_10th": false,
+      "confidence": "medium",
+      "verification": "web-verified",
+      "notes": "Similarweb-rankingar av trafik svänger månad för månad, så listan bör läsas som en ögonblicksbild för juli 2026, inte ett stabilt faktum. Inga bindningar bland de 15 platserna. Value/unit satta till själva rangordningen (rank) eftersom Similarweb inte publicerar exakta besökssiffror öppet på översiktssidan — trafikordningen är själva svaret laget ska gissa på."
     }
   ],
   "rejected": [
@@ -11057,6 +12007,16 @@
       "slug_en": "longest-reigning-roman-emperors",
       "title_sv": "Romarrikets längst regerande kejsare",
       "reason_sv": "Två separata problem. (1) Definitionstvist: \"romerska kejsare\" som inkluderar Bysans är kontroversiellt - laget kan med rätta hävda att t.ex. Basileios II eller Konstantin VII är \"bysantinska\"/\"grekiska\", inte \"romerska\", och de dominerar topp 10 (7 av 10 platser). (2) Faktiskt oavgjort resultat över den förbjudna gränsen: Leo VI och Mikael III delar båda cirka 25 år och 8 månader vid makten och hamnar båda på gränsen rang 10/11 - vilket bryter mot regeln att en delning över just den gränsen inte är tillåten (ytterligare delningar finns vid 12/13 och 14/15). Utkastets lista stämde dessutom inte med källorna - saknade Leo VI, Mikael III, Tiberius, Antoninus Pius, Hadrianus och Diocletianus helt från topp 15, och hade en ej verifierbar \"Konstantin I\" på plats 7."
+    },
+    {
+      "slug_en": "largest-employers-sweden",
+      "title_sv": "Sveriges största börsbolag efter antal anställda (koncernen)",
+      "reason_sv": "Jag hämtade largestcompanies.se:s sida \"Arbetsgivare i Sverige med flest anställda i hemlandet\" (via proxy, eftersom direkt hämtning blockerades) och siffrorna stämde exakt med utkastet. Men en stickprovskontroll mot Ericssons egna \"company facts\" visar att Ericsson hade cirka 12 600 anställda i Sverige 2025 — inte 95 154 som källan påstår under just rubriken \"anställda i Sverige\"; siffran ligger istället nära koncernens globala/totala huvudkontor. Källan motsäger alltså sin egen etikett, listan blandar dessutom in samma bolag två gånger (Scania CV AB och Scania AB), och ett korrekt mått på faktiskt antal anställda i Sverige per bolag går inte att verifiera mot någon samlad, pålitlig källa — listan underkänns eftersom den bygger på ett mått som är tvistigt och delvis obekräftbart vid mikrofonen."
+    },
+    {
+      "slug_en": "most-followed-swedish-instagram-accounts",
+      "title_sv": "Svenskar med flest följare på Instagram",
+      "reason_sv": "Jag hämtade sverigetoppen.se (daterad 19 maj 2024) och den matchar utkastet exakt rank för rank. Men jag hämtade även driva-eget.se (7 november 2025) och alxmedia.se (uppdaterad 11 maj 2026), och båda ger helt andra topplistor: PewDiePie etta i stället för Zlatan, Zlatan saknas helt, och varken Bianca Ingrosso eller flera andra namn som förekommer i nyare källor finns med i sverigetoppen-listan. De tre källorna är oförenliga i både medlemskap och inbördes ordning, vilket gör kategorin definitionsberoende (vilka räknas som \"svensk\"/\"influencer\", vilket datum gäller) och tvistig — gäster skulle med rätta kunna bråka om placeringarna vid mikrofonen. Avslag: ingen tillförlitlig, aktuell och samstämmig källa hittades för denna lista."
     }
   ],
   "duplicates": [

@@ -22,6 +22,7 @@
     "ADMIN_TOKEN": "e2e-admin-token",
     "ANTHROPIC_API_KEY": "e2e-dummy-key",
     "ANTHROPIC_BASE_URL": "http://127.0.0.1:8790",
-    "QUESTION_SECONDS": "15"
+    "QUESTION_SECONDS": "15",
+    "QUIZ_QUESTIONS": "[\"most-populous-eu-countries\",\"largest-european-countries-by-area\",\"countries-by-population\",\"tallest-mountains-world\",\"swedish-municipalities-by-population\",\"countries-by-area\",\"largest-lakes-world\",\"highest-grossing-films-worldwide\",\"best-selling-game-consoles-all-time\",\"countries-by-nobel-laureates\"]"
   }
 }

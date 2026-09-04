@@ -232,7 +232,7 @@ function tilesScreen(key: string): Screen {
     h(
       'div',
       { style: 'display:flex;flex-direction:column;gap:6px' },
-      h('div', { class: 'eyebrow' }, 'Sophie 25 år'),
+      h('div', { class: 'eyebrow' }, 'Sofie 25 år'),
       h('div', { class: 'display', style: 'font-size:64px;line-height:0.95' }, 'Topp ', h('br'), 'tio'),
       h('div', { style: 'font-size:16px;color:var(--text-2);margin-top:8px' }, 'Välj ert lag. En telefon per lag.'),
     ),
@@ -281,7 +281,7 @@ function lobbyScreen(key: string): Screen {
       h(
         'div',
         { style: 'font-size:14px;color:var(--text-2);line-height:1.5' },
-        'Ett svar per lag och fråga. Poäng = svarets plats på listan: ettan ger 1, tian ger 10. Utanför listan ger 0. Ni har 2:30 per fråga.',
+        'Ett svar per lag och fråga. Poäng = svarets plats på listan: ettan ger 1, tian ger 10. Utanför listan ger 0. Ni har 1:30 per fråga.',
       ),
     ),
   );
@@ -312,7 +312,7 @@ function questionScreen(s: PlayerStateView, key: string): Screen {
   const ringSvg = svg('svg', { width: 168, height: 168, viewBox: '0 0 168 168' });
   ringSvg.appendChild(svg('circle', { cx: 84, cy: 84, r: RING_R, fill: 'none', stroke: 'var(--border)', 'stroke-width': 8 }));
   ringSvg.appendChild(ringFg);
-  const time = h('div', { class: 'display time', 'data-clock': true }, '2:30');
+  const time = h('div', { class: 'display time', 'data-clock': true }, '1:30');
   const ring = h('div', { class: 'ring' }, ringSvg, time);
   const under = h('div', { class: 'eyebrow', style: 'margin-top:6px' }, 'kvar');
 
@@ -604,7 +604,7 @@ app.replaceChildren(
   h(
     'div',
     { style: 'display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;flex-grow:1' },
-    h('div', { class: 'eyebrow' }, 'Sophie 25 år'),
+    h('div', { class: 'eyebrow' }, 'Sofie 25 år'),
     h('div', { class: 'display', style: 'font-size:64px;line-height:0.95' }, 'Topp tio'),
     h('div', { class: 'pill offline', 'data-pill': 'Ansluten' }, h('span', { class: 'dot' }), h('span', { class: 'label' }, 'Ansluter…')),
   ),

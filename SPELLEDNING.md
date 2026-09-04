@@ -20,7 +20,7 @@ ligger inte i git. Spara adminlänken som bokmärke i telefonen, då slipper du 
 
 - Åtta lag, **Lag 1–Lag 8**, en telefon per lag. Gästerna skannar QR-koden och trycker på sitt
   lag. En upptagen ruta är nedtonad med "TAGET".
-- Du trycker **Starta fråga N**. Alla telefoner visar frågan och samma klocka: **2:30**.
+- Du trycker **Starta fråga N**. Alla telefoner visar frågan och samma klocka: **1:30**.
   Du läser frågan högt i micken.
 - Varje lag skriver **ett** svar och trycker Skicka. De kan ändra sig tills klockan är på 0:00
   (eller tills du trycker **Lås svaren nu**). Sista texten gäller.
@@ -104,7 +104,7 @@ https://dash.cloudflare.com/3230330a438cc5c59b377e1834847e76/api-tokens och kör
 3. Ta två andra telefoner, skanna QR-sidan (eller skriv adressen). Välj Lag 1 på den ena
    och Lag 2 på den andra. Prova att välja Lag 1 på den andra också: den ska säga
    "Lag 1 är redan taget".
-4. Admin: **Starta fråga 1**. Båda telefonerna ska visa frågan och 2:30 samtidigt.
+4. Admin: **Starta fråga 1**. Båda telefonerna ska visa frågan och 1:30 samtidigt.
 5. Skriv ett svar på Lag 1 (t.ex. rätt svar från listan) och ett fel svar på Lag 2. Ändra
    Lag 1:s svar en gång. Admin ska visa **svar** på båda.
 6. Admin: **Pausa**, ladda om adminsidan — klockan ska stå still på samma tid. **Fortsätt**.
@@ -143,7 +143,7 @@ Pappersblad enligt `_coach/current/sophie-quiz/design.md`. Skriv ut dem oavsett.
 
 | Steg | Knapp | Vad händer |
 |---|---|---|
-| 1 | **Starta fråga N** | Alla telefoner visar frågan och 2:30. Läs frågan högt (den står överst på din skärm). |
+| 1 | **Starta fråga N** | Alla telefoner visar frågan och 1:30. Läs frågan högt (den står överst på din skärm). |
 | 2 | — | Titta på rutnätet: **svar** (grönt) = laget har skickat, **väntar** = inte än, **offline** (rött) = telefonen har tappat kontakten. |
 | 3 | **Pausa** / **Fortsätt** | Stoppar och startar klockan på alla telefoner. Överlever att du laddar om sidan. |
 | 4 | **+30 s** | Lägger på 30 sekunder. |

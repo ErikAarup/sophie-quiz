@@ -3,9 +3,25 @@
 
 import type { QuizQuestion } from './types.ts';
 
-/** Lowercase, strip diacritics and punctuation, collapse whitespace. "Tjeckien!" -> "tjeckien". */
+/**
+ * Emoji and flag sequences become stable ASCII tokens ("😂" -> "e1f602") so an emoji-only answer
+ * can be an exact hit against an alias that is the emoji itself. Variation selectors and skin tones
+ * are dropped (👍🏽 = 👍); ZWJ sequences keep every part; repeats collapse ("😂😂" = "😂").
+ */
+const EMOJI_SEQ =
+  /(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:[\u{FE0E}\u{FE0F}]|[\u{1F3FB}-\u{1F3FF}]|\p{Regional_Indicator}|\u{200D}(?:\p{Extended_Pictographic}|\p{Regional_Indicator}))*/gu;
+function emojiToTokens(text: string): string {
+  return text.replace(EMOJI_SEQ, (m) => {
+    const cps = [...m]
+      .map((c) => c.codePointAt(0)!)
+      .filter((cp) => cp !== 0xfe0e && cp !== 0xfe0f && !(cp >= 0x1f3fb && cp <= 0x1f3ff));
+    return ` e${cps.map((cp) => cp.toString(16)).join('x')} `;
+  });
+}
+
+/** Lowercase, strip diacritics and punctuation, collapse whitespace. "Tjeckien!" -> "tjeckien"; "😂😂" -> "e1f602". */
 export function normalize(text: string): string {
-  return text
+  return emojiToTokens(text)
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
@@ -16,6 +32,7 @@ export function normalize(text: string): string {
     .replace(/đ/g, 'd')
     .replace(/ł/g, 'l')
     .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\b(e[0-9a-fx]+)(?: \1)+\b/g, '$1')
     .trim();
 }
 
