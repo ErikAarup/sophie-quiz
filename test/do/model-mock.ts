@@ -14,6 +14,13 @@ export const SLOW_MODEL_MS = 1_500;
 /** Spellings the mock "understands" beyond exact (normalised) row names. */
 const ALIASES: Record<string, string> = { tjekkiet: 'Tjeckien', czechia: 'Tjeckien', germany: 'Tyskland', belgium: 'Belgien' };
 
+/**
+ * `modell: <radens namn>` is a test answer that only the model can resolve: the prefix makes it
+ * invisible to the deterministic pre-pass (it is neither a row name nor an alias), and the mock
+ * strips it. It lets a test force a real model round-trip for whatever list quiz.json holds.
+ */
+const MODEL_ONLY = /^\s*modell:\s*/i;
+
 interface Payload {
   list: { rows: { row: number; rank: number; name: string }[] };
   answers: { team: number; text: string }[];
@@ -50,7 +57,7 @@ export function createModelMock(): (request: Request) => Promise<Response> {
     const payload = payloadOf(await request.json());
     const byName = new Map((payload?.list.rows ?? []).map((r) => [normalize(r.name), r.row]));
     const results = (payload?.answers ?? []).map((a) => {
-      const n = normalize(a.text);
+      const n = normalize(a.text.replace(MODEL_ONLY, ''));
       const alias = ALIASES[n];
       const row = byName.get(n) ?? (alias ? byName.get(normalize(alias)) : undefined) ?? null;
       return { team: a.team, row, reason: row ? 'mock: matched' : 'mock: not on the list' };

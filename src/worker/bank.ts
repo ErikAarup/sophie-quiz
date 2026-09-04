@@ -28,25 +28,35 @@ export interface BankList {
   items: BankItem[];
 }
 
-interface Bank {
+export interface Bank {
   generated_on: string;
   count: number;
   lists: BankList[];
 }
 
-interface QuizFile {
+export interface QuizFile {
   questions: string[];
   durationSeconds: number;
 }
 
-type AliasFile = Record<string, Record<string, string[]> | string>;
+export type AliasFile = Record<string, Record<string, string[]> | string>;
+
+/** The three data files as one bundle, so a checker can build from a copy (see test/unit/data.test.ts). */
+export interface QuizData {
+  bank: Bank;
+  quiz: QuizFile;
+  aliases: AliasFile;
+}
 
 export const bank = bankJson as unknown as Bank;
 export const quizFile = quizJson as unknown as QuizFile;
 export const aliasFile = aliasesJson as unknown as AliasFile;
 
-export function listBySlug(slug: string): BankList | undefined {
-  return bank.lists.find((l) => l.slug_en === slug);
+/** The bundled files — exactly what the Worker and the Durable Object build their quiz from. */
+export const bundledData: QuizData = { bank, quiz: quizFile, aliases: aliasFile };
+
+export function listBySlug(slug: string, from: Bank = bank): BankList | undefined {
+  return from.lists.find((l) => l.slug_en === slug);
 }
 
 export function buildQuestion(list: BankList, aliases: Record<string, string[]> = {}): QuizQuestion {
@@ -75,22 +85,30 @@ export function buildQuestion(list: BankList, aliases: Record<string, string[]> 
 export interface BuildQuizOptions {
   /** Overrides quiz.json's durationSeconds (the e2e suite shortens the clock). */
   durationSeconds?: number | undefined;
+  /**
+   * Which data to build from. Defaults to the bundled files, so the Durable Object is unchanged.
+   * The data gate (test/unit/data.test.ts) passes a copy read from disk, so a deliberately broken
+   * quiz.json can be checked without anything under `data/` being touched.
+   */
+  data?: QuizData | undefined;
 }
 
 /** Throws with a clear message if quiz.json names a slug that is missing or not verified/corrected. */
 export function buildQuiz(opts: BuildQuizOptions = {}): Quiz {
-  const questions = quizFile.questions.map((slug) => {
-    const list = listBySlug(slug);
+  const data = opts.data ?? bundledData;
+  if (!data.quiz || !Array.isArray(data.quiz.questions)) throw new Error('quiz.json: "questions" must be a list of slugs');
+  const questions = data.quiz.questions.map((slug) => {
+    const list = listBySlug(slug, data.bank);
     if (!list) throw new Error(`quiz.json: no list with slug "${slug}" in data/bank.json (run npm run sync-bank?)`);
     if (list.verdict !== 'verified' && list.verdict !== 'corrected') {
       throw new Error(`quiz.json: list "${slug}" has verdict "${list.verdict}"; only verified/corrected lists may be used`);
     }
     if (list.items.length < 10) throw new Error(`quiz.json: list "${slug}" has only ${list.items.length} rows`);
-    const aliases = aliasFile[slug];
+    const aliases = data.aliases[slug];
     return buildQuestion(list, typeof aliases === 'object' ? aliases : {});
   });
   if (questions.length === 0) throw new Error('quiz.json: no questions');
-  const seconds = opts.durationSeconds ?? quizFile.durationSeconds;
+  const seconds = opts.durationSeconds ?? data.quiz.durationSeconds;
   if (!Number.isFinite(seconds) || seconds <= 0) throw new Error(`invalid question length ${seconds}`);
   return { questions, durationMs: Math.round(seconds * 1000) };
 }

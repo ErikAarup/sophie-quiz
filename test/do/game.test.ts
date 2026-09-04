@@ -4,8 +4,16 @@ import { env, evictDurableObject, runInDurableObject } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { GameState } from '../../src/shared/types.ts';
 import { GAME_NAME } from '../../src/worker/config.ts';
+import { buildQuiz } from '../../src/worker/bank.ts';
 import { Client, TOKEN, admin, player, resetGame, sleep } from './client.ts';
 import { MODEL_CONTROL_URL, type ModelMode } from './model-mock.ts';
+
+// The DO builds its quiz in its constructor from data/quiz.json + data/bank.json; this suite builds
+// the same quiz here and takes every answer and expectation from question 1 *by rank*, so whichever
+// ten lists Erik puts in quiz.json on the Friday, the suite still describes the same game (WO-083 A2).
+const q1 = buildQuiz().questions[0]!;
+/** The row at that place on question 1. Places 1–10 are unique: the data gate refuses a tie at 10. */
+const at = (rank: number) => q1.rows.find((r) => r.rank === rank)!;
 
 /** Switch the mock model (vitest.config.ts `outboundService`) for the rest of a test. */
 async function setModel(mode: ModelMode): Promise<void> {
@@ -193,9 +201,9 @@ describe('grading and reveal (§2.5, §2.6, §2.7)', () => {
     const p8 = await joined('device-jjjjjjjj', 8);
     await a.admin({ type: 'start' });
     await p3.playerState((x) => x.phase === 'open');
-    p3.send({ type: 'answer', text: 'portugal' });
-    p4.send({ type: 'answer', text: 'Czech Republic' });
-    p8.send({ type: 'answer', text: 'Tjekkiet' }); // Danish spelling: not in the alias table
+    p3.send({ type: 'answer', text: at(10).name.toLowerCase() }); // casing must not matter to the pre-pass
+    p4.send({ type: 'answer', text: at(9).name });
+    p8.send({ type: 'answer', text: 'ett svar som inte står på listan' }); // no pre-pass hit → the model, which is down here
     await a.adminState((x) => x.teams.filter((t) => t.answer !== null).length === 3);
     await a.admin({ type: 'lock' });
     expect((await a.admin({ type: 'grade' })).type).toBe('ok');
@@ -213,20 +221,21 @@ describe('grading and reveal (§2.5, §2.6, §2.7)', () => {
     let s3 = await p3.playerState((x) => x.phase === 'reveal');
     expect(s3.rows.every((r) => r.name === null)).toBe(true);
     expect(s3.result).toEqual({ kind: 'pending' });
-    for (let i = 1; i <= 9; i++) {
+    for (let i = 1; i <= q1.topCount - 1; i++) {
       await a.admin({ type: 'revealNext' });
       s3 = await p3.playerState((x) => x.revealed === i);
       expect(s3.result).toEqual({ kind: 'pending' });
       expect(s3.rows[i - 1]?.name).not.toBeNull();
       expect(s3.rows[i]?.name).toBeNull();
     }
-    const s4 = await p4.playerState((x) => x.revealed === 9);
-    expect(s4.result).toEqual({ kind: 'hit', rank: 9, points: 9, rowName: 'Tjeckien' });
+    const s4 = await p4.playerState((x) => x.revealed === q1.topCount - 1);
+    expect(s4.result).toEqual({ kind: 'hit', rank: 9, points: 9, rowName: at(9).name });
     await a.admin({ type: 'revealNext' });
-    s3 = await p3.playerState((x) => x.revealed === 10);
-    expect(s3.result).toEqual({ kind: 'hit', rank: 10, points: 10, rowName: 'Portugal' });
-    expect(s3.visibleRows).toBe(15);
-    expect(s3.rows[10]).toEqual({ rank: 11, name: 'Sverige', label: '10,6 milj', near: true });
+    s3 = await p3.playerState((x) => x.revealed === q1.topCount);
+    expect(s3.result).toEqual({ kind: 'hit', rank: 10, points: 10, rowName: at(10).name });
+    expect(s3.visibleRows).toBe(q1.rows.length); // top complete: the near misses show too
+    const near = q1.rows[q1.topCount]!;
+    expect(s3.rows[q1.topCount]).toEqual({ rank: near.rank, name: near.name, label: near.label, near: true });
     expect((await a.admin({ type: 'revealNext' })).type).toBe('error');
 
     await a.admin({ type: 'standings' });
@@ -236,7 +245,7 @@ describe('grading and reveal (§2.5, §2.6, §2.7)', () => {
       { position: 2, team: 4, points: 9 },
       { position: 2, team: 8, points: 9 },
     ]);
-    expect(st.last).toBe('Senaste: portugal, plats 10, +10 poäng');
+    expect(st.last).toBe(`Senaste: ${at(10).name.toLowerCase()}, plats 10, +10 poäng`);
 
     await a.admin({ type: 'next' });
     const lobby = await p3.playerState((x) => x.phase === 'lobby');
@@ -249,14 +258,14 @@ describe('grading and reveal (§2.5, §2.6, §2.7)', () => {
     const p7 = await joined('device-kkkkkkkk', 7);
     await a.admin({ type: 'start' });
     await p7.playerState((x) => x.phase === 'open');
-    expect((await a.admin({ type: 'manualAnswer', team: 7, text: 'Polen' })).type).toBe('ok');
-    const s7 = await p7.playerState((x) => x.answer === 'Polen');
+    expect((await a.admin({ type: 'manualAnswer', team: 7, text: at(5).name })).type).toBe('ok');
+    const s7 = await p7.playerState((x) => x.answer === at(5).name);
     expect(s7.answerSource).toBe('admin');
     await a.admin({ type: 'lock' });
     await a.admin({ type: 'grade' });
     await a.adminState((x) => x.phase === 'reveal' && x.teams[6]?.grade?.rank === 5, 8000);
     // After grading: a hand-typed answer for Lag 2 gets graded on the spot (exact hit).
-    expect((await a.admin({ type: 'manualAnswer', team: 2, text: 'Belgien' })).type).toBe('ok');
+    expect((await a.admin({ type: 'manualAnswer', team: 2, text: at(8).name })).type).toBe('ok');
     const av = await a.adminState((x) => x.teams[1]?.grade?.rank === 8, 8000);
     expect(av.teams[1]?.grade).toMatchObject({ rank: 8, points: 8, manual: false });
   });
@@ -322,12 +331,12 @@ describe('R3 review fix: grade requests have an identity (grade-request-has-no-i
   const STATE_KEY = 'state'; // the DO's storage key
   const stub = () => env.GAME.get(env.GAME.idFromName(GAME_NAME));
 
-  /** Question 1 played to the standings: Lag 2 = Portugal (exact hit, 10 points, no model call). */
+  /** Question 1 played to the standings: Lag 2 answered place 10 (exact hit, 10 points, no model call). */
   async function standings(): Promise<Client> {
     const p2 = await joined('device-rrrrrrrr', 2);
     await a.admin({ type: 'start' });
     await p2.playerState((x) => x.phase === 'open');
-    p2.send({ type: 'answer', text: 'Portugal' });
+    p2.send({ type: 'answer', text: at(10).name });
     await p2.until((m) => m.type === 'ok');
     await a.admin({ type: 'lock' });
     await a.admin({ type: 'grade' });
@@ -340,11 +349,12 @@ describe('R3 review fix: grade requests have an identity (grade-request-has-no-i
 
   it('"Nästa fråga" is refused with a message while a hand-typed answer is with the grader, then accepted with the points intact', async () => {
     const p2 = await standings();
-    // A slow model: 1.5 s, then "Tjekkiet" → Tjeckien (plats 9). The request is in flight long
-    // enough to tap "Nästa fråga" meanwhile.
+    // A slow model: 1.5 s, then the "modell:" answer → place 9. The prefix is deliberately invisible
+    // to the pre-pass, so the answer really goes to the model; the request is in flight long enough
+    // to tap "Nästa fråga" meanwhile.
     await setModel('slow');
     try {
-      a.send({ type: 'manualAnswer', team: 3, text: 'Tjekkiet', token: TOKEN });
+      a.send({ type: 'manualAnswer', team: 3, text: `modell: ${at(9).name}`, token: TOKEN });
       await a.adminState((x) => x.gradeStatus === 'running');
       a.send({ type: 'next', token: TOKEN });
       const reply = await a.until((m) => m.type === 'error' || (m.type === 'ok' && m.of === 'next'));
@@ -372,12 +382,12 @@ describe('R3 review fix: grade requests have an identity (grade-request-has-no-i
 
   it('a restart while a request is out re-sends exactly that request; its grade lands and the game goes on (§2.9)', async () => {
     await standings();
-    // Freeze the moment between "request persisted" and "result landed": Erik typed Belgien for
-    // Lag 4 from the standings, the request went out as id 7, and the Worker died.
+    // Freeze the moment between "request persisted" and "result landed": Erik typed place 8's row
+    // for Lag 4 from the standings, the request went out as id 7, and the Worker died.
     await runInDurableObject(stub(), async (_instance, state) => {
       const s = (await state.storage.get<GameState>(STATE_KEY))!;
-      s.answers['0:4'] = { text: 'Belgien', updatedAt: Date.now(), source: 'admin' };
-      s.gradeInFlight['7'] = { id: 7, questionIndex: 0, answers: [{ team: 4, text: 'Belgien' }] };
+      s.answers['0:4'] = { text: at(8).name, updatedAt: Date.now(), source: 'admin' };
+      s.gradeInFlight['7'] = { id: 7, questionIndex: 0, answers: [{ team: 4, text: at(8).name }] };
       s.gradeSeq = 8;
       s.gradeStatus['0'] = 'running';
       await state.storage.put(STATE_KEY, s);
@@ -403,7 +413,7 @@ describe('R3 review fix: grade requests have an identity (grade-request-has-no-i
     const p2 = await joined('device-ssssssss', 2);
     await a.admin({ type: 'start' });
     await p2.playerState((x) => x.phase === 'open');
-    p2.send({ type: 'answer', text: 'Portugal' });
+    p2.send({ type: 'answer', text: at(10).name });
     await p2.until((m) => m.type === 'ok');
     await a.admin({ type: 'lock' });
     await a.adminState((x) => x.phase === 'locked');

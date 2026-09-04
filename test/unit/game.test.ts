@@ -2,15 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { CONFIRM_WORD, answerKey, type GameState } from '../../src/shared/types.ts';
 import { gradesInFlight, migrateState, remainingMs } from '../../src/shared/game.ts';
 import { adminView } from '../../src/shared/view.ts';
-import { T0, claimAll, fresh, quiz, run, step } from './helpers.ts';
+import { FIXTURE_SLUGS, T0, claimAll, eu, fresh, quiz, run, step } from './helpers.ts';
 
-const DURATION = quiz.durationMs; // 150 000 from data/quiz.json
-const eu = quiz.questions[0]!;
+const DURATION = quiz.durationMs; // the fixture's 2:30
 const rowIndexOf = (name: string) => eu.rows.findIndex((r) => r.name === name);
 
-describe('quiz data', () => {
-  it('loads ten verified lists with 15 rows and a top ten', () => {
-    expect(quiz.questions).toHaveLength(10);
+describe('the fixture quiz', () => {
+  it('is built by slug from data/bank.json, so these tests do not depend on data/quiz.json', () => {
+    expect(quiz.questions.map((q) => q.slug)).toEqual([...FIXTURE_SLUGS]);
     expect(DURATION).toBe(150_000);
     for (const q of quiz.questions) {
       expect(q.rows.length).toBeGreaterThanOrEqual(10);

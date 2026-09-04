@@ -1,0 +1,16 @@
+{
+  "_comment": "A deliberately broken quiz.json for proving the data gate (WO-083 A1). Question 9 is a verified bank list whose rank 10 is shared, so its 'top ten' is eleven rows or more and the reveal would never end at ten. Nothing reads this file unless SOPHIE_QUIZ_JSON points at it: `SOPHIE_QUIZ_JSON=test/fixtures/quiz-tie-at-ten.json npx vitest run --project unit`.",
+  "questions": [
+    "most-populous-eu-countries",
+    "largest-european-countries-by-area",
+    "countries-by-population",
+    "tallest-mountains-world",
+    "swedish-municipalities-by-population",
+    "countries-by-area",
+    "largest-lakes-world",
+    "highest-grossing-films-worldwide",
+    "best-selling-video-games-all-time",
+    "countries-by-nobel-laureates"
+  ],
+  "durationSeconds": 150
+}

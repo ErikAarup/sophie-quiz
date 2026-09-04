@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildUserPrompt, gradeAnswers, parseModelOutput, type ModelInput } from '../../src/worker/grader.ts';
-import { quiz } from './helpers.ts';
+import { eu } from './helpers.ts';
 
-const eu = quiz.questions[0]!;
 const rowIndexOf = (name: string) => eu.rows.findIndex((r) => r.name === name);
 
 describe('parseModelOutput', () => {

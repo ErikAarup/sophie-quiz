@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildPrepass, normalize, rowVariants } from '../../src/shared/normalize.ts';
-import { quiz } from './helpers.ts';
+import { eu } from './helpers.ts';
 
 describe('normalize', () => {
   it('lowercases, strips diacritics and punctuation, collapses spaces', () => {
@@ -20,7 +20,6 @@ describe('rowVariants', () => {
 });
 
 describe('buildPrepass on the EU list (§2.5 example)', () => {
-  const eu = quiz.questions[0]!;
   const index = buildPrepass(eu);
   const tjeckien = eu.rows.findIndex((r) => r.name === 'Tjeckien');
 

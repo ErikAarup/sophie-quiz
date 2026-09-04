@@ -12,6 +12,7 @@
     "proof": "node scripts/build.mjs --client && playwright test --project proof",
     "build": "node scripts/build.mjs",
     "dev": "node scripts/build.mjs --client && wrangler dev",
+    "predeploy": "vitest run --project unit",
     "deploy": "node scripts/build.mjs && wrangler deploy",
     "grader:live": "vitest run --project live"
   },

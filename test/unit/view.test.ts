@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { adminView, playerView } from '../../src/shared/view.ts';
 import type { Team } from '../../src/shared/types.ts';
-import { T0, claimAll, fresh, quiz, run } from './helpers.ts';
+import { T0, claimAll, eu, fresh, quiz, run } from './helpers.ts';
 
-const eu = quiz.questions[0]!;
 const rowIndexOf = (name: string) => eu.rows.findIndex((r) => r.name === name);
 const allOnline = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true } as Record<Team, boolean>;
 
