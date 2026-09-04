@@ -2,7 +2,7 @@
 
 **Branch:** `build/wo-083` · **Worktree:** `C:\Users\erika\projects\sophie-quiz\.claude\worktrees\wo-083`
 **Stamped by the loop at dispatch:** 2026-09-04T17:01:39.127Z
-**Phase:** P3 in progress (client changes written, e2e running) — 2026-09-04 19:27 local
+**Phase:** P5 done — full verification green. Pushing and opening the PR (2026-09-04 19:42 local)
 
 > Reset at dispatch so this file can never show the PREVIOUS work order's status
 > (WO-019 §2.6). Everything below this line is written by WO-083
@@ -72,3 +72,12 @@
   (wrangler's workerd runs — Smart App Control really is off). First `npm run e2e`: 12 passed,
   2 failed — one was an old assertion of the *wrong* lobby counter (AC8 changes it), one was my
   own new spec double-toggling "Mer…". Both fixed; re-running the whole suite now. Next: §B runbook.
+- **2026-09-04 19:42 local** — P4 and P5 done. `SPELLEDNING.md` carries every §B block in place;
+  `KNOWN-ISSUES-WO-078.md` no longer claims the bank's verifier rejects rank-10 ties.
+  Full verification set, all clean on this machine (Smart App Control off):
+  `npm run typecheck` ✓ · `npm test` 100 passed (9 files, unit + DO) ✓ · `npm run e2e` 19 passed ✓ ·
+  `npm run build` ✓ (wrangler dry run + secret scan). `npm run proof` (WO-078's walkthrough) also
+  run green; its regenerated screenshots and videos were reverted to keep the diff reviewable.
+  Data-gate proof: real data passes; a bad slug and a tie-at-10 list each fail by name; and
+  `npm run deploy` on the broken copy exits 1 inside `predeploy` — `build.mjs` and `wrangler`
+  never run. Six user-seat screenshots at 390×844 in `proof/wo-083/`. Next: push + PR (P6).
