@@ -26,3 +26,5 @@ Heartbeat (mtime = liveness).
   screenshots under `proof/wo-084/`. SPELLEDNING §3 + troubleshooting lines written (AC6).
   e2e/env.ts and e2e/wrangler.e2e.jsonc reverted; regenerated proof/wo-083 shots reverted.
 - Remaining: commit, push, open the PR against build/wo-083.
+- 2026-09-04 20:26 — PR #6 open: https://github.com/ErikAarup/sophie-quiz/pull/6
+  (base `build/wo-083`, head `build/wo-084`). Builder done; nothing merged, nothing deployed.
