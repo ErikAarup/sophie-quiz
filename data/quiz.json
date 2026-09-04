@@ -1,0 +1,16 @@
+{
+  "_comment": "Ten placeholder lists from data/bank.json (all verdict=verified, 15 rows each). Erik swaps them Friday; only slugs with verdict verified/corrected are allowed. Order = question order.",
+  "questions": [
+    "most-populous-eu-countries",
+    "largest-european-countries-by-area",
+    "countries-by-population",
+    "tallest-mountains-world",
+    "swedish-municipalities-by-population",
+    "countries-by-area",
+    "largest-lakes-world",
+    "highest-grossing-films-worldwide",
+    "best-selling-game-consoles-all-time",
+    "countries-by-nobel-laureates"
+  ],
+  "durationSeconds": 150
+}

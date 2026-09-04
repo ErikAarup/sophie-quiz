@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"]
+  },
+  "include": [
+    "src/shared/**/*.ts",
+    "src/worker/grader.ts",
+    "src/worker/bank.ts",
+    "test/unit/**/*.ts",
+    "test/live/**/*.ts",
+    "e2e/**/*.ts",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "data/*.json"
+  ]
+}

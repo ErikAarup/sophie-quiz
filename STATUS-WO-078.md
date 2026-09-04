@@ -1,32 +1,54 @@
-# STATUS — WO-078 (sophie-quiz)
+# WO-078 — build heartbeat
 
-> Heartbeat file. **File mtime = liveness**, never task state. The PR-loop watcher reads
-> this file's mtime: older than the stall threshold while the queue record says `running`
-> means the build is stalled, and the loop repairs or parks it.
->
-> Touch it at every phase boundary **and at least every ~15 minutes during any
-> long operation** (WO-014 §2.7) — a phase that outlives the stall threshold looks exactly
-> like a crash from the outside, and on 2026-08-17 that parked a live builder.
->
-> Per-work-order filename (WO-014 §2.6): a shared repo-root `STATUS.md` is what made every
-> parallel build hand-resolve the same merge conflict.
+**Branch:** `build/wo-078` · **Worktree:** `C:\Users\erika\projects\sophie-quiz\.claude\worktrees\wo-078`
+**Stamped by the loop at dispatch:** 2026-09-03T14:51:02.979Z
+**Phase:** R4 DONE — 20:23 +02:00 (clock read). R3's one bounce finding `grade-request-has-no-identity` fixed in 1963c57 (+ R3 review files as found in 1b5048a, + this heartbeat). Verification on the final code: typecheck clean; `npm test` 87/87 (unit 71 + DO 16; 10 new); e2e 15/15 (1 new); build + secret scan clean; proof re-recorded; live grader 8/8 (3.7 s); deployed version 6055c38c and smoke-tested on the live URL with the real model (next refused 45 ms after the tap during a hand-typed grade, grade landed 2.6 s later, next ok, points on every leaderboard). Pushing `build/wo-078` once and updating PR #1's body now; the loop re-triggers the review on the push. (20:21: the loop nudged me after a quiet turn between the commits and the push; nothing was lost.)
+**Last touch:** 2026-09-03 20:23 +02:00 (clock read)
+Earlier: 19:25 (clock read): verification complete — typecheck clean; `npm test` 87/87 (unit 71 + DO 16; 10 new); e2e 15/15; build + secret scan clean; proof re-recorded (15.7 s); live grader 8/8 (3.7 s); deployed version 6055c38c and smoke-tested on the live URL with the real model (next refused 45 ms after the tap during a hand-typed grade, grade landed 2.6 s later, next ok, points on every leaderboard). Committing now, then PR body and one push.
+Earlier: 19:22: e2e 15/15 (1.2 min; the new route-A scenario passed), build + secret scan clean, live grader 8/8 (3.7 s). 19:20: typecheck clean; unit 71/71 (7 new); DO 16/16 twice (3 new; the DO suite now has a Node-side model mock via Miniflare `outboundService`, since vitest-pool-workers 0.22 has no fetchMock). e2e run started 19:20 in the background; filing KNOWN-ISSUES meanwhile. Then build, proof, live grader, deploy, commit, push.
+Earlier: code written 19:12 (clock read): grade requests carry a persisted id (`gradeSeq` + `gradeInFlight` replace the bare `gradePending` counter), `gradeResult` echoes `requestId` and unknown ids are ignored, `next` refuses `busy` with a message while a request is out, the DO re-sends persisted in-flight requests after a restart, admin standings shows a "Rättar ett svar…" hint, runbook line added. Tests: 7 new unit, 3 new DO, 1 new e2e (+ `slow` mock mode). Now: typecheck + unit run, then DO, e2e, build, proof, live grader, deploy, KNOWN-ISSUES, commit, push.
+**Last touch:** 2026-09-03 19:12 +02:00 (clock read)
+Started 19:01. Scope: one finding, `grade-request-has-no-identity` (REVIEW-WO-078-R3.md fix list items 1–3).
+Earlier phase: DONE — PR #1 marked ready at ~18:33 (last clock read 18:32:43). Final state: a830bbe; typecheck clean; 77 unit+DO tests; 14/14 e2e; build + secret scan clean; proof re-recorded; live grader 8/8 (3.4 s); deployed https://sophie-quiz.erik-aarup.workers.dev (version a87b5c34) and smoke-tested with the real model at 18:32. R1 and R2 review fix lists fully addressed with tests.
+Earlier: 6 + R1 fixes — deployed and smoke-tested at 18:12; then found REVIEW-WO-078-R1.md / CODEX-REVIEW-WO-078-R1.md (the loop's reviewers, written into this worktree at 17:53–17:56 against 6a61605; they went into commit 3a4c585 via `git add -A`). All six findings are real; fixed in code (claim generations for durable release, one slot per device, auto-lock carried through refusals + reducer-driven pings, outstanding-grade counter, grader response validation, lobby question hidden from players) with unit/DO/e2e tests; re-verified at 18:24 (76 tests, 14/14 e2e), proof re-recorded, redeployed 18:25, fixes committed (da1f6db). R2 review files then appeared (same six items, reviewed at 61c4aae before the fixes). Deployed smoke after the redeploy exposed a follow-up: the real model echoes pre-pass teams and the new strict validator flagged the batch → echoes of pre-pass teams are now ignored (unit test added; live grader 8/8 again at 18:27). Final e2e + npm test running; then redeploy, smoke, commit, PR ready.
+**Last touch:** 2026-09-03 18:28 +02:00 (clock read from the test run)
+Earlier: fourth e2e run in progress (17:55). Run 3: 10/11 passed; the failure exposed two real bugs, both fixed: the admin lobby screen never refreshed the team grid (blank statuses), and an idle phone's text pings did not refresh presence when the DO was awake (would read "offline" after 8 s). New DO test covers the second; 65 unit+DO tests green.
+**Last touch:** 2026-09-03 17:55 +02:00 (clock read)
+Earlier: third e2e run in progress. Run 2: 5 passed, 4 failed → fixed: taken tiles stay tappable so the server's "redan taget" refusal shows (§2.1), admin status rule offline > svar > väntar/ledig, reconnect scenario uses a client drop hook + offline emulation, strict-mode selector. Live grader round with the real model PASSED (8/8 sample answers). Phases 3–5 committed (975e092) and pushed; artboards rendered to proof/artboards.
+**Last touch:** 2026-09-03 17:51 +02:00 (clock read; the two previous touches were written as 17:56 and 18:05 from memory and were wrong — real times were about 17:44 and 17:49)
+**Draft PR:** https://github.com/ErikAarup/sophie-quiz/pull/1 (opened after phase 2)
 
-- **phase:** not started
-- **state:** queued
-- **last update:** (set by the build agent — read the clock, never state a time from memory)
-- **blocker:** none
+> Reset at dispatch so this file can never show the PREVIOUS work order's status
+> (WO-019 §2.6). Everything below this line is written by WO-078
+> and by nothing else. If it still reads like this well past dispatch, the builder never
+> got going — that is a real signal, not a stale file.
 
-## Acceptance criteria
+## Goal (restated at every phase boundary)
 
-Restated verbatim from `WORK_ORDER.md` §2 at every phase boundary — the goal-drift counter.
+Build the phone app for the top-ten quiz at Sophie's 25th on Saturday 5 Sept 2026: eight
+teams (Lag 1–8) claim a slot, see the question and a shared 150-second clock, type one
+answer, a model matches it against the list, Erik reveals the list row by row from his
+phone, and a leaderboard shows between questions. Cloudflare Workers + Durable Objects only.
 
-## Decision ledger
+## §2 Acceptance criteria (verbatim)
 
-| # | Decision | Why | Commit |
-|---|---|---|---|
+1. **Join.** A guest opens the app's URL on a phone (scanned from a QR code the repo provides as a printable page), sees eight big tiles Lag 1 to Lag 8, taps one, and is in. A second phone tapping the same tile is refused with "Lag 3 är redan taget" and can pick another. Erik can release any slot from admin; the released phone is sent back to the tiles with a message.
+2. **Question.** When Erik taps "Starta fråga N" on admin, every joined phone shows the question text and a 150-second countdown within two seconds of each other. The countdown is server-authoritative: phones display the same remaining time (±1 s) even after a page reload, and answers lock on the server at zero regardless of what any phone shows.
+3. **Pause and control.** Erik can pause and resume the countdown, add 30 seconds, or lock the answers early. Every phone follows within two seconds. A paused clock stays paused across an admin page reload.
+4. **Answer.** A team types one free-text answer and taps send. The phone shows "Svar skickat" and the text; the team may change it any number of times until lock; the last text before lock is the one graded. An answer sent after lock is refused with a message. Admin shows, per team, "svar" / "väntar" / "offline" live.
+5. **Grade.** On "Rätta", every submitted answer is matched to a row of the question's 15-row list or to "utanför listan": misspellings, casing, diacritics, Swedish/English names and obvious synonyms match ("tjeckien", "Czechia", "Czech Republic" all match Tjeckien). Points = matched rank for ranks 1–10; ranks 11–15 and no match score 0 but the position 11–15 is still shown. Grading completes within 20 seconds; if the model is unavailable, exact-match grading applies and the rest are flagged "ogranskad" for Erik. Erik can tap any team's row on admin and set the rank by hand (0–15), before or after the reveal; the leaderboard follows.
+6. **Reveal.** Erik taps "Visa nästa rad" up to ten times; phones show rows 1..n revealed and the rest hidden. The moment a team's matched row is revealed, its phone highlights "Ert svar: Portugal — plats 10 — 10 poäng". After row 10, rows 11–15 appear as "nära skott". "Visa alla" reveals everything at once.
+7. **Standings.** "Visa ställningen" shows the cumulative leaderboard on every phone, the team's own row highlighted; ties share a position. "Nästa fråga" moves everyone on. After question 10, a final standings screen names the winner.
+8. **Manual entry.** For any team, at any point of a question, Erik can type that team's answer on admin; it is graded and shown like any other.
+9. **Resilience.** A phone that loses connection or is reloaded comes back to exactly the state the game is in, still as its team, with its answer intact. Killing and restarting the worker loses nothing: the whole game state is persisted. Admin shows "offline" for a team within 10 seconds of its socket dropping.
+10. **Erik's runbook.** `SPELLEDNING.md` (Swedish) tells Erik, step by step, what to do Friday (set secrets, choose lists, deploy, smoke test with two phones, print QR) and Saturday (open admin, what each button does, what to do if a phone dies, how to reset a question, how to reset the whole game). Every command in it has been run by the builder.
 
-## Parked for Erik (needs-erik)
+## Progress log
 
-_none_
-
-## Phase log
+- 2026-09-03 16:51 — Builder started. Read dispatch + WORK_ORDER.md. Phase 0: orientation.
+- 2026-09-03 16:58 — Orientation done: wrangler whoami OK (deploy is on); ANTHROPIC_API_KEY present in shared `.dev.vars` (copied to worktree, ADMIN_TOKEN generated locally, gitignored); bank = 100 lists; `design/claude-design/` has no export yet (building from §E + reference sketches).
+- 2026-09-03 17:28 — Phase 2 committed (6a61605): 10 DO integration tests green (58 tests total). Branch pushed; draft PR #1 opened.
+- 2026-09-03 17:33 — Phase 3/4: ws.ts (reconnect + watchdog + clock offset), dom.ts, styles.css, index/admin/qr.html, player.ts (7 screens), admin.ts (5 screens + team sheet + confirm sheets), scripts/build.mjs (esbuild + wrangler dry run + secret scan).
+- 2026-09-03 17:12 — Phase 1 committed (a8a1e19): 3 tsc projects clean, 48 unit tests green.
+- 2026-09-03 17:19 — Phase 2: src/worker/{index,game-do,grader}.ts written; first DO test run failed because the workers pool loads the real `.dev.vars` (token mismatch) — fixed by reading the token from the runtime env and pointing the grader at a dead port in tests. Re-running.
+- 2026-09-03 17:05 — Phase 1 in progress: package.json/tsconfigs/wrangler.jsonc, data (bank snapshot, quiz.json with ten verified placeholders, aliases.json), src/shared (types, game reducer, scoring, normalize, format, view), unit tests written. Running `npm install` (first attempt hit a workers-types peer conflict; bumped to 5.x).

@@ -1,0 +1,27 @@
+{
+  // e2e-only Worker config. Lives in e2e/ on purpose: wrangler reads `.dev.vars` from the config
+  // file's directory, so the real secrets in the repo root are never loaded here. The grader is
+  // pointed at the local mock (e2e/servers.ts) and the clock is shortened.
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "sophie-quiz-e2e",
+  "main": "../src/worker/index.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "../dist/public",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none",
+    "run_worker_first": ["/ws", "/health"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "GAME", "class_name": "Game" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Game"] }],
+  "vars": {
+    "ADMIN_TOKEN": "e2e-admin-token",
+    "ANTHROPIC_API_KEY": "e2e-dummy-key",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8790",
+    "QUESTION_SECONDS": "15"
+  }
+}
