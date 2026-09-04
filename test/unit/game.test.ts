@@ -2,27 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { CONFIRM_WORD, answerKey, type GameState } from '../../src/shared/types.ts';
 import { gradesInFlight, migrateState, remainingMs } from '../../src/shared/game.ts';
 import { adminView } from '../../src/shared/view.ts';
-import { T0, claimAll, fresh, quiz, run, step } from './helpers.ts';
-import { buildQuiz, quizFile } from '../../src/worker/bank.ts';
+import { FIXTURE_SLUGS, T0, claimAll, eu, fresh, quiz, run, step } from './helpers.ts';
 
-const DURATION = quiz.durationMs; // from data/quiz.json durationSeconds (90 s since 4 Sept)
-const eu = quiz.questions[0]!;
+const DURATION = quiz.durationMs; // the fixture's 2:30
 const rowIndexOf = (name: string) => eu.rows.findIndex((r) => r.name === name);
 
-describe('quiz data', () => {
-  it("the evening's quiz.json builds: ten verified lists, each with at least ten rows", () => {
-    const real = buildQuiz();
-    expect(quizFile.questions).toHaveLength(10);
-    expect(real.questions.map((q) => q.slug)).toEqual(quizFile.questions);
-    for (const q of real.questions) {
-      expect(q.rows.length).toBeGreaterThanOrEqual(10);
-      expect(q.topCount).toBeGreaterThanOrEqual(10);
-    }
-  });
-
-  it('loads ten verified lists with 15 rows and a top ten', () => {
-    expect(quiz.questions).toHaveLength(10);
-    expect(DURATION).toBe(quizFile.durationSeconds * 1000);
+describe('the fixture quiz', () => {
+  it('is built by slug from data/bank.json, so these tests do not depend on data/quiz.json', () => {
+    expect(quiz.questions.map((q) => q.slug)).toEqual([...FIXTURE_SLUGS]);
+    expect(DURATION).toBe(150_000);
     for (const q of quiz.questions) {
       expect(q.rows.length).toBeGreaterThanOrEqual(10);
       expect(q.topCount).toBeGreaterThanOrEqual(10);
@@ -333,6 +321,37 @@ describe('standings and moving on (§2.7)', () => {
     );
   }
 
+  it('WO-083 A3: "Nästa fråga" is refused from the reveal until every top row is out, and works from the standings', () => {
+    const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+    const reveal = run(open, [{ type: 'lock' }, { type: 'grade' }, { type: 'gradeResult', requestId: 0, failed: false, results: [] }], T0);
+    expect(reveal.phase).toBe('reveal');
+    expect(reveal.revealed).toBe(0);
+
+    // Nothing shown yet: the question would end with the whole list unread.
+    const atZero = step(reveal, { type: 'next' }, T0);
+    expect(atZero.error).toEqual({ code: 'reveal', message: 'Visa hela listan först.' });
+    expect(atZero.state.phase).toBe('reveal');
+    expect(atZero.state.questionIndex).toBe(0);
+
+    // One row short is still short.
+    let s = reveal;
+    for (let i = 1; i < eu.topCount; i++) s = run(s, [{ type: 'revealNext' }], T0);
+    expect(s.revealed).toBe(eu.topCount - 1);
+    expect(step(s, { type: 'next' }, T0).error?.code).toBe('reveal');
+
+    // The last row lands: now it moves on.
+    const done = run(s, [{ type: 'revealNext' }], T0);
+    expect(done.revealed).toBe(eu.topCount);
+    const nx = step(done, { type: 'next' }, T0);
+    expect(nx.error).toBeUndefined();
+    expect(nx.state.phase).toBe('lobby');
+    expect(nx.state.questionIndex).toBe(1);
+
+    // From the standings it is never refused for this reason (getting there needs a full reveal anyway).
+    const st = run(done, [{ type: 'standings' }], T0);
+    expect(step(st, { type: 'next' }, T0).error).toBeUndefined();
+  });
+
   it('standings <-> reveal, then next opens the lobby for the following question', () => {
     const s = afterReveal();
     const st = run(s, [{ type: 'standings' }], T0);
@@ -457,6 +476,83 @@ describe('R1 review fixes', () => {
     const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
     const g = run(open, [{ type: 'lock' }, { type: 'grade' }], T0);
     expect(step(g, { type: 'grade' }, T0).error?.code).toBe('busy');
+  });
+
+  describe('WO-083 A6: "Rätta igen" from the reveal', () => {
+    /** Question 1 revealed: Lag 1 graded (Tyskland, place 1), Lag 2 flagged "ogranskad", Lag 3 set by hand. */
+    function revealWithOneUngraded(): GameState {
+      const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+      const locked = run(
+        open,
+        [
+          { type: 'answer', team: 1, text: 'Tyskland', source: 'team' },
+          { type: 'answer', team: 2, text: 'Tjekkiet', source: 'team' },
+          { type: 'answer', team: 3, text: 'nonsens', source: 'team' },
+          { type: 'lock' },
+          { type: 'grade' },
+        ],
+        T0,
+      );
+      const settled = run(
+        locked,
+        [
+          {
+            type: 'gradeResult',
+            requestId: 0,
+            failed: true,
+            results: [
+              { team: 1, gradedText: 'Tyskland', rowIndex: rowIndexOf('Tyskland'), needsReview: false, reason: 'Exakt träff' },
+              { team: 2, gradedText: 'Tjekkiet', rowIndex: null, needsReview: true, reason: 'model down' },
+              { team: 3, gradedText: 'nonsens', rowIndex: null, needsReview: true, reason: 'model down' },
+            ],
+          },
+        ],
+        T0,
+      );
+      expect(settled.phase).toBe('reveal');
+      return run(settled, [{ type: 'override', team: 3, rank: 0 }], T0);
+    }
+
+    it('re-grades only the answers still "ogranskad" — a grade that stands, and Erik\'s own, are left alone', () => {
+      const s = revealWithOneUngraded();
+      expect(s.gradeStatus['0']).toBe('failed');
+      const again = step(s, { type: 'grade' }, T0 + 1);
+      expect(again.error).toBeUndefined();
+      // Lag 1 is already graded and Lag 3 is Erik's; only Lag 2 goes back to the model.
+      expect(again.grade).toEqual({ id: 1, questionIndex: 0, answers: [{ team: 2, text: 'Tjekkiet' }] });
+      // Still the reveal, still the rows shown so far: a re-grade never restarts the question.
+      expect(again.state.phase).toBe('reveal');
+      expect(again.state.gradeStatus['0']).toBe('running');
+      expect(again.state.grades[answerKey(0, 1)]?.points).toBe(1);
+      expect(again.state.grades[answerKey(0, 3)]?.manual).toBe(true);
+
+      const landed = step(
+        again.state,
+        { type: 'gradeResult', requestId: 1, failed: false, results: [{ team: 2, gradedText: 'Tjekkiet', rowIndex: rowIndexOf('Tjeckien'), needsReview: false, reason: 'dansk stavning' }] },
+        T0 + 2,
+      );
+      expect(landed.state.phase).toBe('reveal');
+      expect(landed.state.grades[answerKey(0, 2)]).toMatchObject({ rank: 9, points: 9, needsReview: false, manual: false });
+      expect(landed.state.gradeStatus['0']).toBe('done');
+    });
+
+    it('is refused, never silently, when nothing is left to re-grade', () => {
+      const s = revealWithOneUngraded();
+      const fixed = run(s, [{ type: 'override', team: 2, rank: 9 }], T0);
+      expect(step(fixed, { type: 'grade' }, T0).error).toEqual({ code: 'done', message: 'Alla svar är redan rättade.' });
+    });
+
+    it('the first grade from "locked" is unchanged: every non-manual answer goes to the model', () => {
+      const open = run(claimAll(fresh()), [{ type: 'start' }], T0);
+      const locked = run(
+        open,
+        [{ type: 'answer', team: 1, text: 'Tyskland', source: 'team' }, { type: 'answer', team: 2, text: 'Tjekkiet', source: 'team' }, { type: 'lock' }],
+        T0,
+      );
+      const g = step(locked, { type: 'grade' }, T0);
+      expect(g.grade?.answers).toEqual([{ team: 1, text: 'Tyskland' }, { team: 2, text: 'Tjekkiet' }]);
+      expect(g.state.phase).toBe('grading');
+    });
   });
 });
 

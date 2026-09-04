@@ -1,10 +1,54 @@
-import { buildQuiz } from '../../src/worker/bank.ts';
+// Fixtures for the unit suite (WO-083 A2). The quiz under test is built here, by slug, from
+// `data/bank.json` with its own alias table — never from `data/quiz.json`. Erik swaps the ten
+// lists in `quiz.json` on the Friday; these tests must keep passing whatever he picks, and in
+// whatever order. `data/quiz.json` itself is checked by exactly one test: test/unit/data.test.ts.
+import { buildQuestion, listBySlug } from '../../src/worker/bank.ts';
 import { initialState, reduce, type GameEvent, type Outcome } from '../../src/shared/game.ts';
 import type { GameState, Quiz, Team } from '../../src/shared/types.ts';
 import { TEST_QUESTIONS } from '../fixtures/questions.ts';
 
-/** The pinned test ten (question 1 = the EU list), not the evening's quiz.json. */
-export const quiz: Quiz = buildQuiz({ questions: TEST_QUESTIONS });
+/** Ten bank lists, in a fixed order. Question 1 is the EU list every expectation below is written against. */
+export const FIXTURE_SLUGS: readonly string[] = TEST_QUESTIONS;
+
+/**
+ * The fixture's own aliases, inline rather than read from `data/aliases.json` — that file belongs
+ * to the list session too, so a pre-pass test must not depend on what it happens to contain.
+ */
+const FIXTURE_ALIASES: Record<string, Record<string, string[]>> = {
+  'most-populous-eu-countries': {
+    Tyskland: ['Germany', 'Deutschland'],
+    Frankrike: ['France'],
+    Italien: ['Italy', 'Italia'],
+    Spanien: ['Spain', 'España'],
+    Polen: ['Poland', 'Polska'],
+    Rumänien: ['Romania'],
+    Nederländerna: ['Netherlands', 'The Netherlands', 'Holland', 'Nederland'],
+    Belgien: ['Belgium'],
+    Tjeckien: ['Czechia', 'Czech Republic', 'Tjeckiska republiken', 'Czech'],
+    Portugal: [],
+    Sverige: ['Sweden'],
+    Grekland: ['Greece', 'Hellas'],
+    Ungern: ['Hungary'],
+    Österrike: ['Austria'],
+    Bulgarien: ['Bulgaria'],
+  },
+};
+
+export const FIXTURE_DURATION_MS = 150_000;
+
+/** Build a quiz from `data/bank.json` by slug. Throws by name if the bank no longer has a list. */
+export function quizFromSlugs(slugs: readonly string[], durationMs = FIXTURE_DURATION_MS): Quiz {
+  const questions = slugs.map((slug) => {
+    const list = listBySlug(slug);
+    if (!list) throw new Error(`fixture: data/bank.json has no list with slug "${slug}"`);
+    return buildQuestion(list, FIXTURE_ALIASES[slug] ?? {});
+  });
+  return { questions, durationMs };
+}
+
+export const quiz: Quiz = quizFromSlugs(FIXTURE_SLUGS);
+/** Question 1 of the fixture: "EU:s folkrikaste länder" (Tyskland 1 … Portugal 10 … Sverige 11). */
+export const eu = quiz.questions[0]!;
 export const T0 = 1_700_000_000_000; // a fixed "now"
 
 /** Apply events in order; throw on the first refusal so tests stay short. */

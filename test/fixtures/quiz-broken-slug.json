@@ -1,0 +1,16 @@
+{
+  "_comment": "A deliberately broken quiz.json for proving the data gate (WO-083 A1). Question 4 is a misspelled slug that data/bank.json does not have. Nothing reads this file unless SOPHIE_QUIZ_JSON points at it: `SOPHIE_QUIZ_JSON=test/fixtures/quiz-broken-slug.json npx vitest run --project unit`.",
+  "questions": [
+    "most-populous-eu-countries",
+    "largest-european-countries-by-area",
+    "countries-by-population",
+    "tallest-mountains-of-the-world",
+    "swedish-municipalities-by-population",
+    "countries-by-area",
+    "largest-lakes-world",
+    "highest-grossing-films-worldwide",
+    "best-selling-game-consoles-all-time",
+    "countries-by-nobel-laureates"
+  ],
+  "durationSeconds": 150
+}

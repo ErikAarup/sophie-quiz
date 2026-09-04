@@ -111,7 +111,7 @@ test('grade, manual entry, override, reveal row by row with highlight timing, st
 
   await admin.page.getByRole('button', { name: 'Nästa fråga' }).click();
   await expect(p3.page.getByText('Väntar på att Erik startar')).toBeVisible();
-  await expect(p3.page.getByText('Fråga 1 av 10')).toBeVisible(); // one question done
+  await expect(p3.page.getByText('Fråga 2 av 10 · väntar')).toBeVisible(); // WO-083 A10(b): the question about to start, as admin counts it
   await expect(admin.page.getByRole('button', { name: 'Starta fråga 2' })).toBeVisible();
 });
 

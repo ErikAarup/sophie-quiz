@@ -214,6 +214,47 @@ function smallLinks(...items: { label: string; onClick: () => void }[]): HTMLEle
   );
 }
 
+const resetQuestionItem = {
+  label: 'Nollställ frågan',
+  onClick: () => {
+    sheet = { kind: 'confirm', what: 'question' };
+    renderSheet();
+  },
+};
+
+const resetGameItem = {
+  label: 'Nollställ spelet',
+  onClick: () => {
+    sheet = { kind: 'confirm', what: 'game' };
+    renderSheet();
+  },
+};
+
+/**
+ * WO-083 A4: on the two screens that carry "Nästa fråga" the resets live behind a "Mer…" button in
+ * the topbar instead of eight pixels under the primary button — a thumb aiming at the bottom of the
+ * screen cannot reach them, and they still need a deliberate tap to even appear (WO-078 R4: both
+ * resets stay reachable from every screen).
+ */
+function moreMenu(): { button: HTMLElement; panel: HTMLElement } {
+  const panel = h('div', { class: 'more-panel hidden' }, smallLinks(resetQuestionItem, resetGameItem));
+  const button = h(
+    'button',
+    {
+      class: 'btn btn-ghost btn-sm more-button',
+      type: 'button',
+      'aria-expanded': 'false',
+      onClick: () => {
+        const open = panel.classList.contains('hidden');
+        toggle(panel, 'hidden', !open);
+        button.setAttribute('aria-expanded', String(open));
+      },
+    },
+    'Mer…',
+  );
+  return { button, panel };
+}
+
 // ---- Lobby: "Starta fråga N" ----
 function lobbyScreen(key: string): Screen {
   const label = h('div', { class: 'eyebrow' });
@@ -233,13 +274,7 @@ function lobbyScreen(key: string): Screen {
       { class: 'bottom', style: 'gap:10px' },
       start,
       h('div', { style: 'font-size:12px;color:var(--muted);text-align:center' }, 'Klockan startar direkt. Läs frågan högt när den syns.'),
-      smallLinks({
-        label: 'Nollställ spelet',
-        onClick: () => {
-          sheet = { kind: 'confirm', what: 'game' };
-          renderSheet();
-        },
-      }),
+      smallLinks(resetGameItem),
     ),
   );
   return {
@@ -262,6 +297,9 @@ function questionScreen(key: string): Screen {
   const pause = h('button', { class: 'btn btn-ghost btn-sm', type: 'button' }, 'Pausa');
   const extend = h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => cmd({ type: 'extend' }) }, '+30 s');
   const title = h('div', { style: 'font-size:15px;font-weight:600;line-height:1.3' });
+  // The host question, verbatim, under the title: it is what Erik reads into the mic, and the
+  // guests have it in front of them (player.ts). The title alone is not the question.
+  const question = h('div', { class: 'muted', 'data-host-question': true, style: 'font-size:14px;line-height:1.5' });
   const grid = teamGrid();
   const lock = h('button', { class: 'btn btn-danger', type: 'button', onClick: () => cmd({ type: 'lock' }) }, 'Lås svaren nu');
   const grade = h('button', { class: 'btn btn-primary', type: 'button', onClick: () => cmd({ type: 'grade' }) }, 'Rätta och börja avslöja');
@@ -274,32 +312,10 @@ function questionScreen(key: string): Screen {
     { style: 'display:flex;flex-direction:column;gap:16px;flex-grow:1' },
     topbar(label),
     h('div', { class: 'clock-row' }, clock, h('div', { class: 'clock-buttons' }, pause, extend)),
-    title,
+    h('div', { class: 'stack', style: 'gap:6px' }, title, question),
     h('div', { class: 'eyebrow' }, 'Lagen · tryck för att skriva svar eller släppa'),
     grid.el,
-    h(
-      'div',
-      { class: 'bottom', style: 'gap:10px' },
-      lock,
-      grade,
-      note,
-      smallLinks(
-        {
-          label: 'Nollställ frågan',
-          onClick: () => {
-            sheet = { kind: 'confirm', what: 'question' };
-            renderSheet();
-          },
-        },
-        {
-          label: 'Nollställ spelet',
-          onClick: () => {
-            sheet = { kind: 'confirm', what: 'game' };
-            renderSheet();
-          },
-        },
-      ),
-    ),
+    h('div', { class: 'bottom', style: 'gap:10px' }, lock, grade, note, smallLinks(resetQuestionItem, resetGameItem)),
   );
 
   let last: AdminStateView | null = null;
@@ -321,6 +337,7 @@ function questionScreen(key: string): Screen {
       const status = s.phase === 'open' ? (paused ? 'pausad' : 'svar öppna') : s.phase === 'locked' ? 'låst' : 'rättar…';
       setText(label, `Fråga ${s.questionIndex + 1} av ${s.questionCount} · ${status}`);
       setText(title, s.question?.title ?? '');
+      setText(question, s.question?.question ?? '');
       setText(pause, paused ? 'Fortsätt' : 'Pausa');
       pause.disabled = s.phase !== 'open';
       extend.disabled = s.phase !== 'open';
@@ -385,42 +402,26 @@ function revealScreen(key: string): Screen {
   const lastRow = h('div', { style: 'font-size:15px;line-height:1.4' });
   const nextRow = h('div', { class: 'muted', style: 'font-size:14px;line-height:1.4' });
   const all = h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => cmd({ type: 'revealAll' }) }, 'Visa alla');
+  // WO-083 A6: offered only while something is still "ogranskad"; the reducer re-grades exactly
+  // those answers and leaves every grade that already stands (and Erik's own) alone.
+  const regrade = h('button', { class: 'btn btn-ghost btn-sm hidden', type: 'button', onClick: () => cmd({ type: 'grade' }) }, 'Rätta igen');
   const answers = answersList();
   const standings = h('button', { class: 'btn btn-ghost btn-md', type: 'button', onClick: () => cmd({ type: 'standings' }) }, 'Visa ställningen');
   const next = h('button', { class: 'btn btn-primary btn-md', type: 'button', onClick: () => cmd({ type: 'next' }) }, 'Nästa fråga');
+  const more = moreMenu();
   let mode: 'next' | 'standings' = 'next';
   main.addEventListener('click', () => cmd({ type: mode === 'next' ? 'revealNext' : 'standings' }));
 
   const el = h(
     'div',
     { style: 'display:flex;flex-direction:column;gap:14px;flex-grow:1' },
-    topbar(label),
+    topbar(h('div', { class: 'topbar-right' }, label, more.button)),
+    more.panel,
     h('div', { class: 'reveal-controls' }, counter, main),
     h('div', { class: 'card', style: 'padding:12px 14px;gap:4px' }, lastRow, nextRow),
-    h('div', { class: 'topbar' }, h('div', { class: 'eyebrow' }, 'Lagens svar · tryck för att ändra'), all),
+    h('div', { class: 'topbar' }, h('div', { class: 'eyebrow' }, 'Lagens svar · tryck för att ändra'), h('div', { class: 'small-links reveal-tools' }, regrade, all)),
     answers.el,
-    h(
-      'div',
-      { class: 'bottom', style: 'gap:8px' },
-      standings,
-      next,
-      smallLinks(
-        {
-          label: 'Nollställ frågan',
-          onClick: () => {
-            sheet = { kind: 'confirm', what: 'question' };
-            renderSheet();
-          },
-        },
-        {
-          label: 'Nollställ spelet',
-          onClick: () => {
-            sheet = { kind: 'confirm', what: 'game' };
-            renderSheet();
-          },
-        },
-      ),
-    ),
+    h('div', { class: 'bottom', style: 'gap:8px' }, standings, next),
   );
   return {
     key,
@@ -441,15 +442,20 @@ function revealScreen(key: string): Screen {
       }
       const shown = s.rows[n - 1];
       const coming = s.rows[n];
-      setText(lastRow, n === 0 ? 'Ingen rad visad än. Läs listan nerifrån: tryck för rad 1.' : `Visad: ${shown?.rank}. ${shown?.name ?? ''}${shown?.label ? ' · ' + shown.label : ''}`);
+      setText(lastRow, n === 0 ? 'Ingen rad visad än. Första trycket visar plats 1 – listan läses uppifrån.' : `Visad: ${shown?.rank}. ${shown?.name ?? ''}${shown?.label ? ' · ' + shown.label : ''}`);
       setText(
         nextRow,
         n < top && coming ? `Nästa: ${coming.rank}. ${coming.name ?? ''}${coming.label ? ' · ' + coming.label : ''}` : n >= top ? 'Hela topplistan är visad. Plats 11–15 syns nu som nära skott på telefonerna.' : '',
       );
       setText(next, s.questionIndex + 1 >= s.questionCount ? 'Visa slutresultat' : 'Nästa fråga');
+      const running = s.gradeStatus === 'running';
+      const ungraded = s.teams.some((t) => t.grade?.needsReview === true);
+      toggle(regrade, 'hidden', !ungraded && !running);
+      regrade.disabled = running || !ungraded;
+      setText(regrade, running ? 'Rättar…' : 'Rätta igen');
       if (s.gradeStatus === 'failed' && failToastFor !== s.questionIndex) {
         failToastFor = s.questionIndex; // once per question, not on every state update
-        toast('Modellen kunde inte rätta alla svar. Rader med "ogranskad" sätter du för hand.', true);
+        toast('Modellen kunde inte rätta alla svar. Tryck "Rätta igen", eller sätt platsen för hand.', true);
       }
       answers.update(s);
     },
@@ -465,10 +471,12 @@ function standingsScreen(key: string): Screen {
   // A hand-typed answer is still with the grader: the server refuses "Nästa fråga" with a message
   // until it lands; this line says so before Erik taps.
   const grading = h('div', { class: 'hidden', 'data-grading': true, style: 'font-size:13px;color:var(--accent);text-align:center' }, 'Rättar ett svar… Nästa fråga väntar tills det är klart.');
+  const more = moreMenu();
   const el = h(
     'div',
     { style: 'display:flex;flex-direction:column;gap:16px;flex-grow:1' },
-    topbar(label),
+    topbar(h('div', { class: 'topbar-right' }, label, more.button)),
+    more.panel,
     h('div', { class: 'display', style: 'font-size:56px;line-height:0.95' }, 'Ställning'),
     h('div', { class: 'eyebrow' }, 'Tryck på ett lag för att ändra dess svar eller plats'),
     list,
@@ -518,13 +526,7 @@ function finalScreen(key: string): Screen {
     h(
       'div',
       { class: 'bottom' },
-      smallLinks({
-        label: 'Nollställ spelet',
-        onClick: () => {
-          sheet = { kind: 'confirm', what: 'game' };
-          renderSheet();
-        },
-      }),
+      smallLinks(resetGameItem),
     ),
   );
   return {
@@ -550,22 +552,52 @@ function finalScreen(key: string): Screen {
 // ---------- sheets ----------
 
 let sheetEl: HTMLElement | null = null;
+/** Identity of the sheet currently in the DOM: while it is unchanged the sheet is updated, not rebuilt. */
+let sheetKey: string | null = null;
+let sheetUpdate: ((s: AdminStateView) => void) | null = null;
+
+interface Sheet {
+  nodes: (HTMLElement | null)[];
+  update(s: AdminStateView): void;
+}
+
+function sheetKeyOf(sh: NonNullable<typeof sheet>): string {
+  return sh.kind === 'team' ? `team:${sh.team}` : `confirm:${sh.what}`;
+}
 
 function closeSheet(): void {
   sheet = null;
+  sheetKey = null;
+  sheetUpdate = null;
   if (sheetEl) {
     sheetEl.remove();
     sheetEl = null;
   }
 }
 
+/**
+ * WO-083 A8: the Durable Object broadcasts on every change, socket close, error and hello, and
+ * `render()` reaches here on each one. Rebuilding the sheet on a broadcast wiped whatever Erik had
+ * half-typed and stole the keyboard, so while the open sheet's identity (kind + team / what) is
+ * unchanged only its labels are refreshed; the input keeps its text and its focus.
+ */
 function renderSheet(): void {
-  if (sheetEl) {
-    sheetEl.remove();
-    sheetEl = null;
+  if (!sheet || !state) {
+    if (sheetEl) {
+      sheetEl.remove();
+      sheetEl = null;
+    }
+    sheetKey = null;
+    sheetUpdate = null;
+    return;
   }
-  if (!sheet || !state) return;
-  const body = sheet.kind === 'team' ? teamSheet(state, sheet.team) : confirmSheet(state, sheet.what);
+  const key = sheetKeyOf(sheet);
+  if (sheetEl && sheetKey === key && sheetUpdate) {
+    sheetUpdate(state);
+    return;
+  }
+  if (sheetEl) sheetEl.remove();
+  const built = sheet.kind === 'team' ? teamSheet(state, sheet.team) : confirmSheet(state, sheet.what);
   sheetEl = h(
     'div',
     {
@@ -574,30 +606,30 @@ function renderSheet(): void {
         if (ev.target === sheetEl) closeSheet();
       },
     },
-    h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' }, body),
+    h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' }, built.nodes),
   );
+  sheetKey = key;
+  sheetUpdate = built.update;
   document.body.appendChild(sheetEl);
+  built.update(state);
 }
 
-function teamSheet(s: AdminStateView, team: Team): (HTMLElement | null)[] {
-  const tv = s.teams[team - 1]!;
-  const questionActive = s.phase !== 'lobby' && s.phase !== 'final';
-  const canOverride = questionActive && s.phase !== 'open';
+function teamSheet(s: AdminStateView, team: Team): Sheet {
   const input = h('input', {
     class: 'answer-input',
     type: 'text',
     maxlength: 80,
     placeholder: 'skriv svar för hand…',
     autocomplete: 'off',
-    disabled: !questionActive,
   });
-  input.value = tv.answer ?? '';
+  input.value = s.teams[team - 1]?.answer ?? '';
+  /** What the field held when it was last filled from the server; anything else is Erik's typing. */
+  let seeded = input.value;
   const save = h(
     'button',
     {
       class: 'btn btn-primary',
       type: 'button',
-      disabled: !questionActive,
       onClick: () => {
         const text = input.value.trim();
         if (!text) {
@@ -617,101 +649,166 @@ function teamSheet(s: AdminStateView, team: Team): (HTMLElement | null)[] {
     }
   });
 
-  const ranks = Array.from(new Set(s.rows.map((r) => r.rank))).sort((a, b) => a - b);
-  const currentRank = tv.grade ? (tv.grade.needsReview ? -1 : (tv.grade.rank ?? 0)) : -1;
-  const rankGrid = h(
-    'div',
-    { class: 'rank-grid' },
-    [0, ...ranks].map((r) =>
-      h(
-        'button',
-        {
-          class: 'btn btn-ghost' + (r === currentRank ? ' current' : ''),
-          type: 'button',
-          title: r === 0 ? 'Utanför listan' : s.rows.filter((row) => row.rank === r).map((row) => row.name).join(' / '),
-          onClick: () => {
-            cmd({ type: 'override', team, rank: r });
-            closeSheet();
-          },
-        },
-        r === 0 ? '0' : String(r),
-      ),
-    ),
+  const status = h('div', { class: 'status' });
+  const answerEyebrow = h('div', { class: 'eyebrow' });
+  const typedByYou = h('div', { class: 'muted hidden', style: 'font-size:12px' }, 'Nuvarande svar är inskrivet av dig.');
+  const gradeLine = h('div', { style: 'font-size:14px;color:var(--text-2)' });
+  // WO-083 A5: every place carries its row name. On a 390 px phone Erik is choosing between names,
+  // not between numbers — the name was in a `title` attribute before, which a thumb never sees.
+  const rankList = h('div', { class: 'rank-list' });
+  const overrideBlock = h('div', { class: 'stack hidden' }, h('div', { class: 'eyebrow' }, 'Plats på listan · rätta för hand (0 = utanför)'), gradeLine, rankList);
+  const overrideNote = h('div', { class: 'muted hidden', style: 'font-size:13px' }, 'Plats kan sättas för hand när svaren är låsta.');
+  const release = h(
+    'button',
+    {
+      class: 'btn btn-danger hidden',
+      type: 'button',
+      onClick: () => {
+        cmd({ type: 'release', team });
+        closeSheet();
+      },
+    },
+    `Släpp ${teamName(team)} (telefonen får välja lag igen)`,
   );
-  const gradeLine = tv.grade
-    ? tv.grade.needsReview
-      ? 'Ogranskad – modellen kunde inte avgöra. Välj plats nedan.'
-      : tv.grade.rank === null
-        ? `Utanför listan · 0 poäng${tv.grade.manual ? ' (satt för hand)' : ''}`
-        : `Plats ${tv.grade.rank} · ${tv.grade.rowName ?? ''} · ${tv.grade.points} poäng${tv.grade.manual ? ' (satt för hand)' : ''}`
-    : questionActive
-      ? 'Inte rättad än.'
-      : '';
+  const noPhone = h('div', { class: 'muted hidden', style: 'font-size:13px' }, 'Ingen telefon har valt det här laget.');
 
-  return [
-    h('div', { class: 'topbar' }, h('h2', { class: 'display' }, teamName(team)), h('div', { class: `status ${tv.status}` }, tv.status + (tv.total ? ` · ${tv.total} p totalt` : ''))),
-    h(
-      'div',
-      { class: 'stack' },
-      h('div', { class: 'eyebrow' }, questionActive ? `Svar på fråga ${s.questionIndex + 1}` : 'Svar'),
-      input,
-      save,
-      tv.answerSource === 'admin' ? h('div', { class: 'muted', style: 'font-size:12px' }, 'Nuvarande svar är inskrivet av dig.') : null,
-    ),
-    canOverride
-      ? h(
-          'div',
-          { class: 'stack' },
-          h('div', { class: 'eyebrow' }, 'Plats på listan · rätta för hand (0 = utanför)'),
-          h('div', { style: 'font-size:14px;color:var(--text-2)' }, gradeLine),
-          rankGrid,
-        )
-      : questionActive
-        ? h('div', { class: 'muted', style: 'font-size:13px' }, 'Plats kan sättas för hand när svaren är låsta.')
-        : null,
-    tv.claimed
-      ? h(
-          'button',
-          {
-            class: 'btn btn-danger',
-            type: 'button',
-            onClick: () => {
-              cmd({ type: 'release', team });
-              closeSheet();
-            },
-          },
-          `Släpp ${teamName(team)} (telefonen får välja lag igen)`,
-        )
-      : h('div', { class: 'muted', style: 'font-size:13px' }, 'Ingen telefon har valt det här laget.'),
-    h('button', { class: 'btn btn-ghost', type: 'button', onClick: closeSheet }, 'Stäng'),
-  ];
+  let ranksKey = '';
+  return {
+    nodes: [
+      h('div', { class: 'topbar' }, h('h2', { class: 'display' }, teamName(team)), status),
+      h('div', { class: 'stack' }, answerEyebrow, input, save, typedByYou),
+      overrideBlock,
+      overrideNote,
+      release,
+      noPhone,
+      h('button', { class: 'btn btn-ghost', type: 'button', onClick: closeSheet }, 'Stäng'),
+    ],
+    update(v) {
+      const tv = v.teams[team - 1]!;
+      const questionActive = v.phase !== 'lobby' && v.phase !== 'final';
+      const canOverride = questionActive && v.phase !== 'open';
+      status.className = `status ${tv.status}`;
+      setText(status, tv.status + (tv.total ? ` · ${tv.total} p totalt` : ''));
+      setText(answerEyebrow, questionActive ? `Svar på fråga ${v.questionIndex + 1}` : 'Svar');
+      input.disabled = !questionActive;
+      save.disabled = !questionActive;
+      // Follow the server only while the field is untouched: never overwrite what Erik typed, and
+      // never take the caret out of a field he is typing in.
+      const fromServer = tv.answer ?? '';
+      if (document.activeElement !== input && input.value === seeded && fromServer !== seeded) {
+        input.value = fromServer;
+        seeded = fromServer;
+      }
+      toggle(typedByYou, 'hidden', tv.answerSource !== 'admin');
+
+      toggle(overrideBlock, 'hidden', !canOverride);
+      toggle(overrideNote, 'hidden', canOverride || !questionActive);
+      if (canOverride) {
+        setText(
+          gradeLine,
+          tv.grade
+            ? tv.grade.needsReview
+              ? 'Ogranskad – modellen kunde inte avgöra. Välj plats nedan.'
+              : tv.grade.rank === null
+                ? `Utanför listan · 0 poäng${tv.grade.manual ? ' (satt för hand)' : ''}`
+                : `Plats ${tv.grade.rank} · ${tv.grade.rowName ?? ''} · ${tv.grade.points} poäng${tv.grade.manual ? ' (satt för hand)' : ''}`
+            : 'Inte rättad än.',
+        );
+        const currentRank = tv.grade ? (tv.grade.needsReview ? -1 : (tv.grade.rank ?? 0)) : -1;
+        const key = `${v.questionIndex}:${currentRank}:${v.rows.length}`;
+        if (key !== ranksKey) {
+          ranksKey = key;
+          const ranks = Array.from(new Set(v.rows.map((r) => r.rank))).sort((a, b) => a - b);
+          rankList.replaceChildren(
+            ...[0, ...ranks].map((r) =>
+              h(
+                'button',
+                {
+                  class: 'row rank-row' + (r === currentRank ? ' current' : ''),
+                  type: 'button',
+                  'data-rank': r,
+                  onClick: () => {
+                    cmd({ type: 'override', team, rank: r });
+                    closeSheet();
+                  },
+                },
+                h('div', { class: 'rank display' }, String(r)),
+                h('div', { class: 'grow' }, r === 0 ? 'utanför listan' : v.rows.filter((row) => row.rank === r).map((row) => row.name ?? '').join(' / ')),
+              ),
+            ),
+          );
+        }
+      }
+
+      toggle(release, 'hidden', !tv.claimed);
+      toggle(noPhone, 'hidden', tv.claimed);
+    },
+  };
 }
 
-function confirmSheet(s: AdminStateView, what: 'question' | 'game'): (HTMLElement | null)[] {
+function confirmSheet(s: AdminStateView, what: 'question' | 'game'): Sheet {
   const isQ = what === 'question';
-  return [
-    h('h2', { class: 'display' }, isQ ? 'Nollställ frågan?' : 'Nollställ spelet?'),
-    h(
-      'div',
-      { style: 'font-size:15px;color:var(--text-2);line-height:1.5' },
-      isQ
-        ? `Alla svar och poäng på fråga ${s.questionIndex + 1} raderas och frågan går tillbaka till "Starta fråga". Lagen behåller sina platser.`
-        : 'Alla lag, svar och poäng raderas och spelet börjar om från fråga 1. Alla telefoner får välja lag igen. Gör detta innan gästerna kommer.',
-    ),
-    h(
-      'button',
-      {
-        class: 'btn btn-danger',
-        type: 'button',
-        onClick: () => {
-          cmd(isQ ? { type: 'resetQuestion', confirm: CONFIRM_WORD } : { type: 'resetGame', confirm: CONFIRM_WORD });
-          closeSheet();
-        },
+  const go = h(
+    'button',
+    {
+      class: 'btn btn-danger',
+      type: 'button',
+      onClick: () => {
+        cmd(isQ ? { type: 'resetQuestion', confirm: CONFIRM_WORD } : { type: 'resetGame', confirm: CONFIRM_WORD });
+        closeSheet();
       },
-      isQ ? 'Ja, nollställ frågan' : 'Ja, nollställ hela spelet',
-    ),
-    h('button', { class: 'btn btn-ghost', type: 'button', onClick: closeSheet }, 'Avbryt'),
-  ];
+    },
+    isQ ? 'Ja, nollställ frågan' : 'Ja, nollställ hela spelet',
+  );
+  // WO-083 A4: wiping the whole evening takes more than two taps. The red button stays dead until
+  // the confirm word is typed — something no thumb does by accident, and nothing a state broadcast
+  // can clear (the sheet is updated, not rebuilt: see renderSheet).
+  const typed = h('input', {
+    class: 'answer-input',
+    type: 'text',
+    autocomplete: 'off',
+    autocapitalize: 'characters',
+    autocorrect: 'off',
+    spellcheck: false,
+    maxlength: 20,
+    placeholder: CONFIRM_WORD,
+    'aria-label': `Skriv ${CONFIRM_WORD}`,
+    'data-confirm-input': true,
+  });
+  const check = (): void => {
+    go.disabled = typed.value.trim().toLocaleUpperCase('sv-SE') !== CONFIRM_WORD;
+  };
+  if (!isQ) {
+    go.disabled = true;
+    typed.addEventListener('input', check);
+    typed.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        check();
+        if (!go.disabled) go.click();
+      }
+    });
+  }
+
+  const body = h(
+    'div',
+    { style: 'font-size:15px;color:var(--text-2);line-height:1.5' },
+    isQ
+      ? `Alla svar och poäng på fråga ${s.questionIndex + 1} raderas och frågan går tillbaka till "Starta fråga". Lagen behåller sina platser.`
+      : 'Alla lag, svar och poäng raderas och spelet börjar om från fråga 1. Alla telefoner får välja lag igen. Gör detta innan gästerna kommer.',
+  );
+  return {
+    nodes: [
+      h('h2', { class: 'display' }, isQ ? 'Nollställ frågan?' : 'Nollställ spelet?'),
+      body,
+      isQ ? null : h('div', { class: 'stack', style: 'gap:8px' }, h('div', { class: 'eyebrow' }, `Skriv ${CONFIRM_WORD} för att låsa upp knappen`), typed),
+      go,
+      h('button', { class: 'btn btn-ghost', type: 'button', onClick: closeSheet }, 'Avbryt'),
+    ],
+    update(v) {
+      if (isQ) setText(body, `Alla svar och poäng på fråga ${v.questionIndex + 1} raderas och frågan går tillbaka till "Starta fråga". Lagen behåller sina platser.`);
+    },
+  };
 }
 
 // ---------- boot ----------

@@ -348,13 +348,20 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
       if (state.phase === 'open' || state.phase === 'lobby' || state.phase === 'final') return refuse('phase', 'Svaren måste vara låsta först.');
       if (state.phase === 'grading' || gradesInFlight(state, qi) > 0) return refuse('busy', 'Rättning pågår.');
       if (!question) return refuse('noQuestion', 'Ingen fråga.');
+      // "Rätta igen" from the reveal or the standings is for the rows the model could not decide:
+      // a grade that already stands (and Erik's own, always) is left alone, so a second attempt
+      // can never move points that are already on the board.
+      const onlyUngraded = state.phase === 'reveal' || state.phase === 'standings';
       const answers: GradeRequest['answers'] = [];
       for (const team of TEAMS) {
         const key = answerKey(qi, team);
         const answer = state.answers[key];
         const existing = state.grades[key];
-        if (answer && !(existing && existing.manual)) answers.push({ team, text: answer.text });
+        if (!answer || (existing && existing.manual)) continue;
+        if (onlyUngraded && existing && !existing.needsReview) continue;
+        answers.push({ team, text: answer.text });
       }
+      if (onlyUngraded && answers.length === 0) return refuse('done', 'Alla svar är redan rättade.');
       if (state.phase === 'locked') {
         state.phase = 'grading';
         state.revealed = 0;
@@ -452,6 +459,12 @@ export function reduce(prev: GameState, event: GameEvent, now: number, quiz: Qui
 
     case 'next': {
       if (state.phase !== 'standings' && state.phase !== 'reveal') return refuse('phase', 'Avsluta frågan först.');
+      // Mid-reveal there is no way back: `next` clears the question for good and the list can never
+      // be shown again. A thumb that meant "Visa nästa rad" must not be able to end the question
+      // with half the list unread, so from the reveal it is refused until every top row is out.
+      if (state.phase === 'reveal' && question && state.revealed < question.topCount) {
+        return refuse('reveal', 'Visa hela listan först.');
+      }
       // A hand-typed answer may still be with the grader (SPELLEDNING: "även efter att ställningen
       // visats"). Moving on now would leave that team's points for this question ungraded for
       // good, so the request must land first. Never silent: admin shows this message.

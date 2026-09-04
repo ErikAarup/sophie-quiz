@@ -13,10 +13,20 @@ export interface ConnectionOptions {
   onStatus: (online: boolean) => void;
 }
 
-const PING_EVERY_MS = 3_000;
+export const PING_EVERY_MS = 3_000;
 const DEAD_AFTER_MS = 8_000;
 const BACKOFF_MIN_MS = 500;
 const BACKOFF_MAX_MS = 5_000;
+
+/**
+ * WO-083 A9. Waking up (visible again, network back, page shown) with nothing heard for two ping
+ * intervals means the socket the OS left behind is dead however healthy `readyState` looks. Pinging
+ * it costs the watchdog's 8 s plus a backoff — eleven seconds of "Återansluter…" in the room —
+ * where dropping it costs one. Pure so the threshold itself is testable.
+ */
+export function socketIsStale(lastAlive: number, now: number): boolean {
+  return now - lastAlive > 2 * PING_EVERY_MS;
+}
 
 export class Connection {
   private ws: WebSocket | null = null;
@@ -68,6 +78,12 @@ export class Connection {
   /** Reconnect right away if we are not connected (page became visible, network is back). */
   private kick(): void {
     if (this.online) {
+      if (socketIsStale(this.lastAlive, Date.now())) {
+        // Reconnect from the shortest backoff, not from wherever the last failure left it.
+        this.backoff = BACKOFF_MIN_MS;
+        this.drop();
+        return;
+      }
       this.sendPing();
       return;
     }

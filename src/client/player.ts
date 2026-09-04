@@ -169,8 +169,9 @@ function updateStatus(): void {
 }
 
 function questionLabel(s: PlayerStateView): string {
-  const n = s.phase === 'lobby' ? s.questionIndex : s.questionIndex + 1;
-  return `Fråga ${n} av ${s.questionCount}`;
+  // The same count Erik reads off admin: the question about to start, not the ones already done.
+  // A guest reading "Fråga 4 av 10" while the mic says "fråga fem" is one argument nobody needs.
+  return `Fråga ${s.questionIndex + 1} av ${s.questionCount}` + (s.phase === 'lobby' ? ' · väntar' : '');
 }
 
 function pill(label: string, accent = false): HTMLElement {

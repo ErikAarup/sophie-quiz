@@ -79,9 +79,14 @@ export async function adminGrade(admin: Page): Promise<void> {
   await expect(admin.getByRole('button', { name: /^Visa nästa rad|^Visa ställningen$/ }).first()).toBeVisible({ timeout: 30_000 });
 }
 
+/** Reset the game through the real UI: open "Mer…" if the screen hides the links there, then type the confirm word. */
 export async function adminResetGame(admin: Page): Promise<void> {
-  await admin.getByRole('button', { name: 'Nollställ spelet' }).click();
-  await admin.getByRole('button', { name: 'Ja, nollställ hela spelet' }).click();
+  const link = admin.getByRole('button', { name: 'Nollställ spelet' });
+  if ((await link.isVisible()) === false) await admin.getByRole('button', { name: 'Mer…' }).click();
+  await link.click();
+  const sheet = admin.getByRole('dialog');
+  await sheet.locator('[data-confirm-input]').fill(CONFIRM_WORD);
+  await sheet.getByRole('button', { name: 'Ja, nollställ hela spelet' }).click();
   await expect(admin.getByRole('button', { name: 'Starta fråga 1' })).toBeVisible();
 }
 
@@ -101,7 +106,7 @@ export async function adminManualAnswer(admin: Page, team: Team, text: string): 
 
 export async function adminOverride(admin: Page, team: Team, rank: number): Promise<void> {
   await adminOpenTeam(admin, team);
-  await admin.getByRole('dialog').locator('.rank-grid').getByRole('button', { name: String(rank), exact: true }).click();
+  await admin.getByRole('dialog').locator(`.rank-list .rank-row[data-rank="${rank}"]`).click();
   await expect(admin.getByRole('dialog')).toBeHidden();
 }
 
