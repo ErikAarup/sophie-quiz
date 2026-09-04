@@ -180,17 +180,22 @@ efteråt, och halva plan B.
 
 1. Öppna adminlänken på din telefon. Sätt skärmen på "släcks aldrig" (iPhone: Inställningar →
    Bildskärm → Autolås → Aldrig). Ladda telefonen.
-2. Pillen ska säga **Admin**. Tryck **Nollställ spelet** → skriv **NOLLSTÄLL** i rutan →
-   **Ja, nollställ hela spelet**. Alla åtta lag ska stå som **ledig**.
-3. Lägg ut QR-lapparna. När gästerna skannar och väljer lag byts **ledig** mot **väntar**.
-4. Säg i micken innan fråga 1, två saker:
+2. **Är ni inte åtta lag?** Ställ in antalet först, innan du nollställer: rutan **Antal lag** på
+   lobbyskärmen, − och + (2–12). Alla telefoner byter antal rutor direkt. Det går bara innan
+   fråga 1 har startat och innan något lag har tagit en plats — har någon redan valt lag, tryck
+   på laget → **Släpp** först. Antalet överlever **Nollställ spelet**, så ordningen spelar ingen
+   roll — men gör det innan gästerna kommer.
+3. Pillen ska säga **Admin**. Tryck **Nollställ spelet** → skriv **NOLLSTÄLL** i rutan →
+   **Ja, nollställ hela spelet**. Alla lag ska stå som **ledig**.
+4. Lägg ut QR-lapparna. När gästerna skannar och väljer lag byts **ledig** mot **väntar**.
+5. Säg i micken innan fråga 1, två saker:
    - "Stäng av wifi på telefonen och kör på mobildata." (Barens wifi kan ha en inloggningssida
      som stoppar appen.)
    - "Bara EN telefon per lag skannar. Resten lägger undan telefonen."
    Skriv lagnumret för hand på varje bords QR-blad (`/qr` skriver ut samma kod).
-5. Förklara poängen högt, och en gång till efter fråga 1: **plats 10 ger 10 poäng, plats 1 ger
+6. Förklara poängen högt, och en gång till efter fråga 1: **plats 10 ger 10 poäng, plats 1 ger
    1 poäng.** Det svåra svaret är värt mest. Alla tror tvärtom första gången.
-6. Inga deployer efter att gästerna kommit. Måste du ändå: tryck **Nollställ spelet** direkt
+7. Inga deployer efter att gästerna kommit. Måste du ändå: tryck **Nollställ spelet** direkt
    efteråt, annars pekar en pågående fråga på fel lista.
 
 ### Per fråga — det här trycker du
@@ -207,7 +212,7 @@ efteråt, och halva plan B.
 | 8 | **Visa ställningen** | Alla ser tabellen; det egna laget är markerat. |
 | 9 | **Nästa fråga** | Tillbaka till Starta fråga. Efter fråga 10: **Visa slutresultat** → vinnaren visas på alla telefoner. |
 
-Vid 0:30 (steg 2): läs raden under rutnätet högt — "X av 8 har svarat" — och ropa upp lagen som
+Vid 0:30 (steg 2): läs raden under rutnätet högt — "X av N har svarat" (N = antalet lag) — och ropa upp lagen som
 står kvar på **väntar**. Ett svar som försvann i en dålig uppkoppling syns bara så här.
 
 Rättningen (steg 6) tar 3–5 sekunder normalt, upp till 20 om modellen strular. Prata under
@@ -248,7 +253,8 @@ Tryck på ett lag (i rutnätet eller i svarslistan). Där kan du:
 | Modellen har uppenbart fel | Tryck på raden, sätt rätt plats. Ditt ord gäller. |
 | Fel fråga startad / kaos | **Nollställ frågan** (bakom **Mer…** på avslöjande- och ställningsskärmen, längst ner på de andra) → **Ja**. Svaren på den frågan raderas, lagen behåller sina platser och sina poäng från tidigare frågor. |
 | Allt behöver börja om | **Nollställ spelet** → skriv **NOLLSTÄLL** i rutan → **Ja**. Allt raderas, alla telefoner får välja lag igen. |
-| Din adminsida säger **Fel adminlänk** | Länken saknar `?t=…` eller har fel nyckel. Öppna bokmärket igen. |
+| Din adminsida säger **Fel adminlänk** | Länken saknar `?t=…` eller har fel nyckel. Öppna bokmärket med hela `?t=`-länken **en gång** — då sparas rätt nyckel igen i telefonen, och vanliga `/admin` fungerar efteråt. En länk med fel nyckel skriver inte över den sparade. |
+| Ni blev fler eller färre lag mitt i kvällen | Antalet går inte att ändra när spelet startat. Vill du ändå: **Nollställ spelet** (allt raderas) → ställ **Antal lag** → börja om. Annars: låt tomma lag stå kvar, de får noll poäng och stör inget. |
 | Din adminsida säger **Återansluter…** länge | Kolla nätet på din telefon. Spelet ligger på Cloudflare och väntar; inget försvinner. |
 | En telefon säger "används av en annan telefon" | Vanligt om gästen först öppnade länken inne i Instagram/Snapchat och sedan i Safari. Tryck på laget → **Släpp** → de väljer om. |
 | Alla telefoner säger **Återansluter…**, även din | Direkt efter en deploy: fel i `data/quiz.json` — kör `npm test`, rätta, deploya om. Mitt i kvällen: nätet. Säg "mobildata, inte wifi". Pappersbladen om det inte släpper. |

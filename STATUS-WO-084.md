@@ -21,3 +21,8 @@ Heartbeat (mtime = liveness).
   microseconds (no model call to wait for) — noted in the ledger, both are correct refusals.
 - Next: e2e (AC5 token cache, AC4 through a real socket, the six-team user-seat run + shots),
   SPELLEDNING §3 lines, then the PR.
+- 2026-09-04 20:20 — phase 3 done. Full verification green: typecheck clean, `npm test`
+  118/118 (was 103), `npm run e2e` 23/23 (was 19), `npm run build` clean. Seven 390×844
+  screenshots under `proof/wo-084/`. SPELLEDNING §3 + troubleshooting lines written (AC6).
+  e2e/env.ts and e2e/wrangler.e2e.jsonc reverted; regenerated proof/wo-083 shots reverted.
+- Remaining: commit, push, open the PR against build/wo-083.
