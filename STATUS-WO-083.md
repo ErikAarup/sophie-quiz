@@ -2,7 +2,7 @@
 
 **Branch:** `build/wo-083` · **Worktree:** `C:\Users\erika\projects\sophie-quiz\.claude\worktrees\wo-083`
 **Stamped by the loop at dispatch:** 2026-09-04T17:01:39.127Z
-**Phase:** P5 done — full verification green. Pushing and opening the PR (2026-09-04 19:42 local)
+**Phase:** DONE — PR #5 open, waiting for the review chain and Erik (2026-09-04 19:44 local)
 
 > Reset at dispatch so this file can never show the PREVIOUS work order's status
 > (WO-019 §2.6). Everything below this line is written by WO-083
@@ -81,3 +81,11 @@
   Data-gate proof: real data passes; a bad slug and a tie-at-10 list each fail by name; and
   `npm run deploy` on the broken copy exits 1 inside `predeploy` — `build.mjs` and `wrangler`
   never run. Six user-seat screenshots at 390×844 in `proof/wo-083/`. Next: push + PR (P6).
+- **2026-09-04 19:44 local** — P6 done. `build/wo-083` pushed; **PR #5**
+  (https://github.com/ErikAarup/sophie-quiz/pull/5) open against `main`, 36 files, +1490/−254,
+  with the acceptance-criteria table, the real verification output, the data-gate proof, the six
+  screenshots, the walkthrough, and the decision ledger in the body. `main` untouched, nothing
+  merged, nothing deployed. Every item in §A and §B is in the PR; the five entries in
+  `KNOWN-ISSUES-WO-083.md` are cosmetic or test-coverage notes, not §A items left undone.
+  I have not dispatched, authored or framed any review of this work — the chain does that.
+  Builder finished.
