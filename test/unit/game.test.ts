@@ -5,7 +5,7 @@ import { adminView } from '../../src/shared/view.ts';
 import { T0, claimAll, fresh, quiz, run, step } from './helpers.ts';
 import { buildQuiz, quizFile } from '../../src/worker/bank.ts';
 
-const DURATION = quiz.durationMs; // 150 000 from data/quiz.json
+const DURATION = quiz.durationMs; // from data/quiz.json durationSeconds (90 s since 4 Sept)
 const eu = quiz.questions[0]!;
 const rowIndexOf = (name: string) => eu.rows.findIndex((r) => r.name === name);
 
@@ -22,7 +22,7 @@ describe('quiz data', () => {
 
   it('loads ten verified lists with 15 rows and a top ten', () => {
     expect(quiz.questions).toHaveLength(10);
-    expect(DURATION).toBe(150_000);
+    expect(DURATION).toBe(quizFile.durationSeconds * 1000);
     for (const q of quiz.questions) {
       expect(q.rows.length).toBeGreaterThanOrEqual(10);
       expect(q.topCount).toBeGreaterThanOrEqual(10);
