@@ -95,7 +95,10 @@ async function callAnthropic(input: ModelInput, opts: GraderOptions): Promise<Mo
   });
   const response = await client.beta.messages.create({
     model: opts.model ?? GRADER_MODEL,
-    max_tokens: 1024,
+    // Room for eight answers *and* the thinking Opus does by default, which counts against the cap.
+    // At 1024 a full question could stop on max_tokens; :105 then throws and :174 flags every
+    // pending answer "ogranskad" — the whole table for Erik to set by hand.
+    max_tokens: 4096,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: buildUserPrompt(input) }],
     output_config: { effort: 'low', format: { type: 'json_schema', schema: OUTPUT_SCHEMA as unknown as Record<string, unknown> } },

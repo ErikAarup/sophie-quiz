@@ -169,8 +169,9 @@ function updateStatus(): void {
 }
 
 function questionLabel(s: PlayerStateView): string {
-  const n = s.phase === 'lobby' ? s.questionIndex : s.questionIndex + 1;
-  return `Fråga ${n} av ${s.questionCount}`;
+  // The same count Erik reads off admin: the question about to start, not the ones already done.
+  // A guest reading "Fråga 4 av 10" while the mic says "fråga fem" is one argument nobody needs.
+  return `Fråga ${s.questionIndex + 1} av ${s.questionCount}` + (s.phase === 'lobby' ? ' · väntar' : '');
 }
 
 function pill(label: string, accent = false): HTMLElement {
@@ -232,7 +233,7 @@ function tilesScreen(key: string): Screen {
     h(
       'div',
       { style: 'display:flex;flex-direction:column;gap:6px' },
-      h('div', { class: 'eyebrow' }, 'Sophie 25 år'),
+      h('div', { class: 'eyebrow' }, 'Sofie 25 år'),
       h('div', { class: 'display', style: 'font-size:64px;line-height:0.95' }, 'Topp ', h('br'), 'tio'),
       h('div', { style: 'font-size:16px;color:var(--text-2);margin-top:8px' }, 'Välj ert lag. En telefon per lag.'),
     ),
@@ -604,7 +605,7 @@ app.replaceChildren(
   h(
     'div',
     { style: 'display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;flex-grow:1' },
-    h('div', { class: 'eyebrow' }, 'Sophie 25 år'),
+    h('div', { class: 'eyebrow' }, 'Sofie 25 år'),
     h('div', { class: 'display', style: 'font-size:64px;line-height:0.95' }, 'Topp tio'),
     h('div', { class: 'pill offline', 'data-pill': 'Ansluten' }, h('span', { class: 'dot' }), h('span', { class: 'label' }, 'Ansluter…')),
   ),

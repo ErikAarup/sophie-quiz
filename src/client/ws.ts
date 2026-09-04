@@ -68,6 +68,15 @@ export class Connection {
   /** Reconnect right away if we are not connected (page became visible, network is back). */
   private kick(): void {
     if (this.online) {
+      // A phone that slept keeps a socket the OS quietly killed: `readyState` still says OPEN and
+      // pings vanish into it. Nothing heard for two ping intervals at the moment of waking means
+      // exactly that, so drop it now rather than wait out the 8 s watchdog and its backoff — the
+      // difference in the room is about a second instead of eleven.
+      if (Date.now() - this.lastAlive > 2 * PING_EVERY_MS) {
+        this.backoff = BACKOFF_MIN_MS;
+        this.drop();
+        return;
+      }
       this.sendPing();
       return;
     }

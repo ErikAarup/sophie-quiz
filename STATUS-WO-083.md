@@ -2,7 +2,7 @@
 
 **Branch:** `build/wo-083` · **Worktree:** `C:\Users\erika\projects\sophie-quiz\.claude\worktrees\wo-083`
 **Stamped by the loop at dispatch:** 2026-09-04T17:01:39.127Z
-**Phase:** P1 done (data gate + fixtures) — 2026-09-04 19:15 local
+**Phase:** P3 in progress (client changes written, e2e running) — 2026-09-04 19:27 local
 
 > Reset at dispatch so this file can never show the PREVIOUS work order's status
 > (WO-019 §2.6). Everything below this line is written by WO-083
@@ -63,3 +63,12 @@
   answer and expectation from question 1 by rank. Green: unit 73/73, DO 16/16. Gate proved
   failing on both broken copies, and `npm run deploy` exits 1 in `predeploy` — `build.mjs` and
   `wrangler` never run. Committing, then P2 (reducer: A3, A6).
+- **2026-09-04 19:27 local** — P2 done and committed with P3's code in progress. Reducer: `next`
+  refused from `reveal` below `topCount` ("Visa hela listan först."), `grade` from reveal/standings
+  re-grades only the still-ungraded answers, `max_tokens` 1024 → 4096. Client: A4 (resets behind
+  "Mer…" on reveal + standings, typed confirm for the game reset), A5 (row names per place),
+  A6 ("Rätta igen"), A7 (sheet keeps text + focus: the sheet is updated, not rebuilt), A9 (fast
+  reconnect on wake), A10 (all four copy fixes). `npm run typecheck` clean, `npm run build` clean
+  (wrangler's workerd runs — Smart App Control really is off). First `npm run e2e`: 12 passed,
+  2 failed — one was an old assertion of the *wrong* lobby counter (AC8 changes it), one was my
+  own new spec double-toggling "Mer…". Both fixed; re-running the whole suite now. Next: §B runbook.
