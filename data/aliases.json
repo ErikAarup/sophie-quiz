@@ -729,6 +729,11 @@
       "Taiwan Semiconductor Manufacturing Company",
       "Taiwan Semiconductor"
     ],
+    "SpaceX": [
+      "Space X",
+      "Space Exploration Technologies",
+      "SPCX"
+    ],
     "Broadcom": [],
     "Saudi Aramco": [
       "Aramco"
@@ -749,11 +754,6 @@
     ],
     "Eli Lilly": [
       "Lilly"
-    ],
-    "JPMorgan Chase": [
-      "JPMorgan",
-      "J.P. Morgan",
-      "Chase"
     ]
   },
   "largest-islands-sweden": {

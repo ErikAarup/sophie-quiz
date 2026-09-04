@@ -2,8 +2,8 @@
   "generated_on": "2026-09-04",
   "count": 109,
   "verdict_counts": {
-    "verified": 72,
-    "corrected": 37,
+    "verified": 71,
+    "corrected": 38,
     "rejected": 66,
     "unverifiable": 0
   },
@@ -8272,13 +8272,13 @@
     },
     {
       "no": 77,
-      "verdict": "verified",
-      "reason_sv": "Jag hämtade companiesmarketcap.com direkt (två sidladdningar, plats 1-15 samt plats 16-20) och jämförde mot utkastet. Alla tio första platserna stämde exakt i ordning och värde efter att SpaceX (privatägt, ingen börsnotering) korrekt exkluderats och resten skiftats upp ett steg; plats 11-15 stämde också exakt, inklusive JPMorgan Chase på 948 miljarder USD som motsvarar ursprunglig plats 16 på sajten. Inga ändringar behövdes i namn, värden, enhet, datum eller källa.",
+      "verdict": "corrected",
+      "reason_sv": "Faktagranskaren hämtade companiesmarketcap.com den 4 september 2026 och plats 1–20 stämde mot utkastet, men den uteslöt SpaceX som \"privatägt\". Fel: Erik påpekade att SpaceX är börsnoterat, och sajtens egen SpaceX-sida bekräftar det (ticker SPCX, aktiekurs 148,69 USD, börsvärde 1 959 miljarder, plats 7). SpaceX är återinsatt på plats 7 och plats 7–14 har flyttats ett steg ned; JPMorgan Chase (948 miljarder) föll ut från plats 15. Rättat i sittningen 4 september kl 18:20.",
       "batch": 13,
       "slug_en": "largest-companies-by-market-cap",
       "category": "foretag-ekonomi",
       "title_sv": "Världens mest värdefulla börsbolag",
-      "definition_sv": "Börsnoterade bolag (endast publika bolag med aktiekurs på en börs — inte privatägda bolag som SpaceX och inte fonder) rangordnade efter börsvärde i miljarder USD, enligt companiesmarketcap.com den 4 september 2026.",
+      "definition_sv": "Börsnoterade bolag (publika bolag med aktiekurs på en börs, inte fonder) rangordnade efter börsvärde i miljarder USD, enligt companiesmarketcap.com den 4 september 2026.",
       "host_question_sv": "Världens mest värdefulla börsnoterade bolag efter börsvärde i miljarder USD, enligt companiesmarketcap.com den 4 september 2026.",
       "source_name": "companiesmarketcap.com — Largest companies by market cap",
       "source_description_sv": "companiesmarketcap.com är en oberoende webbplats som samlar börsvärden för börsnoterade bolag globalt, beräknat som aktiekurs gånger antal utestående aktier. Siffrorna hämtas från marknadsdata och uppdateras löpande under handelsdagen, så listan kan se annorlunda ut redan nästa dag.",
@@ -8323,56 +8323,56 @@
         },
         {
           "rank": 7,
+          "name_sv": "SpaceX",
+          "value": "1 959",
+          "unit": "miljarder USD"
+        },
+        {
+          "rank": 8,
           "name_sv": "Broadcom",
           "value": "1 701",
           "unit": "miljarder USD"
         },
         {
-          "rank": 8,
+          "rank": 9,
           "name_sv": "Saudi Aramco",
           "value": "1 672",
           "unit": "miljarder USD"
         },
         {
-          "rank": 9,
+          "rank": 10,
           "name_sv": "Meta",
           "value": "1 558",
           "unit": "miljarder USD"
         },
         {
-          "rank": 10,
+          "rank": 11,
           "name_sv": "Tesla",
           "value": "1 394",
           "unit": "miljarder USD"
         },
         {
-          "rank": 11,
+          "rank": 12,
           "name_sv": "Samsung",
           "value": "1 245",
           "unit": "miljarder USD"
         },
         {
-          "rank": 12,
+          "rank": 13,
           "name_sv": "Micron",
           "value": "1 129",
           "unit": "miljarder USD"
         },
         {
-          "rank": 13,
+          "rank": 14,
           "name_sv": "Berkshire Hathaway",
           "value": "1 084",
           "unit": "miljarder USD"
         },
         {
-          "rank": 14,
+          "rank": 15,
           "name_sv": "Eli Lilly",
           "value": "1 020",
-          "unit": "miljarder USD"
-        },
-        {
-          "rank": 15,
-          "name_sv": "JPMorgan Chase",
-          "value": "948",
           "unit": "miljarder USD"
         }
       ],
@@ -8380,7 +8380,8 @@
       "well_known_10th": false,
       "confidence": "medium",
       "verification": "web-verified",
-      "notes": "SpaceX låg på plats 7 på sajten (cirka 1 968 miljarder USD) men exkluderades eftersom det är ett privatägt bolag utan börsnotering; övriga bolag från plats 7 och nedåt är omrankade ett steg upp utifrån sajtens ursprungliga ordning (ursprunglig plats 8-16 blir här 7-15). Ingen tie ligger vid gränsen mellan plats 10 och 11. Börsvärden ändras kontinuerligt under handelsdagen, så exakta siffror kan skilja sig något beroende på exakt tidpunkt för avläsning. Kontrollerat mot en färsk hämtning av companiesmarketcap.com den 4 september 2026, plats 1-20, och alla värden stämde exakt."
+      "notes": "SpaceX (SPCX) på plats 7 med 1 959 miljarder USD per sajtens egen sida den 4 september 2026; övriga värden från samma dags hämtning. Ingen delning vid gränsen 10/11 (Meta 1 558 mot Samsung 1 245). Börsvärden ändras under handelsdagen, så exakta siffror kan skilja något mot kvällen. Alphabet svaras ofta som Google, Meta som Facebook, Saudi Aramco som Aramco — alla finns som alias.",
+      "modified": "2026-09-04"
     },
     {
       "no": 78,
