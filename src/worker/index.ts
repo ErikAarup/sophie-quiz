@@ -15,6 +15,8 @@ export interface Env {
   ANTHROPIC_BASE_URL?: string;
   /** Optional override of data/quiz.json durationSeconds (the e2e suite shortens the clock). */
   QUESTION_SECONDS?: string;
+  /** Optional override of data/quiz.json questions, a JSON array of slugs (test suites only). */
+  QUIZ_QUESTIONS?: string;
 }
 
 export default {

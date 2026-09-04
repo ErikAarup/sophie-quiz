@@ -1,16 +1,16 @@
 {
-  "_comment": "Ten placeholder lists from data/bank.json (all verdict=verified, 15 rows each). Erik swaps them Friday; only slugs with verdict verified/corrected are allowed. Order = question order.",
+  "_comment": "Erik's ten, Friday 4 Sept 2026 19:10 (vault: current/sophie-quiz/kvallens-listor.md), in the order the host runs them. Swap a slug for any other verified/corrected slug in data/bank.json to change the evening; npm test checks the result.",
   "questions": [
-    "most-populous-eu-countries",
-    "largest-european-countries-by-area",
-    "countries-by-population",
-    "tallest-mountains-world",
     "swedish-municipalities-by-population",
-    "countries-by-area",
-    "largest-lakes-world",
-    "highest-grossing-films-worldwide",
-    "best-selling-game-consoles-all-time",
-    "countries-by-nobel-laureates"
+    "countries-by-mcdonalds-restaurants",
+    "girls-names-born-2001-sweden",
+    "highest-grossing-film-franchises",
+    "most-used-emojis-unicode",
+    "most-common-occupations-sweden",
+    "highest-paid-athletes-forbes",
+    "most-visited-websites-sweden",
+    "largest-companies-by-market-cap",
+    "most-followed-instagram-accounts"
   ],
-  "durationSeconds": 150
+  "durationSeconds": 90
 }

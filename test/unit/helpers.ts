@@ -1,8 +1,10 @@
 import { buildQuiz } from '../../src/worker/bank.ts';
 import { initialState, reduce, type GameEvent, type Outcome } from '../../src/shared/game.ts';
 import type { GameState, Quiz, Team } from '../../src/shared/types.ts';
+import { TEST_QUESTIONS } from '../fixtures/questions.ts';
 
-export const quiz: Quiz = buildQuiz();
+/** The pinned test ten (question 1 = the EU list), not the evening's quiz.json. */
+export const quiz: Quiz = buildQuiz({ questions: TEST_QUESTIONS });
 export const T0 = 1_700_000_000_000; // a fixed "now"
 
 /** Apply events in order; throw on the first refusal so tests stay short. */

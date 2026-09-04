@@ -52,7 +52,10 @@ export class Game extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     const seconds = env.QUESTION_SECONDS ? Number(env.QUESTION_SECONDS) : undefined;
-    this.quiz = buildQuiz({ durationSeconds: Number.isFinite(seconds) ? seconds : undefined });
+    // QUIZ_QUESTIONS is a JSON array of slugs, set only by the test suites (vitest bindings and
+    // e2e/wrangler.e2e.jsonc) so their scripted answers keep matching whatever quiz.json says.
+    const questions = env.QUIZ_QUESTIONS ? (JSON.parse(env.QUIZ_QUESTIONS) as string[]) : undefined;
+    this.quiz = buildQuiz({ durationSeconds: Number.isFinite(seconds) ? seconds : undefined, questions });
     // Player phones send the text "ping" every few seconds; the runtime answers "pong" without
     // waking us, and remembers when (presence).
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
