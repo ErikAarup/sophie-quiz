@@ -96,10 +96,27 @@ The worktree is fresh: run `npm ci` first (Playwright browsers are already insta
 
 ```
 npm run typecheck
-npm test
-npm run e2e
+npx vitest run --project unit
 npm run build
 ```
+
+**Machine fact, 4 Sept 18:45 (read this before running anything else):** Windows Smart App
+Control on this PC now blocks the unsigned `workerd.exe` that wrangler and
+`@cloudflare/vitest-pool-workers` spawn ("An Application Control policy has blocked this
+file"). It worked on 3 Sept; the policy switched on since. Consequences for you:
+`npx vitest run --project do`, `npm run e2e`, `npm run proof` and `npm run dev` **may fail
+through no fault of the code**. Try each once; if it fails with that policy error (or
+`spawn UNKNOWN` from miniflare), record the exact error in the PR body under a heading
+"Blocked by Smart App Control" and move on. **Never delete, skip, `.skip`, or reconfigure a
+test to get past this**, and never change `package.json`'s `test` script — the DO project must
+still run for Erik once the policy is off. Erik may turn the policy off while you work; if
+`workerd` starts, run the full set (`npm test`, `npm run e2e`) and attach the real output.
+`wrangler deploy --dry-run` inside `npm run build` does not need workerd; if it does fail on
+this machine, say so rather than guessing.
+
+Because of this, **AC1's deploy wiring runs the unit project only**: `predeploy` (or
+equivalent) = `vitest run --project unit`, where the data test lives. The unit project must
+never spawn workerd.
 
 Data-gate proof (AC1/AC2): show the new data test **failing** on a deliberately broken copy
 of `quiz.json` (a wrong slug, and separately a tie-at-10 list such as
@@ -114,6 +131,14 @@ User-seat proof: a Playwright run through the **real admin UI** that (a) is refu
 reconnects, and the text survives. Screenshots at 390×844 of: the reveal screen with the new
 control layout, the typed-confirm sheet, the override control with names, the admin question
 screen with the definition, and the player lobby counter. Attach to the PR body.
+
+**If the harness is blocked (see above), the proof you owe instead is:** unit tests for every
+reducer change (A3, A6's re-grade path, A9's decision logic if it is factored into a pure
+function), the rendered admin and player pages opened statically where possible (the client
+bundle with a stubbed state is acceptable for screenshots of A4, A7, A10), and a plain
+walkthrough in the PR body of what Erik will see on each changed screen. Say plainly which
+proofs are missing and why; the reviewer and Erik's Saturday-morning rehearsal on the
+deployed app carry the rest.
 
 ## 6. Decision ledger contract
 
