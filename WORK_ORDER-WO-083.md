@@ -110,8 +110,12 @@ everything that spawns `wrangler dev`: `npm run e2e`, `npm run proof`, `npm run 
 each once; if it fails with that policy error (or `spawn UNKNOWN` from miniflare), record
 the exact error in the PR body under a heading "Blocked by Smart App Control" and move on.
 Do not try to work around it by changing wrangler, miniflare or workerd versions or
-overrides — that is a different change with its own risk, and Erik may lift the policy
-while you work. **Never delete, skip, `.skip`, or reconfigure a
+overrides — that is a different change with its own risk.
+
+**Update 18:55: Erik turned Smart App Control off, and wrangler's workerd starts again.**
+Expect the full set to run: `npm run typecheck`, `npm test`, `npm run e2e`, `npm run build`,
+and the Playwright user-seat proof below. The paragraph above stays only so you recognise
+the error if it somehow returns; if it does, follow it. **Never delete, skip, `.skip`, or reconfigure a
 test to get past this**, and never change `package.json`'s `test` script — the DO project must
 still run for Erik once the policy is off. Erik may turn the policy off while you work; if
 `workerd` starts, run the full set (`npm test`, `npm run e2e`) and attach the real output.
