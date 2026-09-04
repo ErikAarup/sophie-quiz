@@ -96,18 +96,22 @@ The worktree is fresh: run `npm ci` first (Playwright browsers are already insta
 
 ```
 npm run typecheck
-npx vitest run --project unit
+npm test
 npm run build
 ```
 
-**Machine fact, 4 Sept 18:45 (read this before running anything else):** Windows Smart App
-Control on this PC now blocks the unsigned `workerd.exe` that wrangler and
-`@cloudflare/vitest-pool-workers` spawn ("An Application Control policy has blocked this
-file"). It worked on 3 Sept; the policy switched on since. Consequences for you:
-`npx vitest run --project do`, `npm run e2e`, `npm run proof` and `npm run dev` **may fail
-through no fault of the code**. Try each once; if it fails with that policy error (or
-`spawn UNKNOWN` from miniflare), record the exact error in the PR body under a heading
-"Blocked by Smart App Control" and move on. **Never delete, skip, `.skip`, or reconfigure a
+**Machine fact, 4 Sept 18:52 (read this before running anything else):** Windows Smart App
+Control on this PC blocks the unsigned `workerd.exe` **bundled inside wrangler**
+(`node_modules/wrangler/node_modules/@cloudflare/workerd-windows-64`, v1.20260831.1) with
+"An Application Control policy has blocked this file". The older top-level copy that
+`@cloudflare/vitest-pool-workers` uses (v1.20260815.1) still runs, so **`npm test` (unit +
+DO projects) works — verified 16/16 on the DO project at 18:51.** What is blocked is
+everything that spawns `wrangler dev`: `npm run e2e`, `npm run proof`, `npm run dev`. Try
+each once; if it fails with that policy error (or `spawn UNKNOWN` from miniflare), record
+the exact error in the PR body under a heading "Blocked by Smart App Control" and move on.
+Do not try to work around it by changing wrangler, miniflare or workerd versions or
+overrides — that is a different change with its own risk, and Erik may lift the policy
+while you work. **Never delete, skip, `.skip`, or reconfigure a
 test to get past this**, and never change `package.json`'s `test` script — the DO project must
 still run for Erik once the policy is off. Erik may turn the policy off while you work; if
 `workerd` starts, run the full set (`npm test`, `npm run e2e`) and attach the real output.
