@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildPrepass, normalize, rowVariants } from '../../src/shared/normalize.ts';
+import { buildQuiz } from '../../src/worker/bank.ts';
 import { eu } from './helpers.ts';
 
 describe('normalize', () => {
@@ -10,6 +11,38 @@ describe('normalize', () => {
     expect(normalize('Avatar: The Way of Water')).toBe('avatar the way of water');
     expect(normalize('Kongo-Kinshasa')).toBe('kongo kinshasa');
     expect(normalize('Ålesund/Ø')).toBe('alesund o');
+  });
+
+  it('turns an emoji into a stable token; skin tone, variation selector and repeats do not matter', () => {
+    expect(normalize('😂')).toBe('e1f602');
+    expect(normalize('❤️')).toBe('e2764');
+    expect(normalize('❤')).toBe('e2764');
+    expect(normalize('👍🏽')).toBe('e1f44d');
+    expect(normalize('😂😂😂')).toBe('e1f602');
+    expect(normalize('Tumme upp 👍')).toBe('tumme upp e1f44d');
+    expect(normalize('🇸🇪')).toBe('e1f1f8x1f1ea');
+  });
+});
+
+describe('buildPrepass on the emoji list (a team answers with the emoji itself)', () => {
+  const q = buildQuiz({ questions: ['most-used-emojis-unicode'] }).questions[0]!;
+  const idx = buildPrepass(q);
+  const row = (name: string) => q.rows.findIndex((r) => r.name === name);
+
+  it('hits by the emoji, by the Swedish name and by the English name', () => {
+    expect(idx.lookup('😂')).toEqual({ kind: 'hit', rowIndex: row('Gråtskrattande ansikte') });
+    expect(idx.lookup('😂😂')).toEqual({ kind: 'hit', rowIndex: row('Gråtskrattande ansikte') });
+    expect(idx.lookup('❤️')).toEqual({ kind: 'hit', rowIndex: row('Rött hjärta') });
+    expect(idx.lookup('👍🏽')).toEqual({ kind: 'hit', rowIndex: row('Tumme upp') });
+    expect(idx.lookup('thumbs up')).toEqual({ kind: 'hit', rowIndex: row('Tumme upp') });
+    expect(idx.lookup('Gråtskrattande ansikte')).toEqual({ kind: 'hit', rowIndex: row('Gråtskrattande ansikte') });
+  });
+
+  it('every row of the emoji list carries its emoji as an alias', () => {
+    for (const r of q.rows) {
+      const al = q.aliases[r.name] ?? [];
+      expect(al.some((a) => /^e[0-9a-fx]+$/.test(normalize(a)))).toBe(true);
+    }
   });
 });
 

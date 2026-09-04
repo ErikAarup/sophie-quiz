@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Sophies topp tio: the phone quiz app for Sophie's 25th (WO-078). Cloudflare Worker + Durable Object.",
+  "description": "Sofies topp tio: the phone quiz app for Sofie's 25th (WO-078). Cloudflare Worker + Durable Object.",
   "scripts": {
     "sync-bank": "node scripts/sync-bank.mjs",
     "typecheck": "tsc -p tsconfig.worker.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.node.json --noEmit",

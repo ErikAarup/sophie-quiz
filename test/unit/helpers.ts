@@ -5,20 +5,10 @@
 import { buildQuestion, listBySlug } from '../../src/worker/bank.ts';
 import { initialState, reduce, type GameEvent, type Outcome } from '../../src/shared/game.ts';
 import type { GameState, Quiz, Team } from '../../src/shared/types.ts';
+import { TEST_QUESTIONS } from '../fixtures/questions.ts';
 
 /** Ten bank lists, in a fixed order. Question 1 is the EU list every expectation below is written against. */
-export const FIXTURE_SLUGS = [
-  'most-populous-eu-countries',
-  'largest-european-countries-by-area',
-  'countries-by-population',
-  'tallest-mountains-world',
-  'swedish-municipalities-by-population',
-  'countries-by-area',
-  'largest-lakes-world',
-  'highest-grossing-films-worldwide',
-  'best-selling-game-consoles-all-time',
-  'countries-by-nobel-laureates',
-] as const;
+export const FIXTURE_SLUGS: readonly string[] = TEST_QUESTIONS;
 
 /**
  * The fixture's own aliases, inline rather than read from `data/aliases.json` — that file belongs

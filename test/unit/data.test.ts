@@ -53,9 +53,9 @@ describe('the ten lists are ready for the party (npm run deploy runs this first)
     expect(partyReadiness()).toEqual([]);
   });
 
-  it('is ten questions of 2:30, the shape the runbook and the screens are written for', () => {
+  it('is ten questions of 1:30, the shape the runbook and the screens are written for (90 s since 4 Sept)', () => {
     expect(data.quiz.questions).toHaveLength(10);
-    expect(data.quiz.durationSeconds).toBe(150);
+    expect(data.quiz.durationSeconds).toBe(90);
   });
 });
 

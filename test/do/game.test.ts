@@ -5,13 +5,15 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { GameState } from '../../src/shared/types.ts';
 import { GAME_NAME } from '../../src/worker/config.ts';
 import { buildQuiz } from '../../src/worker/bank.ts';
+import { TEST_QUESTIONS } from '../fixtures/questions.ts';
 import { Client, TOKEN, admin, player, resetGame, sleep } from './client.ts';
 import { MODEL_CONTROL_URL, type ModelMode } from './model-mock.ts';
 
 // The DO builds its quiz in its constructor from data/quiz.json + data/bank.json; this suite builds
 // the same quiz here and takes every answer and expectation from question 1 *by rank*, so whichever
 // ten lists Erik puts in quiz.json on the Friday, the suite still describes the same game (WO-083 A2).
-const q1 = buildQuiz().questions[0]!;
+// The same ten the DO is given through the QUIZ_QUESTIONS binding (vitest.config.ts), never data/quiz.json.
+const q1 = buildQuiz({ questions: TEST_QUESTIONS }).questions[0]!;
 /** The row at that place on question 1. Places 1–10 are unique: the data gate refuses a tie at 10. */
 const at = (rank: number) => q1.rows.find((r) => r.rank === rank)!;
 

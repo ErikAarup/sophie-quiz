@@ -91,13 +91,20 @@ export interface BuildQuizOptions {
    * quiz.json can be checked without anything under `data/` being touched.
    */
   data?: QuizData | undefined;
+  /**
+   * Overrides the question slugs (the test suites pin their own ten so the evening's real lists
+   * can change without touching a test; the DO reads it from the QUIZ_QUESTIONS binding).
+   * Production never sets this.
+   */
+  questions?: string[] | undefined;
 }
 
 /** Throws with a clear message if quiz.json names a slug that is missing or not verified/corrected. */
 export function buildQuiz(opts: BuildQuizOptions = {}): Quiz {
   const data = opts.data ?? bundledData;
   if (!data.quiz || !Array.isArray(data.quiz.questions)) throw new Error('quiz.json: "questions" must be a list of slugs');
-  const questions = data.quiz.questions.map((slug) => {
+  const slugs = opts.questions ?? data.quiz.questions;
+  const questions = slugs.map((slug) => {
     const list = listBySlug(slug, data.bank);
     if (!list) throw new Error(`quiz.json: no list with slug "${slug}" in data/bank.json (run npm run sync-bank?)`);
     if (list.verdict !== 'verified' && list.verdict !== 'corrected') {
