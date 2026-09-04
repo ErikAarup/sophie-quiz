@@ -1,16 +1,16 @@
 {
-  "_comment": "Ten lists picked from Erik's 28 on Friday 4 Sept 2026 (current/sophie-quiz/list-ideas-2026-09-04.md), easy to hard. Swap a slug for any other verified/corrected slug in data/bank.json to change the evening. Order = question order.",
+  "_comment": "Erik's ten, Friday 4 Sept 2026 19:10 (vault: current/sophie-quiz/kvallens-listor.md), in the order the host runs them. Swap a slug for any other verified/corrected slug in data/bank.json to change the evening; npm test checks the result.",
   "questions": [
     "swedish-municipalities-by-population",
-    "countries-by-population",
-    "girls-names-born-2001-sweden",
     "countries-by-mcdonalds-restaurants",
-    "highest-grossing-films-worldwide",
-    "most-common-occupations-sweden",
-    "most-followed-instagram-accounts",
+    "girls-names-born-2001-sweden",
+    "highest-grossing-film-franchises",
     "most-used-emojis-unicode",
+    "most-common-occupations-sweden",
+    "highest-paid-athletes-forbes",
+    "most-visited-websites-sweden",
     "largest-companies-by-market-cap",
-    "best-selling-smartphone-models-ever"
+    "most-followed-instagram-accounts"
   ],
   "durationSeconds": 90
 }
