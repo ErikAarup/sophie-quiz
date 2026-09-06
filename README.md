@@ -41,6 +41,31 @@ Secrets: `ANTHROPIC_API_KEY` and `ADMIN_TOKEN` in `.dev.vars` locally (gitignore
 `.dev.vars.example`), pushed to Cloudflare with `npx wrangler secret bulk .dev.vars`. The admin
 page is `/admin?t=<ADMIN_TOKEN>`; every admin message carries the token and the DO checks it.
 
+## Fork this for your own quiz
+
+This was built for one specific party, so a few things are named for that. Everything under
+`WORK_ORDER.md`, `STATUS-WO-078.md`, `KNOWN-ISSUES-WO-078.md`, `SPELLEDNING.md` and the
+`REVIEW-*`/`CODEX-REVIEW-*` files is build/review history from that project — safe to ignore or
+delete. The app itself is generic.
+
+To run your own evening:
+
+1. **Swap the questions.** `data/quiz.json` lists the ten slugs to run, in order, plus
+   `durationSeconds`. Each slug must exist in `data/bank.json` — an array of lists, each with a
+   `slug_en`, Swedish title/definition/host question, a `source_url`, and up to 15 ranked `items`
+   (`rank`, `name_sv`, `value`, `unit`). Copy an existing entry as a template; `npm test` checks
+   that every slug in `quiz.json` resolves.
+2. **Set your own secrets.** Copy `.dev.vars.example` to `.dev.vars` and fill in
+   `ANTHROPIC_API_KEY` (used to grade free-text answers) and `ADMIN_TOKEN` (anything you like —
+   it's just a shared secret checked on every admin action, not meant to withstand a real
+   attacker). Push them with `npx wrangler secret bulk .dev.vars` before deploying.
+3. **Deploy under your own Cloudflare account.** `wrangler.jsonc` names the Worker `sophie-quiz`
+   and defaults to `<name>.<your-account>.workers.dev` — rename `name` if you want a different
+   URL, then `npm run deploy`.
+4. **Optional: your own printed cheat sheet.** `npm run festpaket` (`scripts/festpaket.mjs`)
+   generates a PDF with the question order, answer sheets and your admin link, built from
+   whatever's currently in `data/quiz.json`/`data/bank.json`/`.dev.vars`.
+
 ## How it fits together
 
 - The DO is the single source of truth. Every client action is one JSON message; every change is
